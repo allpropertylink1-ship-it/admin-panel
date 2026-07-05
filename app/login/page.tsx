@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { Shield, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -98,6 +99,23 @@ export default function LoginPage() {
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-primary-600" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-primary-800/50 px-2 text-primary-300">Or continue with</span>
+            </div>
+          </div>
+
+          <GoogleSignInButton
+            onSuccess={async () => {
+              await refreshUser();
+              router.replace("/");
+            }}
+            onError={(msg) => setError(msg)}
+          />
 
           <div className="mt-6 text-center">
             <a
