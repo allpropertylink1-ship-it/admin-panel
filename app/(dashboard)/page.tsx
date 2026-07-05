@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 import {
   Users,
   UserCheck,
@@ -94,19 +95,14 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/dashboard")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch dashboard data");
-        return res.json();
-      })
-      .then((json) => {
-        setData(json);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+    api.get<DashboardData>("/api/admin/dashboard").then(({ data, error }) => {
+      if (data) {
+        setData(data);
+      } else {
+        setError(error || "Failed to load dashboard");
+      }
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {
