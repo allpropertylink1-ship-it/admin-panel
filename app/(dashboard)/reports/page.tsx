@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   Users,
@@ -67,9 +68,9 @@ export default function ReportsPage() {
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/dashboard");
-      const json = await res.json();
-      setData(json);
+      const { data, error } = await api.get<DashboardData>("/api/admin/dashboard");
+      if (error || !data) throw new Error(error || "No data");
+      setData(data);
     } catch {
       setData(null);
     } finally {

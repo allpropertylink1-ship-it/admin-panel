@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
   Search,
@@ -89,12 +90,11 @@ export default function PropertiesPage() {
       params.set("page", String(page))
       params.set("limit", String(limit))
 
-      const res = await fetch(`/api/properties?${params}`)
-      if (!res.ok) throw new Error("Failed to fetch properties")
-      const data: PropertiesResponse = await res.json()
-      setProperties(data.properties)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
+      const { data: result, error } = await api.get<PropertiesResponse>(`/api/admin/properties?${params}`)
+      if (error || !result) throw new Error(error || "No data")
+      setProperties(result.properties)
+      setTotal(result.total)
+      setTotalPages(result.totalPages)
     } catch {
       setError("Failed to load properties. Please try again.")
     } finally {
@@ -109,12 +109,8 @@ export default function PropertiesPage() {
   async function updateProperty(id: string, data: Record<string, unknown>) {
     setActionLoading(id)
     try {
-      const res = await fetch(`/api/properties/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error("Failed to update")
+      const { data: _, error } = await api.patch(`/api/admin/properties/${id}`, data)
+      if (error) throw new Error("Failed to update")
       setRejectInput(null)
       await fetchProperties()
     } catch {

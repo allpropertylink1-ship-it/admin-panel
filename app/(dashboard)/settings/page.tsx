@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   Save,
@@ -55,9 +56,8 @@ export default function SettingsPage() {
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/settings");
-      if (res.ok) {
-        const data = await res.json();
+      const { data, error } = await api.get<Settings>("/api/admin/settings");
+      if (!error && data) {
         setForm({ ...defaultSettings, ...data });
       }
     } catch {
@@ -76,12 +76,8 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (res.ok) {
+      const { data, error } = await api.post("/api/admin/settings", form);
+      if (!error) {
         setMessage({ type: "success", text: "Settings saved successfully." });
       } else {
         setMessage({

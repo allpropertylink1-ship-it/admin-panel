@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -43,9 +44,9 @@ export default function AgentsPage() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (statusFilter !== "ALL") params.set("status", statusFilter);
-      const res = await fetch(`/api/agents?${params.toString()}`);
-      const data = await res.json();
-      setAgents(Array.isArray(data) ? data : data.agents ?? []);
+      const { data: result, error } = await api.get<{ agents: Agent[] }>(`/api/admin/agents?${params.toString()}`);
+      if (error || !result) throw new Error(error || "No data");
+      setAgents(result.agents ?? []);
     } catch {
       setAgents([]);
     } finally {
@@ -62,12 +63,8 @@ export default function AgentsPage() {
     const newStatus =
       agent.accountStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
     try {
-      const res = await fetch(`/api/agents/${agent.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountStatus: newStatus }),
-      });
-      if (res.ok) {
+      const { data: _, error } = await api.patch(`/api/admin/agents/${agent.id}`, { accountStatus: newStatus });
+      if (!error) {
         setAgents((prev) =>
           prev.map((a) =>
             a.id === agent.id ? { ...a, accountStatus: newStatus } : a

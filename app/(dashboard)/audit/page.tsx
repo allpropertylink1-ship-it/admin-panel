@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -64,17 +65,11 @@ export default function AuditPage() {
       if (actionFilter) params.set("action", actionFilter);
       if (fromDate) params.set("fromDate", fromDate);
       if (toDate) params.set("toDate", toDate);
-      const res = await fetch(`/api/audit?${params.toString()}`);
-      const json = await res.json();
-      setEntries(json.entries ?? json.data ?? json.auditLogs ?? []);
-      setMeta(
-        json.meta ?? {
-          page: json.page ?? page,
-          limit: json.limit ?? 20,
-          total: json.total ?? 0,
-          totalPages: json.totalPages ?? 1,
-        }
-      );
+      const { data, error } = await api.get<{ entries: AuditEntry[]; meta: PaginationMeta }>(`/api/admin/audit?${params.toString()}`);
+      if (error) throw new Error(error);
+      if (!data) { setEntries([]); return; }
+      setEntries(data.entries ?? []);
+      setMeta(data.meta);
     } catch {
       setEntries([]);
     } finally {

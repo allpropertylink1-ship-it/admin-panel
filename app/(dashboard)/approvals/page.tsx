@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   ChevronDown,
@@ -84,10 +85,9 @@ export default function ApprovalsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/users/pending");
-      if (!res.ok) throw new Error("Failed to fetch pending approvals");
-      const json = await res.json();
-      setUsers(json.users || json);
+      const { data, error } = await api.get<{ users: PendingUser[] }>("/api/admin/users/pending");
+      if (error) throw new Error(error);
+      setUsers(data?.users ?? []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -98,8 +98,8 @@ export default function ApprovalsPage() {
   async function handleApprove(userId: string) {
     setActionLoading(userId);
     try {
-      const res = await fetch(`/api/users/${userId}/approve`, { method: "POST" });
-      if (!res.ok) throw new Error("Failed to approve user");
+      const { data, error } = await api.post(`/api/admin/users/${userId}/approve`, {});
+      if (error) throw new Error("Failed to approve user");
       setUsers((prev) => prev.filter((u) => u.id !== userId));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to approve");
@@ -112,12 +112,8 @@ export default function ApprovalsPage() {
     if (!rejectReason.trim()) return;
     setActionLoading(userId);
     try {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountStatus: "REJECTED", rejectionReason: rejectReason.trim() }),
-      });
-      if (!res.ok) throw new Error("Failed to reject user");
+      const { data, error } = await api.patch(`/api/admin/users/${userId}`, { accountStatus: "REJECTED", rejectionReason: rejectReason.trim() });
+      if (error) throw new Error("Failed to reject user");
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       setRejectInput(null);
       setRejectReason("");

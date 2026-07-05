@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -121,19 +122,17 @@ export default function UserDetailPage() {
 
   useEffect(() => {
     if (!params?.id) return;
-    fetch(`/api/users/${params.id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch user");
-        return res.json();
-      })
-      .then((json) => {
-        setUser(json.user || json);
+    (async () => {
+      try {
+        const { data, error } = await api.get<{ user: UserDetail }>(`/api/admin/users/${params.id}`);
+        if (error || !data) throw new Error(error || "No data");
+        setUser(data.user || data);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to fetch user");
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+      }
+    })();
   }, [params?.id]);
 
   async function handleAction(action: string) {
@@ -141,21 +140,16 @@ export default function UserDetailPage() {
     setActionLoading(action);
     try {
       if (action === "delete") {
-        const res = await fetch(`/api/users/${user.id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Failed to delete user");
+        const { data, error } = await api.delete(`/api/admin/users/${user.id}`);
+        if (error) throw new Error(error);
         router.push("/users");
         return;
       }
-      const res = await fetch(`/api/users/${user.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountStatus: action === "approve" ? "APPROVED" : "SUSPENDED",
-        }),
+      const { data, error } = await api.patch<{ user: UserDetail }>(`/api/admin/users/${user.id}`, {
+        accountStatus: action === "approve" ? "APPROVED" : "SUSPENDED",
       });
-      if (!res.ok) throw new Error("Failed to update user");
-      const json = await res.json();
-      setUser(json.user || json);
+      if (error || !data) throw new Error(error || "No data");
+      setUser(data.user || data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Action failed");
     } finally {

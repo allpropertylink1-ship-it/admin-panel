@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -94,10 +95,9 @@ export default function UsersPage() {
       params.set("page", String(page));
       params.set("pageSize", "20");
 
-      const res = await fetch(`/api/users?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch users");
-      const json = await res.json();
-      setData(json);
+      const { data, error } = await api.get<UsersResponse>(`/api/admin/users?${params}`);
+      if (error || !data) throw new Error(error || "No data");
+      setData(data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -119,12 +119,8 @@ export default function UsersPage() {
     setActionLoading(userId);
     setRoleDropdown(null);
     try {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
-      });
-      if (!res.ok) throw new Error("Failed to update role");
+      const { data, error } = await api.patch(`/api/admin/users/${userId}`, { role: newRole });
+      if (error) throw new Error(error);
       await fetchUsers();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to update role");
@@ -137,12 +133,8 @@ export default function UsersPage() {
     setActionLoading(userId);
     const newStatus = currentStatus === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
     try {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountStatus: newStatus }),
-      });
-      if (!res.ok) throw new Error("Failed to update status");
+      const { data, error } = await api.patch(`/api/admin/users/${userId}`, { accountStatus: newStatus });
+      if (error) throw new Error(error);
       await fetchUsers();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to update status");
@@ -155,8 +147,8 @@ export default function UsersPage() {
     setActionLoading(userId);
     setDeleteConfirm(null);
     try {
-      const res = await fetch(`/api/users/${userId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete user");
+      const { data, error } = await api.delete(`/api/admin/users/${userId}`);
+      if (error) throw new Error(error);
       if (selectedUser?.id === userId) setSelectedUser(null);
       await fetchUsers();
     } catch (err: unknown) {

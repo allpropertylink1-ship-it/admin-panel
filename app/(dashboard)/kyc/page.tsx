@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
   FileText,
@@ -98,12 +99,11 @@ export default function KycPage() {
       params.set("page", String(page))
       params.set("limit", String(limit))
 
-      const res = await fetch(`/api/kyc?${params}`)
-      if (!res.ok) throw new Error("Failed to fetch KYC documents")
-      const data: KycResponse = await res.json()
-      setDocuments(data.documents)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
+      const { data: result, error } = await api.get<KycResponse>(`/api/admin/kyc?${params}`)
+      if (error || !result) throw new Error(error || "No data")
+      setDocuments(result.documents)
+      setTotal(result.total)
+      setTotalPages(result.totalPages)
     } catch {
       setError("Failed to load KYC documents. Please try again.")
     } finally {
@@ -118,12 +118,8 @@ export default function KycPage() {
   async function updateDocument(id: string, data: Record<string, unknown>) {
     setActionLoading(id)
     try {
-      const res = await fetch(`/api/kyc/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error("Failed to update")
+      const { data: _, error } = await api.patch(`/api/admin/kyc/${id}`, data)
+      if (error) throw new Error("Failed to update")
       setRejectInput(null)
       await fetchDocuments()
     } catch {

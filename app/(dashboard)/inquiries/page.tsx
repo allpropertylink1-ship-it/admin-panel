@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
   Search,
@@ -86,12 +87,11 @@ export default function InquiriesPage() {
       params.set("page", String(page))
       params.set("limit", String(limit))
 
-      const res = await fetch(`/api/inquiries?${params}`)
-      if (!res.ok) throw new Error("Failed to fetch inquiries")
-      const data: InquiriesResponse = await res.json()
-      setInquiries(data.inquiries)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
+      const { data: result, error } = await api.get<InquiriesResponse>(`/api/admin/inquiries?${params}`)
+      if (error || !result) throw new Error(error || "No data")
+      setInquiries(result.inquiries)
+      setTotal(result.total)
+      setTotalPages(result.totalPages)
     } catch {
       setError("Failed to load inquiries. Please try again.")
     } finally {
@@ -106,12 +106,8 @@ export default function InquiriesPage() {
   async function updateInquiry(id: string, data: Record<string, unknown>) {
     setActionLoading(id)
     try {
-      const res = await fetch(`/api/inquiries/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error("Failed to update")
+      const { data: _, error } = await api.patch(`/api/admin/inquiries/${id}`, data)
+      if (error) throw new Error("Failed to update")
       await fetchInquiries()
     } catch {
       setError("Failed to update inquiry.")
@@ -124,12 +120,8 @@ export default function InquiriesPage() {
     if (!respondModal || !respondText.trim()) return
     setRespondSending(true)
     try {
-      const res = await fetch(`/api/inquiries/${respondModal.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "RESPONDED", responseMessage: respondText.trim() }),
-      })
-      if (!res.ok) throw new Error("Failed to respond")
+      const { data: _, error } = await api.patch(`/api/admin/inquiries/${respondModal.id}`, { status: "RESPONDED", responseMessage: respondText.trim() })
+      if (error) throw new Error("Failed to respond")
       setRespondModal(null)
       setRespondText("")
       await fetchInquiries()
