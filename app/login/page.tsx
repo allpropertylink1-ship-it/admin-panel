@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Shield, Eye, EyeOff } from "lucide-react";
@@ -12,17 +12,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
-
-  useEffect(() => {
-    getSession().then((session) => {
-      if (session?.user) {
-        router.replace("/dashboard");
-      } else {
-        setCheckingSession(false);
-      }
-    });
-  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,21 +30,18 @@ export default function LoginPage() {
       return;
     }
 
-    const session = await getSession();
-    if (session?.user) {
-      router.replace("/dashboard");
-    } else {
-      setError("Session could not be established. Please try again.");
+    try {
+      const session = await getSession();
+      if (session?.user) {
+        router.replace("/dashboard");
+      } else {
+        setError("Session could not be established. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      setError("Session verification failed. Please try again.");
       setLoading(false);
     }
-  }
-
-  if (checkingSession) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900 p-4">
-        <div className="text-primary-200 text-sm">Checking session...</div>
-      </div>
-    );
   }
 
   return (
