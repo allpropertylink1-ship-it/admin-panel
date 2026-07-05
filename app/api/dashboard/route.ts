@@ -32,7 +32,8 @@ export async function GET() {
       totalAgents,
       recentRegistrations,
       recentInquiries,
-      registrationsByDay,
+      userRegistrations,
+      topCities,
     ] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { accountStatus: "PENDING_APPROVAL", deletedAt: null } }),
@@ -53,28 +54,29 @@ export async function GET() {
         take: 5,
         select: { id: true, name: true, email: true, message: true, status: true, createdAt: true },
       }),
-      prisma.$queryRawUnsafe<Array<{ date: string; count: bigint }>>(
-        `SELECT TO_CHAR(d.date, 'YYYY-MM-DD') AS date, COALESCE(u.cnt, 0)::int AS count
-         FROM GENERATE_SERIES($1::date, $2::date, '1 day'::interval) d(date)
-         LEFT JOIN (
-           SELECT DATE(created_at) AS dt, COUNT(*) AS cnt
-           FROM users
-           WHERE created_at >= $1 AND deleted_at IS NULL
-           GROUP BY DATE(created_at)
-         ) u ON d.date = u.dt
-         ORDER BY d.date`,
-        thirtyDaysAgo.toISOString().slice(0, 10),
-        now.toISOString().slice(0, 10),
-      ),
+      prisma.user.findMany({
+        where: { deletedAt: null, createdAt: { gte: thirtyDaysAgo } },
+        select: { createdAt: true },
+      }),
+      prisma.property.groupBy({
+        by: ["city"],
+        _count: { city: true },
+        where: { deletedAt: null },
+        orderBy: { _count: { city: "desc" } },
+        take: 10,
+      }),
     ])
 
-    const topCities = await prisma.property.groupBy({
-      by: ["city"],
-      _count: { city: true },
-      where: { deletedAt: null },
-      orderBy: { _count: { city: "desc" } },
-      take: 10,
-    })
+    const registrationsByDay: { date: string; count: number }[] = []
+    const cursor = new Date(thirtyDaysAgo)
+    while (cursor <= now) {
+      const dateStr = cursor.toISOString().slice(0, 10)
+      registrationsByDay.push({
+        date: dateStr,
+        count: userRegistrations.filter((r) => r.createdAt.toISOString().slice(0, 10) === dateStr).length,
+      })
+      cursor.setDate(cursor.getDate() + 1)
+    }
 
     return NextResponse.json({
       totalUsers,
@@ -88,10 +90,7 @@ export async function GET() {
       recentRegistrations,
       recentInquiries,
       topCities: topCities.map((c) => ({ city: c.city, count: c._count.city })),
-      registrationsByDay: registrationsByDay.map((r) => ({
-        date: r.date,
-        count: Number(r.count),
-      })),
+      registrationsByDay,
     })
   } catch (error) {
     console.error("Dashboard API error:", error)

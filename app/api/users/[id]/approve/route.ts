@@ -22,9 +22,10 @@ export async function POST(
     }
 
     const { id } = await params
-    const body = await request.json()
+    let body: Record<string, unknown> = {}
+    try { body = await request.json() } catch {}
     const reject = body.reject === true
-    const reason = body.reason || ""
+    const reason = (body.reason as string) || ""
 
     const targetUser = await prisma.user.findUnique({ where: { id } })
     if (!targetUser) {
