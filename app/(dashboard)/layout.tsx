@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminSidebar } from "@/components/AdminSidebar";
+import { DashboardDate } from "@/components/DashboardDate";
 
 export default async function DashboardLayout({
   children,
@@ -34,14 +35,7 @@ export default async function DashboardLayout({
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <time className="text-sm text-muted">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </time>
+            <DashboardDate />
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6 lg:p-8">

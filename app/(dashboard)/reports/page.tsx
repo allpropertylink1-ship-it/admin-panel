@@ -15,22 +15,26 @@ import {
   Loader2,
 } from "lucide-react";
 
+interface RecentUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 interface DashboardData {
-  summary: {
-    totalUsers: number;
-    totalProperties: number;
-    totalInquiries: number;
-    totalAgents: number;
-  };
-  registrations: { date: string; count: number }[];
+  totalUsers: number;
+  activeProperties: number;
+  totalInquiries: number;
+  totalAgents: number;
+  pendingInquiries: number;
+  pendingApprovals: number;
+  pendingReviews: number;
+  kycPending: number;
+  registrationsByDay: { date: string; count: number }[];
   topCities: { city: string; count: number }[];
-  topAgents: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string | null;
-    _count: { properties: number };
-  }[];
+  recentRegistrations: RecentUser[];
+  recentInquiries: { id: string; name: string; message: string; status: string; createdAt: string }[];
 }
 
 function GrowthIndicator({ value }: { value: number }) {
@@ -93,30 +97,30 @@ export default function ReportsPage() {
     );
   }
 
-  const { summary, registrations, topCities, topAgents } = data;
+  const { totalUsers, activeProperties, totalInquiries, totalAgents, registrationsByDay, topCities, recentRegistrations } = data;
 
   const stats = [
     {
       label: "Total Users",
-      value: summary.totalUsers,
+      value: totalUsers,
       icon: Users,
       growth: 12,
     },
     {
-      label: "Total Properties",
-      value: summary.totalProperties,
+      label: "Active Properties",
+      value: activeProperties,
       icon: Building2,
       growth: 8,
     },
     {
       label: "Total Inquiries",
-      value: summary.totalInquiries,
+      value: totalInquiries,
       icon: MessageSquare,
       growth: -3,
     },
     {
       label: "Total Agents",
-      value: summary.totalAgents,
+      value: totalAgents,
       icon: UserCheck,
       growth: 5,
     },
@@ -168,7 +172,7 @@ export default function ReportsPage() {
             </h2>
           </div>
           <div className="overflow-x-auto">
-            {registrations.length === 0 ? (
+            {registrationsByDay.length === 0 ? (
               <div className="py-12 text-center text-sm text-muted">
                 No registration data available.
               </div>
@@ -188,8 +192,8 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {registrations.slice(0, 30).map((row, i) => {
-                    const prev = registrations[i - 1]?.count ?? row.count;
+                  {registrationsByDay.slice(0, 30).map((row, i) => {
+                    const prev = registrationsByDay[i - 1]?.count ?? row.count;
                     const diff = row.count - prev;
                     return (
                       <tr
@@ -259,18 +263,18 @@ export default function ReportsPage() {
           <div className="rounded-xl border border-border bg-card">
             <div className="border-b border-border px-6 py-4">
               <h2 className="font-semibold text-foreground">
-                Top Agents by Listings
+                Recent Registrations
               </h2>
             </div>
-            {topAgents.length === 0 ? (
+            {recentRegistrations.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted">
                 No data.
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {topAgents.slice(0, 5).map((agent, i) => (
+                {recentRegistrations.slice(0, 5).map((user, i) => (
                   <div
-                    key={agent.id}
+                    key={user.id}
                     className="flex items-center justify-between px-6 py-3.5"
                   >
                     <div className="flex items-center gap-3">
@@ -279,14 +283,11 @@ export default function ReportsPage() {
                       </span>
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          {agent.firstName} {agent.lastName}
+                          {user.firstName} {user.lastName}
                         </p>
-                        <p className="text-xs text-muted">{agent.email}</p>
+                        <p className="text-xs text-muted">{user.email}</p>
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-foreground">
-                      {agent._count.properties}
-                    </span>
                   </div>
                 ))}
               </div>

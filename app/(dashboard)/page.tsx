@@ -18,17 +18,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-interface DashboardStats {
-  totalUsers: number;
-  pendingApprovals: number;
-  activeProperties: number;
-  pendingReviews: number;
-  totalInquiries: number;
-  kycPending: number;
-  totalAgents: number;
-  reportsCount: number;
-}
-
 interface RecentUser {
   id: string;
   firstName: string;
@@ -48,9 +37,18 @@ interface RecentInquiry {
 }
 
 interface DashboardData {
-  stats: DashboardStats;
+  totalUsers: number;
+  pendingApprovals: number;
+  activeProperties: number;
+  pendingReviews: number;
+  totalInquiries: number;
+  pendingInquiries: number;
+  kycPending: number;
+  totalAgents: number;
   recentRegistrations: RecentUser[];
   recentInquiries: RecentInquiry[];
+  topCities: { city: string; count: number }[];
+  registrationsByDay: { date: string; count: number }[];
 }
 
 const statCards = [
@@ -61,7 +59,7 @@ const statCards = [
   { label: "Total Inquiries", key: "totalInquiries", icon: MessageSquare, color: "text-violet-600", bg: "bg-violet-50", link: "/inquiries" },
   { label: "KYC Pending", key: "kycPending", icon: ShieldOff, color: "text-rose-600", bg: "bg-rose-50", link: "/kyc" },
   { label: "Total Agents", key: "totalAgents", icon: Handshake, color: "text-cyan-600", bg: "bg-cyan-50", link: "/agents" },
-  { label: "Reports", key: "reportsCount", icon: BarChart3, color: "text-gray-600", bg: "bg-gray-50", link: "/reports" },
+  { label: "Pending Inquiries", key: "pendingInquiries", icon: BarChart3, color: "text-gray-600", bg: "bg-gray-50", link: "/inquiries" },
 ];
 
 const quickActions = [
@@ -165,7 +163,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => {
           const Icon = card.icon;
-          const value = data.stats[card.key as keyof DashboardStats];
+          const value = data[card.key as keyof DashboardData];
           return (
             <Link
               key={card.key}
