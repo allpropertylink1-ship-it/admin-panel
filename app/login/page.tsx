@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 import { Shield, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -18,30 +19,14 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (result?.error) {
-      setError("Invalid email or password, or you do not have admin access.");
+    const { error: loginError } = await login(email, password);
+    if (loginError) {
+      setError(loginError);
       setLoading(false);
       return;
     }
 
-    try {
-      const session = await getSession();
-      if (session?.user) {
-        router.replace("/dashboard");
-      } else {
-        setError("Session could not be established. Please try again.");
-        setLoading(false);
-      }
-    } catch {
-      setError("Session verification failed. Please try again.");
-      setLoading(false);
-    }
+    router.replace("/dashboard");
   }
 
   return (

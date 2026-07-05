@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sora, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth-context";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -30,7 +31,7 @@ export default function RootLayout({
       className={`h-full antialiased ${sora.variable} ${dmSans.variable}`}
     >
       <body className="h-full bg-background text-foreground font-sans">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

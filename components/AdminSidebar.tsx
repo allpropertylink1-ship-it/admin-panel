@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -44,6 +44,7 @@ const navItems = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { logout: signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>("User Management");
 
@@ -151,7 +152,7 @@ export function AdminSidebar() {
 
         <div className="border-t border-primary-800/50 p-4">
           <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={() => signOut()}
             className="touch-target flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary-200 transition-colors hover:bg-sidebar-hover hover:text-white"
           >
             <LogOut size={18} />
