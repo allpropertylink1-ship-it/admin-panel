@@ -286,7 +286,7 @@ export default function InquiriesPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => setRespondModal({ id: inq.id, name: inq.name, message: inq.message })}
-                            className="rounded-lg p-1.5 text-primary transition-colors hover:bg-blue-50"
+                              className="rounded-lg p-1.5 text-primary transition-colors hover:bg-primary-50"
                             title="Respond"
                           >
                             <Send size={16} />
@@ -295,7 +295,7 @@ export default function InquiriesPage() {
                             <button
                               onClick={() => updateInquiry(inq.id, { status: "READ" })}
                               disabled={actionLoading === inq.id}
-                              className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
+                              className="rounded-lg p-1.5 text-primary transition-colors hover:bg-primary-50 disabled:opacity-50"
                               title="Mark as Read"
                             >
                               {actionLoading === inq.id ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}

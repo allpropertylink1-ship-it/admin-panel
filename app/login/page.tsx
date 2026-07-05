@@ -34,28 +34,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-            <Shield size={32} className="text-primary" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20">
+            <Shield size={32} className="text-accent" />
           </div>
           <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
-          <p className="mt-1 text-sm text-gray-400">All Property Link</p>
+          <p className="mt-1 text-sm text-primary-200">All Property Link</p>
         </div>
 
-        <div className="rounded-2xl border border-gray-700/50 bg-gray-800/50 p-8 backdrop-blur-sm">
+        <div className="rounded-2xl border border-primary-700/50 bg-primary-800/50 p-8 backdrop-blur-sm">
           <h2 className="mb-6 text-lg font-semibold text-white">Sign in</h2>
 
           {error && (
-            <div className="mb-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mb-4 rounded-lg bg-error/10 px-4 py-3 text-sm text-error">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-300">
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-primary-100">
                 Email address
               </label>
               <input
@@ -66,12 +66,12 @@ export default function LoginPage() {
                 placeholder="admin@example.com"
                 required
                 autoFocus
-                className="w-full rounded-lg border border-gray-600 bg-gray-700/50 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-lg border border-primary-600 bg-primary-700/50 px-4 py-3 text-sm text-white placeholder:text-primary-300 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-300">
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-primary-100">
                 Password
               </label>
               <div className="relative">
@@ -82,12 +82,12 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  className="w-full rounded-lg border border-gray-600 bg-gray-700/50 px-4 py-3 pr-10 text-sm text-white placeholder:text-gray-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-lg border border-primary-600 bg-primary-700/50 px-4 py-3 pr-10 text-sm text-white placeholder:text-primary-300 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-200 hover:text-white"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -97,7 +97,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="touch-target w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+              className="touch-target w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -108,14 +108,14 @@ export default function LoginPage() {
               href="https://allpropertylink.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-gray-400 hover:text-gray-300"
+              className="text-sm text-primary-200 hover:text-white"
             >
               &larr; Back to main site
             </a>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-500">
+        <p className="mt-6 text-center text-xs text-primary-300">
           Admin access only. Unauthorized access is prohibited.
         </p>
       </div>

@@ -55,7 +55,7 @@ export function AdminSidebar() {
   return (
     <>
       <button
-        className="touch-target fixed left-4 top-4 z-50 flex items-center justify-center rounded-lg border border-gray-700 bg-sidebar p-2.5 text-gray-300 lg:hidden"
+        className="touch-target fixed left-4 top-4 z-50 flex items-center justify-center rounded-lg border border-primary-800 bg-sidebar p-2.5 text-primary-100 lg:hidden"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle menu"
       >
@@ -75,13 +75,13 @@ export function AdminSidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 items-center gap-3 border-b border-gray-700/50 px-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white text-xs font-bold">
+        <div className="flex h-16 items-center gap-3 border-b border-primary-800/50 px-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-white text-xs font-bold">
             AP
           </div>
           <div>
             <p className="text-sm font-semibold text-white">Admin Panel</p>
-            <p className="text-xs text-gray-400">All Property Link</p>
+            <p className="text-xs text-primary-200">All Property Link</p>
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export function AdminSidebar() {
                 <div key={item.label}>
                   <button
                     onClick={() => setExpanded(isExpanded ? null : item.label)}
-                    className="touch-target flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-sidebar-hover"
+                    className="touch-target flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary-100 transition-colors hover:bg-sidebar-hover"
                   >
                     <item.icon size={18} />
                     <span className="flex-1 text-left">{item.label}</span>
@@ -116,7 +116,7 @@ export function AdminSidebar() {
                             "touch-target flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                             isActive(child.href)
                               ? "bg-sidebar-active text-white"
-                              : "text-gray-400 hover:bg-sidebar-hover hover:text-gray-200"
+                              : "text-primary-200 hover:bg-sidebar-hover hover:text-white"
                           )}
                         >
                           <child.icon size={16} />
@@ -139,7 +139,7 @@ export function AdminSidebar() {
                   "touch-target flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive(item.href!)
                     ? "bg-sidebar-active text-white"
-                    : "text-gray-300 hover:bg-sidebar-hover"
+                    : "text-primary-100 hover:bg-sidebar-hover"
                 )}
               >
                 <Icon size={18} />
@@ -149,10 +149,10 @@ export function AdminSidebar() {
           })}
         </nav>
 
-        <div className="border-t border-gray-700/50 p-4">
+        <div className="border-t border-primary-800/50 p-4">
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="touch-target flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-sidebar-hover hover:text-gray-200"
+            className="touch-target flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary-200 transition-colors hover:bg-sidebar-hover hover:text-white"
           >
             <LogOut size={18} />
             Sign out

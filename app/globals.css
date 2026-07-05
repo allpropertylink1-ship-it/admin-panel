@@ -1,44 +1,63 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f8f9fc;
-  --foreground: #1a1a2e;
-  --sidebar: #1a1a2e;
-  --sidebar-hover: #16213e;
-  --sidebar-active: #0f3460;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --success: #059669;
-  --warning: #d97706;
-  --error: #dc2626;
-  --border: #e5e7eb;
-  --card: #ffffff;
-  --muted: #6b7280;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --color-border: var(--border);
-  --color-card: var(--card);
-  --color-muted: var(--muted);
-  --color-sidebar: var(--sidebar);
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-background: #F6F4EF;
+  --color-foreground: #1A1A1A;
+  --color-surface: #FFFFFF;
+  --color-primary: #286255;
+  --color-primary-hover: #1C4A40;
+  --color-primary-50: #E5F0ED;
+  --color-primary-100: #CBE0DA;
+  --color-primary-200: #97C2B5;
+  --color-primary-300: #63A390;
+  --color-primary-400: #44917A;
+  --color-primary-500: #286255;
+  --color-primary-600: #1C4A40;
+  --color-primary-700: #1A3D35;
+  --color-primary-800: #152F29;
+  --color-primary-900: #0F201C;
+  --color-accent: #D49A44;
+  --color-accent-hover: #C18830;
+  --color-accent-50: #F4ECDD;
+  --color-accent-100: #EAD9BB;
+  --color-accent-200: #DDBB84;
+  --color-accent-300: #D49A44;
+  --color-accent-400: #C18830;
+  --color-accent-500: #A07024;
+  --color-accent-600: #7D581C;
+  --color-accent-700: #5B4015;
+  --color-success: #22C55E;
+  --color-success-50: #F0FDF4;
+  --color-warning: #F59E0B;
+  --color-warning-50: #FFFBEB;
+  --color-error: #EF4444;
+  --color-error-50: #FEF2F2;
+  --color-muted: #75716B;
+  --color-border: #E2DDD3;
+  --color-sidebar: #1A3D35;
+  --color-sidebar-hover: #152F29;
+  --color-sidebar-active: #286255;
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-heading: "Sora", system-ui, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-background);
+  color: var(--color-foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .touch-target {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea, select {
+  font-family: inherit;
 }
