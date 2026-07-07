@@ -5,9 +5,10 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
   Shield, ShieldCheck, ShieldX, AlertCircle, Loader2,
-  Search, CheckCircle, XCircle, Clock, FileText, ExternalLink, RefreshCcw, ImageIcon,
+  Search, CheckCircle, XCircle, Clock, FileText, RefreshCcw, ImageIcon,
 } from "lucide-react"
 import ImageLightbox from "@/components/ImageLightbox"
+import PdfViewer from "@/components/PdfViewer"
 
 interface UserInfo {
   id: string; firstName: string; lastName: string; email: string; avatar: string | null; kycStatus?: string
@@ -39,10 +40,6 @@ const statusCfg: Record<string, { bg: string; text: string; label: string }> = {
   PENDING: { bg: "bg-amber-100", text: "text-amber-800", label: "Pending" },
   VERIFIED: { bg: "bg-green-100", text: "text-green-800", label: "Verified" },
   REJECTED: { bg: "bg-red-100", text: "text-red-800", label: "Rejected" },
-}
-
-function pdfUrl(url: string) {
-  return url.replace("/image/upload/", "/raw/upload/").replace(/\.pdf$/, "")
 }
 
 const docLabels: Record<string, string> = {
@@ -185,7 +182,7 @@ export default function KycPage() {
   const openLightbox = (images: { src: string; label: string }[], index: number) => {
     if (images.length === 0) return
     if (images[index]?.src.match(/\.pdf/i)) {
-      window.open(pdfUrl(images[index].src), "_blank", "noopener,noreferrer")
+      window.open(`/api/upload/proxy?url=${encodeURIComponent(images[index].src)}`, "_blank", "noopener,noreferrer")
       return
     }
     setLightbox({ images, index })
@@ -282,8 +279,11 @@ export default function KycPage() {
                   <div className="mt-2 flex gap-1.5">
                     {doc.frontImage && (
                       doc.frontImage.match(/\.pdf/i) ? (
-                        <a href={pdfUrl(doc.frontImage)} target="_blank" rel="noopener noreferrer">
-                          <div className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400 hover:bg-red-100 transition-colors"><FileText size={16} /></div>
+                        <a href={`/api/upload/proxy?url=${encodeURIComponent(doc.frontImage)}`} target="_blank" rel="noopener noreferrer"
+                          className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400 hover:bg-red-100 transition-colors"
+                          title="View PDF"
+                        >
+                          <FileText size={16} />
                         </a>
                       ) : (
                         <ImgWithFallback src={doc.frontImage} alt="" className="h-9 w-14 rounded object-cover" />
@@ -291,8 +291,11 @@ export default function KycPage() {
                     )}
                     {doc.backImage && (
                       doc.backImage.match(/\.pdf/i) ? (
-                        <a href={pdfUrl(doc.backImage)} target="_blank" rel="noopener noreferrer">
-                          <div className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400 hover:bg-red-100 transition-colors"><FileText size={16} /></div>
+                        <a href={`/api/upload/proxy?url=${encodeURIComponent(doc.backImage)}`} target="_blank" rel="noopener noreferrer"
+                          className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400 hover:bg-red-100 transition-colors"
+                          title="View PDF"
+                        >
+                          <FileText size={16} />
                         </a>
                       ) : (
                         <ImgWithFallback src={doc.backImage} alt="" className="h-9 w-14 rounded object-cover" />
@@ -407,12 +410,7 @@ export default function KycPage() {
                             {doc.documentType === "BUSINESS_PERMIT" || doc.documentType === "BUSINESS_REGISTRATION" || doc.documentType === "KRA_PIN" ? "Document Image" : "Front Image"}
                           </label>
                           {doc.frontImage.match(/\.pdf/i) ? (
-                            <a href={pdfUrl(doc.frontImage)} target="_blank" rel="noopener noreferrer"
-                              className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-gray-50 py-12 transition-colors hover:bg-gray-100"
-                            >
-                              <FileText size={40} className="text-red-400" />
-                              <span className="flex items-center gap-1.5 text-sm font-medium text-primary">Open PDF <ExternalLink size={14} /></span>
-                            </a>
+                            <PdfViewer url={doc.frontImage} filename={`${docLabels[doc.documentType] || doc.documentType} — Front`} compact />
                           ) : (
                             <button onClick={() => openLightbox([{ src: doc.frontImage!, label: `${docLabels[doc.documentType] || doc.documentType} — ${selectedDoc!.user.firstName} ${selectedDoc!.user.lastName}` }], 0)}
                               className="group relative overflow-hidden rounded-lg border border-border transition-shadow hover:shadow-md"
@@ -434,12 +432,7 @@ export default function KycPage() {
                         <div className="flex flex-col">
                           <label className="mb-1.5 text-xs font-medium text-muted uppercase tracking-wider">Back Image</label>
                           {doc.backImage.match(/\.pdf/i) ? (
-                            <a href={pdfUrl(doc.backImage)} target="_blank" rel="noopener noreferrer"
-                              className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-gray-50 py-12 transition-colors hover:bg-gray-100"
-                            >
-                              <FileText size={40} className="text-red-400" />
-                              <span className="flex items-center gap-1.5 text-sm font-medium text-primary">Open PDF <ExternalLink size={14} /></span>
-                            </a>
+                            <PdfViewer url={doc.backImage} filename={`${docLabels[doc.documentType] || doc.documentType} — Back`} compact />
                           ) : (
                             <button onClick={() => openLightbox([{ src: doc.backImage!, label: `Back — ${docLabels[doc.documentType] || doc.documentType}` }], 0)}
                               className="group relative overflow-hidden rounded-lg border border-border transition-shadow hover:shadow-md"

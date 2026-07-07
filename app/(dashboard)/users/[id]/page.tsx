@@ -100,10 +100,6 @@ const kycBadge = (status: string) => {
   return map[status] || "bg-gray-50 text-gray-600";
 };
 
-function pdfUrl(url: string) {
-  return url.replace("/image/upload/", "/raw/upload/").replace(/\.pdf$/, "")
-}
-
 const docTypeLabel = (type: string) => {
   const map: Record<string, string> = {
     NATIONAL_ID: "National ID",
@@ -354,9 +350,9 @@ export default function UserDetailPage() {
                         <div className="flex gap-1.5">
                           {doc.frontImage && (
                             doc.frontImage.match(/\.pdf/i) ? (
-                              <a href={pdfUrl(doc.frontImage)} target="_blank" rel="noopener noreferrer"
+                              <a href={`/api/upload/proxy?url=${encodeURIComponent(doc.frontImage)}`} target="_blank" rel="noopener noreferrer"
                                 className="flex h-8 w-12 items-center justify-center rounded border border-border bg-red-50 text-red-400 transition-colors hover:bg-red-100"
-                                title="Open PDF"
+                                title="View PDF"
                               >
                                 <FileText size={14} />
                               </a>
@@ -371,9 +367,9 @@ export default function UserDetailPage() {
                           )}
                           {doc.backImage && (
                             doc.backImage.match(/\.pdf/i) ? (
-                              <a href={pdfUrl(doc.backImage)} target="_blank" rel="noopener noreferrer"
+                              <a href={`/api/upload/proxy?url=${encodeURIComponent(doc.backImage)}`} target="_blank" rel="noopener noreferrer"
                                 className="flex h-8 w-12 items-center justify-center rounded border border-border bg-red-50 text-red-400 transition-colors hover:bg-red-100"
-                                title="Open PDF"
+                                title="View PDF"
                               >
                                 <FileText size={14} />
                               </a>
