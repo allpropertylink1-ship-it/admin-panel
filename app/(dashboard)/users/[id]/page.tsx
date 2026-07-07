@@ -347,26 +347,40 @@ export default function UserDetailPage() {
                         {doc.status}
                       </span>
                       {(doc.frontImage || doc.backImage) && (
-                        <div className="flex gap-1">
+                        <div className="flex gap-1.5">
                           {doc.frontImage && (
-                            <a
-                              href={doc.frontImage}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="touch-target rounded border border-border px-2 py-1 text-xs text-muted transition-colors hover:bg-gray-50"
-                            >
-                              Front
-                            </a>
+                            doc.frontImage.match(/\.pdf/i) ? (
+                              <a href={doc.frontImage} target="_blank" rel="noopener noreferrer"
+                                className="flex h-8 w-12 items-center justify-center rounded border border-border bg-red-50 text-red-400 transition-colors hover:bg-red-100"
+                                title="Open PDF"
+                              >
+                                <FileText size={14} />
+                              </a>
+                            ) : (
+                              <a href={doc.frontImage} target="_blank" rel="noopener noreferrer">
+                                <img src={doc.frontImage} alt="Front"
+                                  className="h-8 w-12 rounded border border-border object-cover hover:ring-2 hover:ring-primary/50 transition-all"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).insertAdjacentHTML("afterend", '<span class="flex h-8 w-12 items-center justify-center rounded border border-border bg-gray-100 text-[10px] text-muted">N/A</span>') }}
+                                />
+                              </a>
+                            )
                           )}
                           {doc.backImage && (
-                            <a
-                              href={doc.backImage}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="touch-target rounded border border-border px-2 py-1 text-xs text-muted transition-colors hover:bg-gray-50"
-                            >
-                              Back
-                            </a>
+                            doc.backImage.match(/\.pdf/i) ? (
+                              <a href={doc.backImage} target="_blank" rel="noopener noreferrer"
+                                className="flex h-8 w-12 items-center justify-center rounded border border-border bg-red-50 text-red-400 transition-colors hover:bg-red-100"
+                                title="Open PDF"
+                              >
+                                <FileText size={14} />
+                              </a>
+                            ) : (
+                              <a href={doc.backImage} target="_blank" rel="noopener noreferrer">
+                                <img src={doc.backImage} alt="Back"
+                                  className="h-8 w-12 rounded border border-border object-cover hover:ring-2 hover:ring-primary/50 transition-all"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).insertAdjacentHTML("afterend", '<span class="flex h-8 w-12 items-center justify-center rounded border border-border bg-gray-100 text-[10px] text-muted">N/A</span>') }}
+                                />
+                              </a>
+                            )
                           )}
                         </div>
                       )}
