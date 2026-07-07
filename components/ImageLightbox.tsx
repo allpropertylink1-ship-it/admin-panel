@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useState, useRef } from "react"
 import { X, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, FileText } from "lucide-react"
+import { resolvePdfUrl } from "@/lib/pdf-utils"
 
 interface ImageLightboxProps {
   images: { src: string; label: string }[]
@@ -148,7 +149,7 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose }: Ima
       {isPdf ? (
         <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
           <a
-            href={current.src}
+            href={resolvePdfUrl(current.src)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex flex-col items-center gap-3 rounded-xl bg-white/10 px-8 py-6 text-white transition-colors hover:bg-white/20"

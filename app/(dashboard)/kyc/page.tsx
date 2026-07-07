@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import ImageLightbox from "@/components/ImageLightbox"
 import PdfViewer from "@/components/PdfViewer"
+import { resolvePdfUrl } from "@/lib/pdf-utils"
 
 interface UserInfo {
   id: string; firstName: string; lastName: string; email: string; avatar: string | null; kycStatus?: string
@@ -182,7 +183,7 @@ export default function KycPage() {
   const openLightbox = (images: { src: string; label: string }[], index: number) => {
     if (images.length === 0) return
     if (images[index]?.src.match(/\.pdf/i)) {
-      window.open(`/api/upload/proxy?url=${encodeURIComponent(images[index].src)}`, "_blank", "noopener,noreferrer")
+      window.open(resolvePdfUrl(images[index].src), "_blank", "noopener,noreferrer")
       return
     }
     setLightbox({ images, index })
@@ -279,7 +280,7 @@ export default function KycPage() {
                   <div className="mt-2 flex gap-1.5">
                     {doc.frontImage && (
                       doc.frontImage.match(/\.pdf/i) ? (
-                        <a href={`/api/upload/proxy?url=${encodeURIComponent(doc.frontImage)}`} target="_blank" rel="noopener noreferrer"
+                        <a href={resolvePdfUrl(doc.frontImage)} target="_blank" rel="noopener noreferrer"
                           className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400 hover:bg-red-100 transition-colors"
                           title="View PDF"
                         >
@@ -291,7 +292,7 @@ export default function KycPage() {
                     )}
                     {doc.backImage && (
                       doc.backImage.match(/\.pdf/i) ? (
-                        <a href={`/api/upload/proxy?url=${encodeURIComponent(doc.backImage)}`} target="_blank" rel="noopener noreferrer"
+                        <a href={resolvePdfUrl(doc.backImage)} target="_blank" rel="noopener noreferrer"
                           className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400 hover:bg-red-100 transition-colors"
                           title="View PDF"
                         >
