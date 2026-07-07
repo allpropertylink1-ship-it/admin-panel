@@ -95,10 +95,11 @@ export default function KycPage() {
     setActionLoading(id)
     try {
       const { error } = await api.patch(`/api/admin/kyc/${id}`, data)
-      if (error) throw new Error("Failed to update")
+      if (error) throw new Error(error)
       setRejectReason("")
+      setError("")
       await fetchDocs()
-    } catch { setError("Failed to update KYC document.") }
+    } catch (e) { setError(e instanceof Error ? e.message : "Failed to update KYC document.") }
     finally { setActionLoading(null) }
   }, [fetchDocs])
 
