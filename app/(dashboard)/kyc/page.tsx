@@ -39,6 +39,7 @@ const statusCfg: Record<string, { bg: string; text: string; label: string; icon:
 
 const docLabels: Record<string, string> = {
   NATIONAL_ID: "National ID", PASSPORT: "Passport", DRIVERS_LICENSE: "Driver's License",
+  BUSINESS_PERMIT: "Business Permit", BUSINESS_REGISTRATION: "Business Registration", KRA_PIN: "KRA PIN",
 }
 
 function initials(fn: string, ln: string) { return `${fn.charAt(0)}${ln.charAt(0)}`.toUpperCase() }

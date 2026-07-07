@@ -104,8 +104,10 @@ const docTypeLabel = (type: string) => {
   const map: Record<string, string> = {
     NATIONAL_ID: "National ID",
     PASSPORT: "Passport",
+    DRIVERS_LICENSE: "Driver's License",
     KRA_PIN: "KRA PIN",
-    BUSINESS_REG: "Business Registration",
+    BUSINESS_PERMIT: "Business Permit",
+    BUSINESS_REGISTRATION: "Business Registration",
     COMPANY_CR12: "Company CR12",
     CERTIFICATE_OF_INCORPORATION: "Certificate of Incorporation",
   };
