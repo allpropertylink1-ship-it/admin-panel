@@ -44,9 +44,7 @@ interface Property {
 
 interface PropertiesResponse {
   properties: Property[]
-  total: number
-  page: number
-  totalPages: number
+  pagination: { total: number; page: number; totalPages: number; limit: number }
 }
 
 const FILTERS = [
@@ -93,8 +91,8 @@ export default function PropertiesPage() {
       const { data: result, error } = await api.get<PropertiesResponse>(`/api/admin/properties?${params}`)
       if (error || !result) throw new Error(error || "No data")
       setProperties(result.properties)
-      setTotal(result.total)
-      setTotalPages(result.totalPages)
+      setTotal(result.pagination.total)
+      setTotalPages(result.pagination.totalPages)
     } catch {
       setError("Failed to load properties. Please try again.")
     } finally {
@@ -316,7 +314,7 @@ export default function PropertiesPage() {
                             </>
                           )}
                           <Link
-                            href={`https://allpropertylink.com/properties/${p.slug}`}
+                            href={`https://allpropertylink-amber.vercel.app/properties/${p.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="rounded-lg p-1.5 text-muted transition-colors hover:bg-gray-100"

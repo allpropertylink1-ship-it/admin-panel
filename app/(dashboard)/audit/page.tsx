@@ -63,13 +63,13 @@ export default function AuditPage() {
       params.set("limit", "20");
       if (search) params.set("search", search);
       if (actionFilter) params.set("action", actionFilter);
-      if (fromDate) params.set("fromDate", fromDate);
-      if (toDate) params.set("toDate", toDate);
-      const { data, error } = await api.get<{ entries: AuditEntry[]; meta: PaginationMeta }>(`/api/admin/audit?${params.toString()}`);
+      if (fromDate) params.set("from", fromDate);
+      if (toDate) params.set("to", toDate);
+      const { data, error } = await api.get<{ logs: AuditEntry[]; pagination: PaginationMeta }>(`/api/admin/audit?${params.toString()}`);
       if (error) throw new Error(error);
       if (!data) { setEntries([]); return; }
-      setEntries(data.entries ?? []);
-      setMeta(data.meta);
+      setEntries(data.logs ?? []);
+      setMeta(data.pagination);
     } catch {
       setEntries([]);
     } finally {

@@ -56,9 +56,9 @@ export default function SettingsPage() {
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await api.get<Settings>("/api/admin/settings");
-      if (!error && data) {
-        setForm({ ...defaultSettings, ...data });
+      const { data, error } = await api.get<{ settings: Settings }>("/api/admin/settings");
+      if (!error && data?.settings) {
+        setForm({ ...defaultSettings, ...data.settings });
       }
     } catch {
       // use defaults

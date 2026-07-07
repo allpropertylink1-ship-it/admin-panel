@@ -40,9 +40,7 @@ interface Inquiry {
 
 interface InquiriesResponse {
   inquiries: Inquiry[]
-  total: number
-  page: number
-  totalPages: number
+  pagination: { total: number; page: number; totalPages: number; limit: number }
 }
 
 const FILTERS = [
@@ -90,8 +88,8 @@ export default function InquiriesPage() {
       const { data: result, error } = await api.get<InquiriesResponse>(`/api/admin/inquiries?${params}`)
       if (error || !result) throw new Error(error || "No data")
       setInquiries(result.inquiries)
-      setTotal(result.total)
-      setTotalPages(result.totalPages)
+      setTotal(result.pagination.total)
+      setTotalPages(result.pagination.totalPages)
     } catch {
       setError("Failed to load inquiries. Please try again.")
     } finally {
@@ -250,7 +248,7 @@ export default function InquiriesPage() {
                       <td className="px-4 py-3 text-sm text-muted">
                         {inq.property ? (
                           <a
-                            href={`https://allpropertylink.com/properties/${inq.property.slug}`}
+                            href={`https://allpropertylink-amber.vercel.app/properties/${inq.property.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:text-primary"
