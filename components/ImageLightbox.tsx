@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useCallback, useState, useRef } from "react"
-import { X, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from "lucide-react"
+import { X, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, FileText } from "lucide-react"
 
 interface ImageLightboxProps {
   images: { src: string; label: string }[]
@@ -64,13 +64,12 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose }: Ima
 
   if (!current) return null
 
+  const isPdf = current.src.match(/\.pdf/i)
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => setIsDragging(false)}
     >
       {/* Toolbar */}
       <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-4 py-3">
@@ -81,29 +80,33 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose }: Ima
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setZoom((z) => Math.max(1, z - 0.5))}
-            className="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white"
-            title="Zoom out"
-          >
-            <ZoomOut size={18} />
-          </button>
-          <span className="min-w-[40px] text-center text-xs text-white/60">{Math.round(zoom * 100)}%</span>
-          <button
-            onClick={() => setZoom((z) => Math.min(5, z + 0.5))}
-            className="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white"
-            title="Zoom in"
-          >
-            <ZoomIn size={18} />
-          </button>
-          <button
-            onClick={() => setRotation((r) => (r + 90) % 360)}
-            className="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white"
-            title="Rotate"
-          >
-            <RotateCw size={18} />
-          </button>
-          <div className="mx-2 h-6 w-px bg-white/20" />
+          {!isPdf && (
+            <>
+              <button
+                onClick={() => setZoom((z) => Math.max(1, z - 0.5))}
+                className="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white"
+                title="Zoom out"
+              >
+                <ZoomOut size={18} />
+              </button>
+              <span className="min-w-[40px] text-center text-xs text-white/60">{Math.round(zoom * 100)}%</span>
+              <button
+                onClick={() => setZoom((z) => Math.min(5, z + 0.5))}
+                className="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white"
+                title="Zoom in"
+              >
+                <ZoomIn size={18} />
+              </button>
+              <button
+                onClick={() => setRotation((r) => (r + 90) % 360)}
+                className="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white"
+                title="Rotate"
+              >
+                <RotateCw size={18} />
+              </button>
+              <div className="mx-2 h-6 w-px bg-white/20" />
+            </>
+          )}
           {images.length > 1 && (
             <>
               <button
@@ -141,24 +144,42 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose }: Ima
         </div>
       </div>
 
-      {/* Image */}
-      <div
-        className="flex h-full w-full items-center justify-center"
-        onWheel={handleWheel}
-      >
-        <img
-          ref={imgRef}
-          src={current.src}
-          alt={current.label}
-          className="max-h-full max-w-full select-none transition-transform duration-100"
-          style={{
-            transform: `scale(${zoom}) rotate(${rotation}deg) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
-            cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default",
-          }}
-          draggable={false}
-          onMouseDown={handleMouseDown}
-        />
-      </div>
+      {/* PDF or Image */}
+      {isPdf ? (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
+          <a
+            href={current.src}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-3 rounded-xl bg-white/10 px-8 py-6 text-white transition-colors hover:bg-white/20"
+          >
+            <FileText size={64} className="text-red-400" />
+            <span className="text-lg font-medium">Open PDF</span>
+            <span className="text-sm text-white/60">Opens in a new tab</span>
+          </a>
+        </div>
+      ) : (
+        <div
+          className="flex h-full w-full items-center justify-center"
+          onWheel={handleWheel}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={() => setIsDragging(false)}
+        >
+          <img
+            ref={imgRef}
+            src={current.src}
+            alt={current.label}
+            className="max-h-full max-w-full select-none transition-transform duration-100"
+            style={{
+              transform: `scale(${zoom}) rotate(${rotation}deg) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+              cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default",
+            }}
+            draggable={false}
+            onMouseDown={handleMouseDown}
+          />
+        </div>
+      )}
 
       {/* Bottom thumbnails */}
       {images.length > 1 && (
@@ -176,7 +197,13 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose }: Ima
                 i === index ? "border-white opacity-100" : "border-transparent opacity-50 hover:opacity-80"
               }`}
             >
-              <img src={img.src} alt="" className="h-full w-full object-cover" />
+              {img.src.match(/\.pdf/i) ? (
+                <div className="flex h-full w-full items-center justify-center bg-gray-800">
+                  <FileText size={16} className="text-red-400" />
+                </div>
+              ) : (
+                <img src={img.src} alt="" className="h-full w-full object-cover" />
+              )}
             </button>
           ))}
         </div>

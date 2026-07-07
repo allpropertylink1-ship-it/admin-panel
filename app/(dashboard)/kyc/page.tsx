@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
   Shield, ShieldCheck, ShieldX, AlertCircle, Loader2, User, CalendarDays,
-  Search, CheckCircle, XCircle, Clock, ArrowRight,
+  Search, CheckCircle, XCircle, Clock, ArrowRight, FileText, ExternalLink,
 } from "lucide-react"
 import ImageLightbox from "@/components/ImageLightbox"
 
@@ -151,6 +151,11 @@ export default function KycPage() {
 
   const openLightbox = (side: "front" | "back") => {
     if (!selected) return
+    const url = side === "front" ? selected.frontImage : selected.backImage
+    if (url?.match(/\.pdf/i)) {
+      window.open(url, "_blank", "noopener,noreferrer")
+      return
+    }
     const imgs = []
     if (selected.frontImage) imgs.push({ src: selected.frontImage, label: "Front — " + `${selected.user.firstName} ${selected.user.lastName}` })
     if (selected.backImage) imgs.push({ src: selected.backImage, label: "Back — " + `${selected.user.firstName} ${selected.user.lastName}` })
@@ -245,8 +250,24 @@ export default function KycPage() {
                 </div>
                 {(doc.frontImage || doc.backImage) && (
                   <div className="mt-2 flex gap-1.5">
-                    {doc.frontImage && <img src={doc.frontImage} alt="" className="h-9 w-14 rounded object-cover" />}
-                    {doc.backImage && <img src={doc.backImage} alt="" className="h-9 w-14 rounded object-cover" />}
+                    {doc.frontImage && (
+                      doc.frontImage.match(/\.pdf/i) ? (
+                        <div className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400">
+                          <FileText size={16} />
+                        </div>
+                      ) : (
+                        <img src={doc.frontImage} alt="" className="h-9 w-14 rounded object-cover" />
+                      )
+                    )}
+                    {doc.backImage && (
+                      doc.backImage.match(/\.pdf/i) ? (
+                        <div className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400">
+                          <FileText size={16} />
+                        </div>
+                      ) : (
+                        <img src={doc.backImage} alt="" className="h-9 w-14 rounded object-cover" />
+                      )
+                    )}
                   </div>
                 )}
               </button>
@@ -307,22 +328,38 @@ export default function KycPage() {
               {selected.frontImage ? (
                 <div className="flex flex-col">
                   <label className="mb-2 text-xs font-medium text-muted uppercase tracking-wider">Front Image</label>
-                  <button
-                    onClick={() => openLightbox("front")}
-                    className="group relative flex-1 overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md"
-                  >
-                    <img
-                      src={selected.frontImage}
-                      alt="Front of document"
-                      className="h-full w-full object-contain p-2"
-                      style={{ minHeight: "280px", maxHeight: "400px" }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/10">
-                      <span className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
-                        Click to zoom
+                  {selected.frontImage.match(/\.pdf/i) ? (
+                    <a
+                      href={selected.frontImage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md hover:bg-gray-50"
+                      style={{ minHeight: "280px" }}
+                    >
+                      <FileText size={48} className="text-red-400" />
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                        Open PDF <ExternalLink size={14} />
                       </span>
-                    </div>
-                  </button>
+                      <span className="text-xs text-muted">Opens in a new tab</span>
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => openLightbox("front")}
+                      className="group relative flex-1 overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <img
+                        src={selected.frontImage}
+                        alt="Front of document"
+                        className="h-full w-full object-contain p-2"
+                        style={{ minHeight: "280px", maxHeight: "400px" }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/10">
+                        <span className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+                          Click to zoom
+                        </span>
+                      </div>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center justify-center rounded-xl border border-dashed border-muted/50 bg-white py-20 text-xs text-muted">
@@ -333,22 +370,38 @@ export default function KycPage() {
               {selected.backImage ? (
                 <div className="flex flex-col">
                   <label className="mb-2 text-xs font-medium text-muted uppercase tracking-wider">Back Image</label>
-                  <button
-                    onClick={() => openLightbox("back")}
-                    className="group relative flex-1 overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md"
-                  >
-                    <img
-                      src={selected.backImage}
-                      alt="Back of document"
-                      className="h-full w-full object-contain p-2"
-                      style={{ minHeight: "280px", maxHeight: "400px" }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/10">
-                      <span className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
-                        Click to zoom
+                  {selected.backImage.match(/\.pdf/i) ? (
+                    <a
+                      href={selected.backImage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md hover:bg-gray-50"
+                      style={{ minHeight: "280px" }}
+                    >
+                      <FileText size={48} className="text-red-400" />
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                        Open PDF <ExternalLink size={14} />
                       </span>
-                    </div>
-                  </button>
+                      <span className="text-xs text-muted">Opens in a new tab</span>
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => openLightbox("back")}
+                      className="group relative flex-1 overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <img
+                        src={selected.backImage}
+                        alt="Back of document"
+                        className="h-full w-full object-contain p-2"
+                        style={{ minHeight: "280px", maxHeight: "400px" }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/10">
+                        <span className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+                          Click to zoom
+                        </span>
+                      </div>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center justify-center rounded-xl border border-dashed border-muted/50 bg-white py-20 text-xs text-muted">
