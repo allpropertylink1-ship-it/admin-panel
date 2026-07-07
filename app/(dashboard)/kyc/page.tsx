@@ -41,6 +41,10 @@ const statusCfg: Record<string, { bg: string; text: string; label: string }> = {
   REJECTED: { bg: "bg-red-100", text: "text-red-800", label: "Rejected" },
 }
 
+function pdfUrl(url: string) {
+  return url.replace("/image/upload/", "/raw/upload/").replace(/\.pdf$/, "")
+}
+
 const docLabels: Record<string, string> = {
   NATIONAL_ID: "National ID", PASSPORT: "Passport", DRIVERS_LICENSE: "Driver's License",
   BUSINESS_PERMIT: "Business Permit", BUSINESS_REGISTRATION: "Business Registration", KRA_PIN: "KRA PIN",
@@ -181,7 +185,7 @@ export default function KycPage() {
   const openLightbox = (images: { src: string; label: string }[], index: number) => {
     if (images.length === 0) return
     if (images[index]?.src.match(/\.pdf/i)) {
-      window.open(images[index].src, "_blank", "noopener,noreferrer")
+      window.open(pdfUrl(images[index].src), "_blank", "noopener,noreferrer")
       return
     }
     setLightbox({ images, index })
@@ -278,14 +282,18 @@ export default function KycPage() {
                   <div className="mt-2 flex gap-1.5">
                     {doc.frontImage && (
                       doc.frontImage.match(/\.pdf/i) ? (
-                        <div className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400"><FileText size={16} /></div>
+                        <a href={pdfUrl(doc.frontImage)} target="_blank" rel="noopener noreferrer">
+                          <div className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400 hover:bg-red-100 transition-colors"><FileText size={16} /></div>
+                        </a>
                       ) : (
                         <ImgWithFallback src={doc.frontImage} alt="" className="h-9 w-14 rounded object-cover" />
                       )
                     )}
                     {doc.backImage && (
                       doc.backImage.match(/\.pdf/i) ? (
-                        <div className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400"><FileText size={16} /></div>
+                        <a href={pdfUrl(doc.backImage)} target="_blank" rel="noopener noreferrer">
+                          <div className="flex h-9 w-14 items-center justify-center rounded bg-red-50 text-red-400 hover:bg-red-100 transition-colors"><FileText size={16} /></div>
+                        </a>
                       ) : (
                         <ImgWithFallback src={doc.backImage} alt="" className="h-9 w-14 rounded object-cover" />
                       )
@@ -399,7 +407,7 @@ export default function KycPage() {
                             {doc.documentType === "BUSINESS_PERMIT" || doc.documentType === "BUSINESS_REGISTRATION" || doc.documentType === "KRA_PIN" ? "Document Image" : "Front Image"}
                           </label>
                           {doc.frontImage.match(/\.pdf/i) ? (
-                            <a href={doc.frontImage} target="_blank" rel="noopener noreferrer"
+                            <a href={pdfUrl(doc.frontImage)} target="_blank" rel="noopener noreferrer"
                               className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-gray-50 py-12 transition-colors hover:bg-gray-100"
                             >
                               <FileText size={40} className="text-red-400" />
@@ -426,7 +434,7 @@ export default function KycPage() {
                         <div className="flex flex-col">
                           <label className="mb-1.5 text-xs font-medium text-muted uppercase tracking-wider">Back Image</label>
                           {doc.backImage.match(/\.pdf/i) ? (
-                            <a href={doc.backImage} target="_blank" rel="noopener noreferrer"
+                            <a href={pdfUrl(doc.backImage)} target="_blank" rel="noopener noreferrer"
                               className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-gray-50 py-12 transition-colors hover:bg-gray-100"
                             >
                               <FileText size={40} className="text-red-400" />
