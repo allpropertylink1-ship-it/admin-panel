@@ -121,7 +121,7 @@ export default function ReportsPage() {
       growth: -3,
     },
     {
-      label: "Total Agents",
+      label: "APL Agents",
       value: totalAgents,
       icon: UserCheck,
       growth: 5,

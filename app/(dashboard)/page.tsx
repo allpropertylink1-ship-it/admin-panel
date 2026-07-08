@@ -59,7 +59,7 @@ const statCards = [
   { label: "Pending Reviews", key: "pendingReviews", icon: Clock, color: "text-orange-600", bg: "bg-orange-50", link: "/properties" },
   { label: "Total Inquiries", key: "totalInquiries", icon: MessageSquare, color: "text-violet-600", bg: "bg-violet-50", link: "/inquiries" },
   { label: "KYC Pending", key: "kycPending", icon: ShieldOff, color: "text-rose-600", bg: "bg-rose-50", link: "/kyc" },
-  { label: "Total Agents", key: "totalAgents", icon: Handshake, color: "text-cyan-600", bg: "bg-cyan-50", link: "/agents" },
+  { label: "APL Agents", key: "totalAgents", icon: Handshake, color: "text-cyan-600", bg: "bg-cyan-50", link: "/agents" },
   { label: "Pending Inquiries", key: "pendingInquiries", icon: BarChart3, color: "text-gray-600", bg: "bg-gray-50", link: "/inquiries" },
 ];
 

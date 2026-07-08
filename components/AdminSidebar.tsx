@@ -35,7 +35,7 @@ const navItems = [
   { href: "/properties", label: "Properties", icon: Building2 },
   { href: "/inquiries", label: "Inquiries", icon: MessageSquare },
   { href: "/kyc", label: "KYC Verification", icon: Shield },
-  { href: "/agents", label: "Agents", icon: Handshake },
+  { href: "/agents", label: "APL Agents", icon: Handshake },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/audit", label: "Audit Log", icon: ScrollText },
   { href: "/settings", label: "Settings", icon: Settings },
