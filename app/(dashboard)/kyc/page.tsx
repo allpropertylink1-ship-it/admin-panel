@@ -250,9 +250,9 @@ export default function KycPage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2.5">
-                    {doc.user.avatar ? (
+                      {doc.user.avatar ? (
                       <img src={doc.user.avatar} alt="" className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).parentElement!.classList.add("flex", "h-8", "w-8", "items-center", "justify-center", "rounded-full", "bg-primary/10", "text-xs", "font-bold", "text-primary") }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
                       />
                     ) : (
                       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">

@@ -71,7 +71,8 @@ export default function ReportsPage() {
       const { data, error } = await api.get<DashboardData>("/api/admin/dashboard");
       if (error || !data) throw new Error(error || "No data");
       setData(data);
-    } catch {
+    } catch (error) {
+      console.warn("[REPORTS] Failed to fetch:", error);
       setData(null);
     } finally {
       setLoading(false);
@@ -137,8 +138,9 @@ export default function ReportsPage() {
           </p>
         </div>
         <button
-          onClick={() => {}}
-          className="touch-target inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-background"
+          disabled
+          title="Coming soon"
+          className="touch-target inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-muted transition-colors cursor-not-allowed opacity-50"
         >
           <Download size={16} />
           Export CSV

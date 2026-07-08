@@ -203,7 +203,7 @@ export default function ImageLightbox({ images, initialIndex = 0, onClose }: Ima
                   <FileText size={16} className="text-red-400" />
                 </div>
               ) : (
-                <img src={img.src} alt="" className="h-full w-full object-cover" />
+                <img src={img.src} alt={img.label || "Document image"} className="h-full w-full object-cover" />
               )}
             </button>
           ))}

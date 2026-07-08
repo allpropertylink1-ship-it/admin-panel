@@ -47,7 +47,8 @@ export default function AgentsPage() {
       const { data: result, error } = await api.get<{ agents: Agent[] }>(`/api/admin/agents?${params.toString()}`);
       if (error || !result) throw new Error(error || "No data");
       setAgents(result.agents ?? []);
-    } catch {
+    } catch (error) {
+      console.warn("[AGENTS] Failed to fetch:", error);
       setAgents([]);
     } finally {
       setLoading(false);

@@ -156,7 +156,9 @@ export default function ApprovalsPage() {
       {users.length > 0 && (
         <div className="relative max-w-md">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+          <label htmlFor="search-approvals" className="sr-only">Search pending users</label>
           <input
+            id="search-approvals"
             type="text"
             placeholder="Search pending users..."
             value={search}

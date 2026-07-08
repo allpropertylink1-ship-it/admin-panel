@@ -350,7 +350,7 @@ export default function UserDetailPage() {
                         <div className="flex gap-1.5">
                           {doc.frontImage && (
                             doc.frontImage.match(/\.pdf/i) ? (
-                              <a href={`/api/upload/proxy?url=${encodeURIComponent(doc.frontImage)}`} target="_blank" rel="noopener noreferrer"
+                              <a href={doc.frontImage} target="_blank" rel="noopener noreferrer"
                                 className="flex h-8 w-12 items-center justify-center rounded border border-border bg-red-50 text-red-400 transition-colors hover:bg-red-100"
                                 title="View PDF"
                               >
@@ -360,14 +360,14 @@ export default function UserDetailPage() {
                               <a href={doc.frontImage} target="_blank" rel="noopener noreferrer">
                                 <img src={doc.frontImage} alt="Front"
                                   className="h-8 w-12 rounded border border-border object-cover hover:ring-2 hover:ring-primary/50 transition-all"
-                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).insertAdjacentHTML("afterend", '<span class="flex h-8 w-12 items-center justify-center rounded border border-border bg-gray-100 text-[10px] text-muted">N/A</span>') }}
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
                                 />
                               </a>
                             )
                           )}
                           {doc.backImage && (
                             doc.backImage.match(/\.pdf/i) ? (
-                              <a href={`/api/upload/proxy?url=${encodeURIComponent(doc.backImage)}`} target="_blank" rel="noopener noreferrer"
+                              <a href={doc.backImage} target="_blank" rel="noopener noreferrer"
                                 className="flex h-8 w-12 items-center justify-center rounded border border-border bg-red-50 text-red-400 transition-colors hover:bg-red-100"
                                 title="View PDF"
                               >
@@ -377,7 +377,7 @@ export default function UserDetailPage() {
                               <a href={doc.backImage} target="_blank" rel="noopener noreferrer">
                                 <img src={doc.backImage} alt="Back"
                                   className="h-8 w-12 rounded border border-border object-cover hover:ring-2 hover:ring-primary/50 transition-all"
-                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).insertAdjacentHTML("afterend", '<span class="flex h-8 w-12 items-center justify-center rounded border border-border bg-gray-100 text-[10px] text-muted">N/A</span>') }}
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
                                 />
                               </a>
                             )

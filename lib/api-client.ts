@@ -17,6 +17,9 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
+
       const res = await fetch(`${this.baseUrl}${path}`, {
         ...options,
         credentials: "include",
@@ -24,7 +27,10 @@ class ApiClient {
           "Content-Type": "application/json",
           ...options.headers,
         },
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
 
       if (res.status === 401) {
         const refreshed = await this.refresh()
@@ -55,16 +61,23 @@ class ApiClient {
       const body = await res.json()
       return { data: body as T }
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return { error: "Request timed out" }
+      }
       return { error: err instanceof Error ? err.message : "Network error" }
     }
   }
 
   private async refresh(): Promise<boolean> {
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
       const res = await fetch(`${this.baseUrl}/api/auth/refresh`, {
         method: "POST",
         credentials: "include",
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       return res.ok
     } catch {
       return false

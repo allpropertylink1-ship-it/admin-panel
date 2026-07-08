@@ -60,8 +60,8 @@ export default function SettingsPage() {
       if (!error && data?.settings) {
         setForm({ ...defaultSettings, ...data.settings });
       }
-    } catch {
-      // use defaults
+    } catch (error) {
+      console.warn("[SETTINGS] Failed to fetch:", error);
     } finally {
       setLoading(false);
     }

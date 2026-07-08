@@ -164,7 +164,9 @@ export default function PropertiesPage() {
           <div className="ml-auto">
             <form onSubmit={handleSearch} className="relative">
               <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <label htmlFor="search-properties" className="sr-only">Search properties</label>
               <input
+                id="search-properties"
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -314,7 +316,7 @@ export default function PropertiesPage() {
                             </>
                           )}
                           <Link
-                            href={`https://allpropertylink-amber.vercel.app/properties/${p.slug}`}
+                            href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink-amber.vercel.app"}/properties/${p.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="rounded-lg p-1.5 text-muted transition-colors hover:bg-gray-100"

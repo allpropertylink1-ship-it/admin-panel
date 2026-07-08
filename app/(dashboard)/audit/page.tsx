@@ -70,7 +70,8 @@ export default function AuditPage() {
       if (!data) { setEntries([]); return; }
       setEntries(data.logs ?? []);
       setMeta(data.pagination);
-    } catch {
+    } catch (error) {
+      console.warn("[AUDIT] Failed to fetch:", error);
       setEntries([]);
     } finally {
       setLoading(false);
@@ -103,7 +104,9 @@ export default function AuditPage() {
                 size={16}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
               />
+              <label htmlFor="search-audit" className="sr-only">Search entity type or user</label>
               <input
+                id="search-audit"
                 type="text"
                 placeholder="Search entity type or user..."
                 value={search}

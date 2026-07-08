@@ -18,5 +18,5 @@ export function DashboardDate() {
 
   if (!dateStr) return null;
 
-  return <time className="text-sm text-muted">{dateStr}</time>;
+  return <time className="text-sm text-muted" suppressHydrationWarning>{dateStr}</time>;
 }

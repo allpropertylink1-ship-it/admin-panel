@@ -248,7 +248,7 @@ export default function InquiriesPage() {
                       <td className="px-4 py-3 text-sm text-muted">
                         {inq.property ? (
                           <a
-                            href={`https://allpropertylink-amber.vercel.app/properties/${inq.property.slug}`}
+                            href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink-amber.vercel.app"}/properties/${inq.property.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:text-primary"
