@@ -33,6 +33,7 @@ interface KycDocument {
   status: string;
   frontImage?: string;
   backImage?: string;
+  bioData?: { firstName?: string; middleName?: string; lastName?: string; phone?: string; email?: string } | null;
   rejectionReason?: string;
   verifiedAt?: string;
   createdAt: string;
@@ -334,6 +335,12 @@ export default function UserDetailPage() {
                         <p className="text-sm font-medium text-foreground">{docTypeLabel(doc.documentType)}</p>
                         {doc.documentNumber && (
                           <p className="text-xs text-muted">{doc.documentNumber}</p>
+                        )}
+                        {doc.bioData && (
+                          <p className="text-[11px] text-muted">
+                            {doc.bioData.firstName} {doc.bioData.middleName} {doc.bioData.lastName}
+                            {doc.bioData.phone && <> · {doc.bioData.phone}</>}
+                          </p>
                         )}
                       </div>
                     </div>

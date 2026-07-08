@@ -18,6 +18,7 @@ interface UserInfo {
 interface KycDocument {
   id: string; documentType: string; documentNumber: string | null
   status: string; frontImage: string | null; backImage: string | null
+  bioData: { firstName?: string; middleName?: string; lastName?: string; phone?: string; email?: string } | null
   rejectionReason: string | null; createdAt: string; verifiedAt: string | null
   user: UserInfo
 }
@@ -459,6 +460,20 @@ export default function KycPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Bio data */}
+                    {doc.bioData && (
+                      <div className="border-t border-border px-5 py-3">
+                        <label className="mb-1.5 block text-xs font-medium text-muted uppercase tracking-wider">Provided Identity Details</label>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                          <div><span className="text-muted">First Name:</span> <span className="ml-1 font-medium text-foreground">{doc.bioData.firstName || "-"}</span></div>
+                          <div><span className="text-muted">Middle Name:</span> <span className="ml-1 font-medium text-foreground">{doc.bioData.middleName || "-"}</span></div>
+                          <div><span className="text-muted">Last Name:</span> <span className="ml-1 font-medium text-foreground">{doc.bioData.lastName || "-"}</span></div>
+                          <div><span className="text-muted">Phone:</span> <span className="ml-1 font-medium text-foreground">{doc.bioData.phone || "-"}</span></div>
+                          <div><span className="text-muted">Email:</span> <span className="ml-1 font-medium text-foreground">{doc.bioData.email || "-"}</span></div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Approve/Reject for PENDING docs */}
                     {doc.status === "PENDING" && (
