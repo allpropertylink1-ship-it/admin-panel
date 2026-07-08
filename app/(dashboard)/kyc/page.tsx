@@ -45,7 +45,6 @@ const statusCfg: Record<string, { bg: string; text: string; label: string }> = {
 
 const docLabels: Record<string, string> = {
   NATIONAL_ID: "National ID", PASSPORT: "Passport", DRIVERS_LICENSE: "Driver's License",
-  BUSINESS_PERMIT: "Business Permit", BUSINESS_REGISTRATION: "Business Registration", KRA_PIN: "KRA PIN",
 }
 
 const coreDocTypes = ["NATIONAL_ID", "DRIVERS_LICENSE", "PASSPORT"]
@@ -380,12 +379,7 @@ export default function KycPage() {
                       <div className="flex items-center gap-3">
                         <h3 className="font-semibold text-foreground">
                           {docLabels[doc.documentType] || doc.documentType}
-                          {coreDocTypes.includes(doc.documentType) && (
-                            <span className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">Required</span>
-                          )}
-                          {!coreDocTypes.includes(doc.documentType) && (
-                            <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-muted">Optional</span>
-                          )}
+                          <span className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">Required</span>
                         </h3>
                         <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium",
                           doc.status === "PENDING" && "bg-amber-100 text-amber-700",
@@ -408,7 +402,7 @@ export default function KycPage() {
                       {doc.frontImage ? (
                         <div className="flex flex-col">
                           <label className="mb-1.5 text-xs font-medium text-muted uppercase tracking-wider">
-                            {doc.documentType === "BUSINESS_PERMIT" || doc.documentType === "BUSINESS_REGISTRATION" || doc.documentType === "KRA_PIN" ? "Document Image" : "Front Image"}
+                            Front Image
                           </label>
                           {doc.frontImage.match(/\.pdf/i) ? (
                             <PdfViewer url={doc.frontImage} filename={`${docLabels[doc.documentType] || doc.documentType} — Front`} compact />

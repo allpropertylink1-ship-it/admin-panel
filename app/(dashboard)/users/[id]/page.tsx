@@ -105,11 +105,6 @@ const docTypeLabel = (type: string) => {
     NATIONAL_ID: "National ID",
     PASSPORT: "Passport",
     DRIVERS_LICENSE: "Driver's License",
-    KRA_PIN: "KRA PIN",
-    BUSINESS_PERMIT: "Business Permit",
-    BUSINESS_REGISTRATION: "Business Registration",
-    COMPANY_CR12: "Company CR12",
-    CERTIFICATE_OF_INCORPORATION: "Certificate of Incorporation",
   };
   return map[type] || type;
 };
