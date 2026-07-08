@@ -316,7 +316,7 @@ export default function PropertiesPage() {
                             </>
                           )}
                           <Link
-                            href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink-amber.vercel.app"}/properties/${p.slug}`}
+                            href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink.co.ke"}/properties/${p.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="rounded-lg p-1.5 text-muted transition-colors hover:bg-gray-100"

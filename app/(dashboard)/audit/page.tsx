@@ -131,14 +131,18 @@ export default function AuditPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <label htmlFor="audit-from" className="sr-only">From date</label>
             <input
+              id="audit-from"
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <span className="text-sm text-muted">—</span>
+            <label htmlFor="audit-to" className="sr-only">To date</label>
             <input
+              id="audit-to"
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}

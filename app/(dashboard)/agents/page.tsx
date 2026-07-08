@@ -136,7 +136,9 @@ export default function AgentsPage() {
               size={16}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
             />
+            <label htmlFor="search-agents" className="sr-only">Search agents by name or email</label>
             <input
+              id="search-agents"
               type="text"
               placeholder="Search by name or email..."
               value={search}

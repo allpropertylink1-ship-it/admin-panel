@@ -64,7 +64,7 @@ const statCards = [
 ];
 
 const quickActions = [
-  { label: "New Property", icon: Plus, href: "#", variant: "primary" as const },
+  { label: "New Property", icon: Plus, href: "/properties", variant: "primary" as const },
   { label: "View Approvals", icon: Eye, href: "/approvals", variant: "secondary" as const },
   { label: "All Users", icon: Users, href: "/users", variant: "secondary" as const },
   { label: "KYC Queue", icon: ShieldOff, href: "/kyc", variant: "secondary" as const },
