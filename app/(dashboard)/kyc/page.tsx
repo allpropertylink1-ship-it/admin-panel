@@ -572,6 +572,48 @@ export default function KycPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Unverify for VERIFIED docs */}
+                    {doc.status === "VERIFIED" && (
+                      <div className="border-t border-border px-5 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => updateDoc(doc.id, { status: "PENDING" })}
+                            disabled={actionLoading === doc.id}
+                            className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+                          >
+                            {actionLoading === doc.id ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
+                            Unverify
+                          </button>
+                          <div className="flex flex-1 items-center gap-2">
+                            <input
+                              value={rejectForDoc === doc.id ? rejectReason : ""}
+                              onChange={(e) => setRejectReason(e.target.value)}
+                              onFocus={() => setRejectForDoc(doc.id)}
+                              placeholder="Reason for unverifying (optional)..."
+                              className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-xs placeholder:text-muted focus:border-primary focus:outline-none"
+                              onKeyDown={(e) => { if (e.key === "Enter") updateDoc(doc.id, { status: "PENDING", rejectionReason: rejectReason || undefined }) }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Re-open for REJECTED docs */}
+                    {doc.status === "REJECTED" && (
+                      <div className="border-t border-border px-5 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => updateDoc(doc.id, { status: "PENDING", rejectionReason: undefined })}
+                            disabled={actionLoading === doc.id}
+                            className="flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
+                          >
+                            {actionLoading === doc.id ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
+                            Re-open for Resubmission
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
