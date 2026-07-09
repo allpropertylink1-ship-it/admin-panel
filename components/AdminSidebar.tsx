@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard, Users, UserCheck, Building2, MessageSquare, Shield,
-  Handshake, Banknote, BarChart3, ScrollText, Settings, LogOut,
+  Handshake, Banknote, Wallet, BarChart3, ScrollText, Settings, LogOut,
   Menu, X, ChevronDown, Home,
 } from "lucide-react"
 
@@ -40,6 +40,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/agents", label: "APL Representatives", icon: Handshake },
       { href: "/commissions", label: "Commissions", icon: Banknote },
+      { href: "/payouts", label: "Payouts", icon: Wallet },
     ],
   },
   {

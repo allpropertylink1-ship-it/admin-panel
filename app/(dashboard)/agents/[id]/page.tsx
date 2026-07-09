@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { api } from "@/lib/api-client"
-import { Loader2, ArrowLeft, Hash, Users, Building2, Banknote, CheckCircle, XCircle, DollarSign, Calendar } from "lucide-react"
+import { Loader2, ArrowLeft, Hash, Users, Building2, Banknote, CheckCircle, XCircle, DollarSign, Calendar, Ban, Wallet, CreditCard, Plus } from "lucide-react"
 
 interface ReferredUser {
   id: string
@@ -42,19 +42,38 @@ interface CommissionRecord {
   user: { id: string; firstName: string; lastName: string; email: string }
 }
 
+interface PayoutRecord {
+  id: string
+  amount: number
+  currency: string
+  method: string
+  reference: string | null
+  status: string
+  notes: string | null
+  paidAt: string | null
+  createdAt: string
+}
+
 interface AgentDetail {
   id: string
   fullName: string
   email: string
   phone: string
   agentCode: string
+  status: string
+  suspendedAt: string | null
+  suspendedReason: string | null
+  commissionRate: number
+  commissionType: string
+  commissionCap: number | null
   createdAt: string
   _count: { users: number }
   _commissionCounts: { total: number; pending: number; paid: number; totalPaid: number }
+  _payoutCounts?: { pending: number; paid: number; totalPaidAmount: number }
   users: ReferredUser[]
 }
 
-type Tab = "overview" | "referrals" | "commissions"
+type Tab = "overview" | "referrals" | "commissions" | "payouts"
 
 export default function AgentDetailPage() {
   const params = useParams()
@@ -64,21 +83,25 @@ export default function AgentDetailPage() {
   const [agent, setAgent] = useState<AgentDetail | null>(null)
   const [referrals, setReferrals] = useState<ReferredUser[]>([])
   const [commissions, setCommissions] = useState<CommissionRecord[]>([])
+  const [payouts, setPayouts] = useState<PayoutRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>("overview")
   const [editCommission, setEditCommission] = useState<{ id: string; amount: number; notes: string } | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [agentRes, referralsRes, commissionsRes] = await Promise.all([
+      const [agentRes, referralsRes, commissionsRes, payoutsRes] = await Promise.all([
         api.get<{ agent: AgentDetail }>(`/api/admin/agents/${agentId}`),
         api.get<{ users: ReferredUser[] }>(`/api/admin/commissions/agents/${agentId}/referrals`),
         api.get<{ commissions: CommissionRecord[] }>(`/api/admin/commissions/agents/${agentId}/commissions`),
+        api.get<{ payouts: PayoutRecord[] }>(`/api/admin/payouts?agentId=${agentId}`),
       ])
       if (agentRes.data?.agent) setAgent(agentRes.data.agent)
       if (referralsRes.data?.users) setReferrals(referralsRes.data.users)
       if (commissionsRes.data?.commissions) setCommissions(commissionsRes.data.commissions)
+      if (payoutsRes.data?.payouts) setPayouts(payoutsRes.data.payouts)
     } catch {
       // handled by error state
     } finally {
@@ -100,6 +123,22 @@ export default function AgentDetailPage() {
     if (data?.commission) {
       setCommissions((prev) => prev.map((c) => (c.id === id ? data.commission : c)))
     }
+  }
+
+  async function handleSuspend() {
+    if (!agent) return
+    setActionLoading(true)
+    const { data } = await api.post<{ agent: AgentDetail }>(`/api/admin/agents/${agent.id}/suspend`, { suspendedReason: agent.suspendedReason || undefined })
+    if (data?.agent) setAgent(data.agent)
+    setActionLoading(false)
+  }
+
+  async function handleReactivate() {
+    if (!agent) return
+    setActionLoading(true)
+    const { data } = await api.post<{ agent: AgentDetail }>(`/api/admin/agents/${agent.id}/reactivate`)
+    if (data?.agent) setAgent(data.agent)
+    setActionLoading(false)
   }
 
   async function handleUpdateCommission() {
@@ -135,6 +174,7 @@ export default function AgentDetailPage() {
     { key: "overview", label: "Overview", icon: Users },
     { key: "referrals", label: "Referrals", icon: Building2, count: referrals.length },
     { key: "commissions", label: "Commissions", icon: Banknote, count: commissions.length },
+    { key: "payouts", label: "Payouts", icon: Wallet, count: payouts.length },
   ]
 
   return (
@@ -147,11 +187,33 @@ export default function AgentDetailPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
             {agent.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">{agent.fullName}</h1>
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary">
-              <Hash size={12} /> {agent.agentCode}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">{agent.fullName}</h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary">
+                  <Hash size={12} /> {agent.agentCode}
+                </span>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                  agent.status === "ACTIVE" ? "bg-success/10 text-success ring-success/20" :
+                  agent.status === "SUSPENDED" ? "bg-error/10 text-error ring-error/20" :
+                  "bg-gray-100 text-gray-500 ring-gray-200"
+                }`}>
+                  {agent.status}
+                </span>
+              </div>
+            </div>
+            {agent.status === "ACTIVE" ? (
+              <button onClick={handleSuspend} disabled={actionLoading}
+                className="rounded-xl bg-warning px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-all disabled:opacity-50 inline-flex items-center gap-1.5">
+                <Ban size={14} /> {actionLoading ? "Suspending..." : "Suspend Agent"}
+              </button>
+            ) : (
+              <button onClick={handleReactivate} disabled={actionLoading}
+                className="rounded-xl bg-success px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-all disabled:opacity-50 inline-flex items-center gap-1.5">
+                <CheckCircle size={14} /> {actionLoading ? "Reactivating..." : "Reactivate Agent"}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -160,7 +222,7 @@ export default function AgentDetailPage() {
         <StatCard icon={Users} label="Users Referred" value={agent._count.users} />
         <StatCard icon={Building2} label="Total Properties" value={referrals.reduce((s, u) => s + u._count.properties, 0)} />
         <StatCard icon={Banknote} label="Commissions" value={`${agent._commissionCounts.pending} pending / ${agent._commissionCounts.paid} paid`} />
-        <StatCard icon={DollarSign} label="Total Paid" value={`KES ${agent._commissionCounts.totalPaid.toLocaleString()}`} color="text-success" />
+        <StatCard icon={Wallet} label="Payouts" value={`${agent._payoutCounts?.pending ?? 0} pending / ${agent._payoutCounts?.paid ?? 0} paid`} color="text-success" />
       </div>
 
       <div className="flex gap-1 rounded-xl border border-border bg-card p-1">
@@ -182,6 +244,20 @@ export default function AgentDetailPage() {
             <InfoRow label="Email" value={agent.email} />
             <InfoRow label="Phone" value={agent.phone} />
             <InfoRow label="Agent Code" value={agent.agentCode} mono />
+            <InfoRow label="Commission Rate" value={agent.commissionType === "PERCENTAGE" ? `${agent.commissionRate}% (Percentage)` : `KES ${new Intl.NumberFormat("en-KE").format(agent.commissionRate)} (Fixed)`} />
+            {agent.commissionCap !== null && agent.commissionCap !== undefined && (
+              <InfoRow label="Commission Cap" value={`KES ${new Intl.NumberFormat("en-KE").format(Number(agent.commissionCap))}`} />
+            )}
+            <InfoRow label="Status" value={agent.status} />
+            {agent.status === "SUSPENDED" && agent.suspendedReason && (
+              <div className="sm:col-span-2">
+                <p className="text-xs text-muted">Suspension Reason</p>
+                <p className="font-medium text-error">{agent.suspendedReason}</p>
+              </div>
+            )}
+            {agent.status === "SUSPENDED" && agent.suspendedAt && (
+              <InfoRow label="Suspended At" value={new Date(agent.suspendedAt).toLocaleDateString()} />
+            )}
             <InfoRow label="Users Referred" value={String(agent._count.users)} />
             <InfoRow label="Onboarded" value={new Date(agent.createdAt).toLocaleDateString()} />
           </div>
@@ -317,6 +393,65 @@ export default function AgentDetailPage() {
                             </>
                           )}
                         </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "payouts" && (
+        <div className="rounded-xl border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
+            <h3 className="font-semibold text-foreground">Payout History</h3>
+            <button onClick={() => router.push("/payouts")}
+              className="rounded-xl bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover transition-all inline-flex items-center gap-1.5">
+              <Plus size={13} />
+              Create Payout
+            </button>
+          </div>
+          {payouts.length === 0 ? (
+            <div className="py-16 text-center text-sm text-muted">No payouts yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="px-4 py-3 text-right font-medium text-muted">Amount</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted">Method</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted">Reference</th>
+                    <th className="px-4 py-3 text-center font-medium text-muted">Status</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted">Paid Date</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payouts.map((p) => (
+                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-background/50">
+                      <td className="px-4 py-3 text-right font-medium text-foreground">
+                        KES {Number(p.amount).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-muted">
+                          {p.method === "MPESA" ? <CreditCard size={12} /> : p.method === "BANK" ? <Banknote size={12} /> : <Wallet size={12} />}
+                          {p.method}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted font-mono">{p.reference || "—"}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${p.status === "PAID" ? "bg-success/10 text-success" : p.status === "PENDING" ? "bg-warning/10 text-warning" : "bg-error/10 text-error"}`}>
+                          {p.status === "PAID" ? <CheckCircle size={12} /> : p.status === "PENDING" ? <XCircle size={12} /> : null}
+                          {p.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted text-xs">
+                        {p.paidAt ? new Date(p.paidAt).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted text-xs max-w-[150px] truncate">
+                        {p.notes || "—"}
                       </td>
                     </tr>
                   ))}

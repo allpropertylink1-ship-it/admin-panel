@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
-  Search, X, UserPlus, Pencil, Trash2, Users, UserCheck, Hash, Loader2, AlertCircle
+  Search, X, UserPlus, Pencil, Trash2, Users, UserCheck, Hash, Loader2, AlertCircle, Ban, CheckCircle
 } from "lucide-react"
 
 interface AplAgent {
@@ -13,13 +13,35 @@ interface AplAgent {
   email: string
   phone: string
   agentCode: string
+  status: string
+  suspendedAt: string | null
+  suspendedReason: string | null
+  commissionRate: number
+  commissionType: string
+  commissionCap: number | null
   createdAt: string
   _count: { users: number }
 }
 
-type FormData = { fullName: string; email: string; phone: string }
+type FormData = { fullName: string; email: string; phone: string; commissionRate: number; commissionType: string; commissionCap: string }
 
-const emptyForm: FormData = { fullName: "", email: "", phone: "" }
+const emptyForm: FormData = { fullName: "", email: "", phone: "", commissionRate: 0, commissionType: "PERCENTAGE", commissionCap: "" }
+
+const statusFilters = ["", "ACTIVE", "SUSPENDED", "INACTIVE"]
+
+const statusLabels: Record<string, string> = { "": "All", ACTIVE: "Active", SUSPENDED: "Suspended", INACTIVE: "Inactive" }
+
+const statusBadge = (status: string) => {
+  const colors: Record<string, string> = {
+    ACTIVE: "bg-success/10 text-success ring-success/20",
+    SUSPENDED: "bg-error/10 text-error ring-error/20",
+    INACTIVE: "bg-gray-100 text-gray-500 ring-gray-200",
+  }
+  return cn(
+    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",
+    colors[status] ?? "bg-gray-100 text-gray-500 ring-gray-200"
+  )
+}
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<AplAgent[]>([])
@@ -28,6 +50,7 @@ export default function AgentsPage() {
   const [error, setError] = useState("")
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("")
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editAgent, setEditAgent] = useState<AplAgent | null>(null)
@@ -37,6 +60,10 @@ export default function AgentsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<AplAgent | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+
+  const [suspendTarget, setSuspendTarget] = useState<AplAgent | null>(null)
+  const [suspendReason, setSuspendReason] = useState("")
+  const [suspendLoading, setSuspendLoading] = useState(false)
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedSearch(search), 300)
@@ -49,6 +76,7 @@ export default function AgentsPage() {
     try {
       const params = new URLSearchParams()
       if (debouncedSearch) params.set("search", debouncedSearch)
+      if (statusFilter) params.set("status", statusFilter)
       const { data, error: fetchError } = await api.get<{ agents: AplAgent[]; total: number }>(`/api/admin/agents?${params.toString()}`)
       if (fetchError || !data) throw new Error(fetchError || "Failed to load representatives")
       setAgents(data.agents ?? [])
@@ -59,7 +87,7 @@ export default function AgentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch])
+  }, [debouncedSearch, statusFilter])
 
   useEffect(() => { fetchAgents() }, [fetchAgents])
 
@@ -76,7 +104,7 @@ export default function AgentsPage() {
 
   function openEditModal(agent: AplAgent) {
     setEditAgent(agent)
-    setForm({ fullName: agent.fullName, email: agent.email, phone: agent.phone })
+    setForm({ fullName: agent.fullName, email: agent.email, phone: agent.phone, commissionRate: agent.commissionRate, commissionType: agent.commissionType, commissionCap: agent.commissionCap !== null && agent.commissionCap !== undefined ? String(agent.commissionCap) : "" })
     setFormError("")
     setModalOpen(true)
   }
@@ -89,12 +117,16 @@ export default function AgentsPage() {
     }
     setFormLoading(true)
     try {
+      const payload = {
+        ...form,
+        commissionCap: form.commissionCap ? Number(form.commissionCap) : null,
+      }
       if (editAgent) {
-        const { data, error: editError } = await api.patch<{ agent: AplAgent }>(`/api/admin/agents/${editAgent.id}`, form)
+        const { data, error: editError } = await api.patch<{ agent: AplAgent }>(`/api/admin/agents/${editAgent.id}`, payload)
         if (editError || !data) { setFormError(editError || "Failed to update agent"); return }
         setAgents((prev) => prev.map((a) => a.id === editAgent.id ? data.agent : a))
       } else {
-        const { data, error: addError } = await api.post<{ agent: AplAgent }>("/api/admin/agents", form)
+        const { data, error: addError } = await api.post<{ agent: AplAgent }>("/api/admin/agents", payload)
         if (addError || !data) { setFormError(addError || "Failed to create agent"); return }
         setAgents((prev) => [data.agent, ...prev])
         setTotal((prev) => prev + 1)
@@ -118,6 +150,35 @@ export default function AgentsPage() {
     } finally {
       setDeleteLoading(false)
       setDeleteTarget(null)
+    }
+  }
+
+  async function handleSuspend() {
+    if (!suspendTarget) return
+    setSuspendLoading(true)
+    try {
+      const { data, error: suspendError } = await api.post<{ agent: AplAgent }>(`/api/admin/agents/${suspendTarget.id}/suspend`, { suspendedReason: suspendReason || undefined })
+      if (suspendError) throw new Error(suspendError)
+      if (data?.agent) {
+        setAgents((prev) => prev.map((a) => a.id === suspendTarget.id ? data.agent : a))
+      }
+      setSuspendTarget(null)
+      setSuspendReason("")
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Failed to suspend agent")
+    } finally {
+      setSuspendLoading(false)
+    }
+  }
+
+  async function handleReactivate(agent: AplAgent) {
+    const { data, error: reactivateError } = await api.post<{ agent: AplAgent }>(`/api/admin/agents/${agent.id}/reactivate`)
+    if (reactivateError) {
+      setFormError(reactivateError)
+      return
+    }
+    if (data?.agent) {
+      setAgents((prev) => prev.map((a) => a.id === agent.id ? data.agent : a))
     }
   }
 
@@ -160,6 +221,14 @@ export default function AgentsPage() {
         </div>
       </div>
 
+      {formError && !suspendTarget && (
+        <div className="rounded-xl bg-error-50 px-4 py-3 text-sm text-red-700 border border-red-100 flex items-center gap-2.5 mb-4">
+          <AlertCircle size={16} />
+          <span className="flex-1">{formError}</span>
+          <button onClick={() => setFormError("")} className="underline text-red-700 hover:text-red-800 font-medium">Dismiss</button>
+        </div>
+      )}
+
       {error ? (
         <div className="rounded-xl bg-error-50 px-4 py-3 text-sm text-red-700 border border-red-100 flex items-center gap-2.5">
           <AlertCircle size={16} />
@@ -168,7 +237,20 @@ export default function AgentsPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-          <div className="border-b border-border px-4 py-3">
+          <div className="border-b border-border px-4 py-3 space-y-3">
+            <div className="flex items-center gap-2">
+              {statusFilters.map((sf) => (
+                <button key={sf} onClick={() => setStatusFilter(sf)}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                    statusFilter === sf
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-muted hover:bg-background hover:text-foreground"
+                  )}>
+                  {statusLabels[sf]}
+                </button>
+              ))}
+            </div>
             <div className="relative max-w-md">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
               <input
@@ -208,6 +290,7 @@ export default function AgentsPage() {
                     <th className="px-4 py-3 text-left">Full Name</th>
                     <th className="px-4 py-3 text-left">Email</th>
                     <th className="px-4 py-3 text-left">Phone</th>
+                    <th className="px-4 py-3 text-center">Status</th>
                     <th className="px-4 py-3 text-center">Referrals</th>
                     <th className="px-4 py-3 text-left">Created</th>
                     <th className="px-4 py-3 text-right">Actions</th>
@@ -224,6 +307,9 @@ export default function AgentsPage() {
                       <td className="px-4 py-3 font-medium">{agent.fullName}</td>
                       <td className="px-4 py-3 text-muted">{agent.email}</td>
                       <td className="px-4 py-3 text-muted">{agent.phone}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={statusBadge(agent.status)}>{agent.status}</span>
+                      </td>
                       <td className="px-4 py-3 text-center font-medium">{agent._count.users}</td>
                       <td className="px-4 py-3 text-muted text-xs">{new Date(agent.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-right">
@@ -231,6 +317,15 @@ export default function AgentsPage() {
                           <button onClick={() => openEditModal(agent)} className="rounded-xl p-2 text-muted hover:bg-gray-50 hover:text-foreground transition-all" title="Edit">
                             <Pencil size={15} />
                           </button>
+                          {agent.status === "ACTIVE" ? (
+                            <button onClick={() => setSuspendTarget(agent)} className="rounded-xl p-2 text-warning/70 hover:bg-warning/10 hover:text-warning transition-all" title="Suspend">
+                              <Ban size={15} />
+                            </button>
+                          ) : (
+                            <button onClick={() => handleReactivate(agent)} className="rounded-xl p-2 text-success/70 hover:bg-success/10 hover:text-success transition-all" title="Reactivate">
+                              <CheckCircle size={15} />
+                            </button>
+                          )}
                           <button onClick={() => setDeleteTarget(agent)} className="rounded-xl p-2 text-error/70 hover:bg-error-50 hover:text-error transition-all" title="Delete">
                             <Trash2 size={15} />
                           </button>
@@ -274,6 +369,26 @@ export default function AgentsPage() {
                   className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   placeholder="+254 7XX XXX XXX" />
               </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium" htmlFor="commissionRate">Commission Rate</label>
+                <input id="commissionRate" type="number" step="0.01" min="0" value={form.commissionRate} onChange={(e) => setForm({ ...form, commissionRate: Number(e.target.value) })}
+                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  placeholder="e.g. 5" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium" htmlFor="commissionType">Commission Type</label>
+                <select id="commissionType" value={form.commissionType} onChange={(e) => setForm({ ...form, commissionType: e.target.value })}
+                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15">
+                  <option value="PERCENTAGE">Percentage (%)</option>
+                  <option value="FIXED">Fixed (KES)</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium" htmlFor="commissionCap">Commission Cap (optional)</label>
+                <input id="commissionCap" type="number" step="0.01" min="0" value={form.commissionCap} onChange={(e) => setForm({ ...form, commissionCap: e.target.value })}
+                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  placeholder="e.g. 50000" />
+              </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => { setModalOpen(false); resetForm() }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">Cancel</button>
@@ -300,6 +415,31 @@ export default function AgentsPage() {
                 className="rounded-xl bg-error px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-all disabled:opacity-50 inline-flex items-center gap-2">
                 {deleteLoading && <Loader2 size={14} className="animate-spin" />}
                 {deleteLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {suspendTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-semibold">Suspend Agent</h2>
+            <p className="mt-2 text-sm text-muted">
+              Are you sure you want to suspend <strong>{suspendTarget.fullName}</strong> ({suspendTarget.agentCode})?
+            </p>
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium" htmlFor="suspendReason">Reason for suspension</label>
+              <textarea id="suspendReason" value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)}
+                className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 min-h-[80px]"
+                placeholder="Explain why this agent is being suspended..." />
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => { setSuspendTarget(null); setSuspendReason("") }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">Cancel</button>
+              <button onClick={handleSuspend} disabled={suspendLoading || !suspendReason.trim()}
+                className="rounded-xl bg-warning px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 transition-all disabled:opacity-50 inline-flex items-center gap-2">
+                {suspendLoading && <Loader2 size={14} className="animate-spin" />}
+                {suspendLoading ? "Suspending..." : "Suspend"}
               </button>
             </div>
           </div>
