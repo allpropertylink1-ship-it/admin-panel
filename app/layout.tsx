@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Sora, DM_Sans } from "next/font/google";
+import { Cinzel, Josefin_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
-const sora = Sora({
+const cinzel = Cinzel({
   subsets: ["latin"],
   variable: "--font-heading",
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+const josefinSans = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${sora.variable} ${dmSans.variable}`}
+      className={`h-full antialiased ${cinzel.variable} ${josefinSans.variable}`}
     >
       <body className="h-full bg-background text-foreground font-sans">
         <AuthProvider>{children}</AuthProvider>

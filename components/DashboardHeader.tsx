@@ -18,22 +18,26 @@ export function DashboardHeader() {
   const { user } = useAuth()
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 lg:ml-0 sticky top-0 z-20">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-md px-4 sm:px-6 lg:ml-0 sticky top-0 z-20">
       <div className="flex items-center gap-3 lg:ml-0 ml-14">
-        <div className="hidden sm:flex items-center gap-1.5">
+        <div className="flex items-center gap-3">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+          </span>
           <DashboardDate />
         </div>
       </div>
       <div className="flex items-center gap-3">
         {user && (
           <div className="flex items-center gap-3">
-            <button className="touch-target relative rounded-xl p-2 text-muted hover:bg-gray-100 hover:text-foreground transition-colors" title="Notifications">
+            <button className="touch-target relative rounded-xl p-2 text-muted hover:bg-primary-50 hover:text-primary transition-colors" title="Notifications">
               <Bell size={18} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-white" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-white animate-pulse-dot" />
             </button>
             <div className="flex items-center gap-2.5 pl-3 border-l border-border">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white text-xs font-bold shadow-sm">
-                {user.firstName[0]}{user.lastName[0]}
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-600 text-white text-xs font-bold shadow-sm shadow-accent/20">
+                {user.firstName?.[0]}{user.lastName?.[0]}
               </div>
               <div className="hidden sm:block min-w-0">
                 <p className="text-sm font-medium text-foreground truncate max-w-[160px]">
