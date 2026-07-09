@@ -25,6 +25,16 @@ interface Payout {
   paidAt: string | null
   createdAt: string
   aplAgent: { id: string; fullName: string; email: string; agentCode: string }
+  properties?: { id: string; title: string; slug?: string; price: number; city: string }[]
+}
+
+interface PropertyOption {
+  id: string
+  title: string
+  slug: string
+  price: number
+  city: string
+  propertyType: string
 }
 
 interface AgentSelectOption {
@@ -143,7 +153,7 @@ export default function PayoutsPage() {
     }
   }
 
-  async function handleCreate(formData: { aplAgentId: string; amount: number; method: string; reference: string; notes: string }) {
+  async function handleCreate(formData: { aplAgentId: string; amount: number; method: string; reference: string; notes: string; propertyIds?: string[] }) {
     await api.post("/api/admin/payouts", formData)
     setShowCreateModal(false)
     await Promise.all([fetchPayouts(), fetchStats()])
@@ -298,11 +308,12 @@ export default function PayoutsPage() {
                 <p className="mt-3 text-sm text-muted">{debouncedSearch || statusFilter ? "No payouts match your filters." : "No payouts yet."}</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
+                  <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
                     <th className="px-4 py-3 text-left">Agent</th>
                     <th className="px-4 py-3 text-right">Amount</th>
+                    <th className="px-4 py-3 text-left">Properties</th>
                     <th className="px-4 py-3 text-left">Method</th>
                     <th className="px-4 py-3 text-left">Reference</th>
                     <th className="px-4 py-3 text-center">Status</th>
@@ -318,6 +329,17 @@ export default function PayoutsPage() {
                         <p className="text-xs text-muted font-mono">{p.aplAgent.agentCode}</p>
                       </td>
                       <td className="px-4 py-3 text-right font-medium">{fmt(p.amount)}</td>
+                      <td className="px-4 py-3 max-w-[200px]">
+                        {p.properties && p.properties.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {p.properties.map((prop) => (
+                              <span key={prop.id} className="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary truncate max-w-[140px]">
+                                {prop.title}
+                              </span>
+                            ))}
+                          </div>
+                        ) : <span className="text-xs text-muted">&mdash;</span>}
+                      </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-muted">
                           {p.method === "MPESA" ? <CreditCard size={12} /> : p.method === "BANK" ? <Banknote size={12} /> : <Wallet size={12} />}
@@ -447,20 +469,38 @@ export default function PayoutsPage() {
   )
 }
 
-function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectOption[]; onClose: () => void; onSubmit: (data: { aplAgentId: string; amount: number; method: string; reference: string; notes: string }) => Promise<void> }) {
+function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectOption[]; onClose: () => void; onSubmit: (data: { aplAgentId: string; amount: number; method: string; reference: string; notes: string; propertyIds?: string[] }) => Promise<void> }) {
   const [aplAgentId, setAplAgentId] = useState("")
   const [amount, setAmount] = useState("")
   const [method, setMethod] = useState("MPESA")
   const [reference, setReference] = useState("")
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [availableProperties, setAvailableProperties] = useState<PropertyOption[]>([])
+  const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>([])
+  const [propertiesLoading, setPropertiesLoading] = useState(false)
+
+  useEffect(() => {
+    if (!aplAgentId) { setAvailableProperties([]); setSelectedPropertyIds([]); return }
+    setPropertiesLoading(true)
+    api.get<{ properties: PropertyOption[] }>(`/api/admin/payouts/available-properties/${aplAgentId}`)
+      .then(({ data }) => setAvailableProperties(data?.properties ?? []))
+      .catch(() => setAvailableProperties([]))
+      .finally(() => setPropertiesLoading(false))
+  }, [aplAgentId])
+
+  function toggleProperty(id: string) {
+    setSelectedPropertyIds((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+    )
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!aplAgentId || !amount) return
     setSubmitting(true)
     try {
-      await onSubmit({ aplAgentId, amount: Number(amount), method, reference, notes })
+      await onSubmit({ aplAgentId, amount: Number(amount), method, reference, notes, propertyIds: selectedPropertyIds.length > 0 ? selectedPropertyIds : undefined })
     } finally {
       setSubmitting(false)
     }
@@ -468,7 +508,7 @@ function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectO
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl">
+      <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h2 className="text-lg font-semibold">Create Payout</h2>
           <button onClick={onClose} className="touch-target rounded-lg p-1 text-muted hover:text-foreground"><X size={18} /></button>
@@ -492,6 +532,40 @@ function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectO
               className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </div>
+
+          {aplAgentId && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted">
+                Link Properties (optional)
+                {propertiesLoading && <Loader2 size={12} className="inline ml-1 animate-spin" />}
+              </label>
+              {availableProperties.length === 0 && !propertiesLoading ? (
+                <p className="text-xs text-muted">No properties found for this agent&apos;s referrals.</p>
+              ) : (
+                <div className="max-h-40 overflow-y-auto rounded-xl border border-border bg-background p-1 space-y-0.5">
+                  {availableProperties.map((prop) => (
+                    <label key={prop.id} className={cn(
+                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs cursor-pointer transition-colors",
+                      selectedPropertyIds.includes(prop.id) ? "bg-primary-50 text-primary" : "hover:bg-gray-50"
+                    )}>
+                      <input
+                        type="checkbox"
+                        checked={selectedPropertyIds.includes(prop.id)}
+                        onChange={() => toggleProperty(prop.id)}
+                        className="rounded border-border text-primary focus:ring-primary/30"
+                      />
+                      <span className="flex-1 truncate font-medium">{prop.title}</span>
+                      <span className="shrink-0 text-muted">{prop.city}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {selectedPropertyIds.length > 0 && (
+                <p className="mt-1 text-[10px] text-muted">{selectedPropertyIds.length} property selected</p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted">Method</label>
             <select value={method} onChange={(e) => setMethod(e.target.value)}
