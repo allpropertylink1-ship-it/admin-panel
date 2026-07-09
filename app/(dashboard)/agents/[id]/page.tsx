@@ -8,7 +8,7 @@ import {
   Loader2, ArrowLeft, Hash, Users, Building2, Banknote,
   CheckCircle, XCircle, DollarSign, Ban, Wallet, TrendingUp,
   Calendar, Phone, Mail, UserPlus, Home, Clock, AlertCircle,
-  Search, Filter, ChevronDown, Plus, Eye,
+  Search, Filter, ChevronDown, Plus, Eye, Lock,
 } from "lucide-react"
 
 interface ReferredUser {
@@ -62,7 +62,10 @@ export default function AgentDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>("referrals")
   const [editCommission, setEditCommission] = useState<{ id: string; amount: number; notes: string } | null>(null)
+  const [showEditRate, setShowEditRate] = useState(false)
+  const [editRate, setEditRate] = useState({ commissionType: "", commissionRate: 0, commissionCap: 0 })
   const [actionLoading, setActionLoading] = useState(false)
+  const [resetPwLoading, setResetPwLoading] = useState(false)
   const [referralSearch, setReferralSearch] = useState("")
 
   const fetchData = useCallback(async () => {
@@ -109,6 +112,18 @@ export default function AgentDashboardPage() {
     const { data } = await api.post<{ agent: AgentDetail }>(`/api/admin/agents/${agent.id}/reactivate`)
     if (data?.agent) setAgent(data.agent)
     setActionLoading(false)
+  }
+
+  async function handleResetPassword() {
+    if (!agent) return
+    setResetPwLoading(true)
+    const { error } = await api.post(`/api/admin/agents/${agent.id}/reset-password`)
+    if (!error) {
+      alert("Password reset email sent to agent")
+    } else {
+      alert(error || "Failed to reset password")
+    }
+    setResetPwLoading(false)
   }
 
   async function handleUpdateCommission() {
@@ -203,9 +218,13 @@ export default function AgentDashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => router.push(`/agents/${agent.id}/edit`)}
+            <button onClick={() => router.push("/agents")}
               className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-all inline-flex items-center gap-1.5">
-              <Eye size={15} /> Edit
+              <ArrowLeft size={15} /> Back
+            </button>
+            <button onClick={handleResetPassword} disabled={resetPwLoading}
+              className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-all inline-flex items-center gap-1.5">
+              <Lock size={15} /> {resetPwLoading ? "..." : "Reset Password"}
             </button>
             {agent.status === "ACTIVE" ? (
               <button onClick={handleSuspend} disabled={actionLoading}

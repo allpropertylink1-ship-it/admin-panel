@@ -65,6 +65,7 @@ export default function PayoutsPage() {
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editPayout, setEditPayout] = useState<Payout | null>(null)
+  const [confirmPaid, setConfirmPaid] = useState<Payout | null>(null)
   const [confirmCancel, setConfirmCancel] = useState<Payout | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Payout | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -368,7 +369,7 @@ export default function PayoutsPage() {
                                 <Pencil size={14} />
                               </button>
                               <button
-                                onClick={() => handleMarkPaid(p.id)}
+                                onClick={() => setConfirmPaid(p)}
                                 disabled={actionLoading === p.id}
                                 className="touch-target rounded p-1.5 text-success hover:bg-success/10 disabled:opacity-50"
                                 title="Mark as paid"
@@ -408,7 +409,7 @@ export default function PayoutsPage() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t border-border px-4 py-3">
-              <p className="text-xs text-muted">Showing {(page - 1) * 20 + 1}&ndash;{Math.min(page * 20, total)} of {total}</p>
+              <p className="text-xs text-muted">Page {page} of {totalPages} ({total} total)</p>
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                   <button
@@ -444,6 +445,15 @@ export default function PayoutsPage() {
         />
       )}
 
+      {confirmPaid && (
+        <ConfirmModal
+          title="Mark Payout as Paid"
+          message={`Confirm that the payout of ${fmt(confirmPaid.amount)} to ${confirmPaid.aplAgent.fullName} has been completed?`}
+          loading={actionLoading === confirmPaid.id}
+          onConfirm={() => { handleMarkPaid(confirmPaid.id); setConfirmPaid(null) }}
+          onClose={() => setConfirmPaid(null)}
+        />
+      )}
       {confirmCancel && (
         <ConfirmModal
           title="Cancel Payout"

@@ -31,12 +31,14 @@ export default function CommissionsPage() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const [stats, setStats] = useState({ total: 0, pending: 0, paid: 0, totalPaidAmount: 0 })
   const [statsLoading, setStatsLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   useEffect(() => {
-    const t = window.setTimeout(() => setDebouncedSearch(search), 300)
+    const t = window.setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
     return () => window.clearTimeout(t)
   }, [search])
 
@@ -47,17 +49,19 @@ export default function CommissionsPage() {
       const params = new URLSearchParams()
       if (debouncedSearch) params.set("search", debouncedSearch)
       if (statusFilter) params.set("status", statusFilter)
-      const { data, error: fetchError } = await api.get<{ commissions: Commission[]; total: number }>(`/api/admin/commissions?${params.toString()}`)
+      params.set("page", String(page))
+      const { data, error: fetchError } = await api.get<{ commissions: Commission[]; total: number; totalPages: number }>(`/api/admin/commissions?${params.toString()}`)
       if (fetchError || !data) throw new Error(fetchError || "Failed to load commissions")
       setCommissions(data.commissions ?? [])
       setTotal(data.total ?? 0)
+      setTotalPages(data.totalPages ?? 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load commissions")
       setCommissions([])
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, statusFilter])
+  }, [debouncedSearch, statusFilter, page])
 
   const fetchStats = useCallback(async () => {
     setStatsLoading(true)
@@ -190,7 +194,7 @@ export default function CommissionsPage() {
               {statuses.map((s) => (
                 <button
                   key={s}
-                  onClick={() => setStatusFilter(s)}
+                  onClick={() => { setStatusFilter(s); setPage(1) }}
                   className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all", s === statusFilter ? "bg-primary text-white shadow-sm" : "text-muted hover:text-foreground")}
                 >
                   {statusLabels[s]}
@@ -276,6 +280,26 @@ export default function CommissionsPage() {
               </table>
             )}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border px-4 py-3">
+              <p className="text-xs text-muted">Page {page} of {totalPages} ({total} total)</p>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={cn(
+                      "touch-target rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                      p === page ? "bg-primary text-white shadow-sm" : "text-muted hover:bg-background hover:text-foreground"
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
