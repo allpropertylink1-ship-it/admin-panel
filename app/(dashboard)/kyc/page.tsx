@@ -497,15 +497,7 @@ export default function KycPage() {
                             <p className="text-sm font-medium text-foreground">Business Permit Document</p>
                             <p className="text-xs text-muted">Uploaded as PDF</p>
                           </div>
-                          {doc.businessPermit.match(/\.pdf/i) ? (
-                            <PdfViewer url={doc.businessPermit} filename={`Business Permit — ${selectedDoc!.user.firstName} ${selectedDoc!.user.lastName}`} compact />
-                          ) : (
-                            <button onClick={() => openLightbox([{ src: doc.businessPermit!, label: `Business Permit — ${selectedDoc!.user.firstName} ${selectedDoc!.user.lastName}` }], 0)}
-                              className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-medium text-white hover:bg-amber-700 transition-colors"
-                            >
-                              View
-                            </button>
-                          )}
+                          <PdfViewer url={doc.businessPermit} filename={`Business Permit — ${selectedDoc!.user.firstName} ${selectedDoc!.user.lastName}`} compact />
                         </div>
                       </div>
                     )}
