@@ -11,7 +11,6 @@ import {
   Phone,
   MapPin,
   Globe,
-  Calendar,
   Shield,
   ShieldOff,
   Trash2,
@@ -58,9 +57,6 @@ interface UserDetail {
   address?: string;
   estateSubLocation?: string;
 
-  nationality?: string;
-  gender?: string;
-  dateOfBirth?: string;
   createdAt: string;
   updatedAt: string;
   approvedAt?: string;
@@ -271,9 +267,7 @@ export default function UserDetailPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <InfoRow icon={Mail} label="Email" value={user.email} />
               <InfoRow icon={Phone} label="Phone" value={user.phone || "—"} />
-              <InfoRow icon={User} label="Gender" value={user.gender || "—"} />
-              <InfoRow icon={Calendar} label="Date of Birth" value={user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : "—"} />
-              <InfoRow icon={Globe} label="Nationality" value={user.nationality || "—"} />
+
               <InfoRow icon={MapPin} label="Address" value={user.address || "—"} />
               <InfoRow icon={MapPin} label="City" value={user.city || "—"} />
               <InfoRow icon={Building2} label="Category" value={user.category || "—"} />
