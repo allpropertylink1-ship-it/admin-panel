@@ -9,15 +9,10 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  CheckCircle,
-  XCircle,
   Eye,
   Globe,
   GlobeOff,
-  Star,
-  StarOff,
   AlertCircle,
-  Loader2,
   Building2,
 } from "lucide-react"
 
@@ -49,16 +44,7 @@ interface PropertiesResponse {
   pagination: { total: number; page: number; totalPages: number; limit: number }
 }
 
-const FILTERS = [
-  { label: "All", value: "" },
-  { label: "Pending Review", value: "PENDING_REVIEW" },
-  { label: "Approved", value: "APPROVED" },
-  { label: "Rejected", value: "REJECTED" },
-  { label: "Draft", value: "DRAFT" },
-]
-
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-  PENDING_REVIEW: { bg: "bg-amber-100", text: "text-amber-800", label: "Pending" },
   APPROVED: { bg: "bg-green-100", text: "text-green-800", label: "Approved" },
   REJECTED: { bg: "bg-red-100", text: "text-red-800", label: "Rejected" },
   DRAFT: { bg: "bg-gray-100", text: "text-gray-700", label: "Draft" },
@@ -93,13 +79,10 @@ export default function PropertiesPage() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [page, setPage] = useState(1)
-  const [filter, setFilter] = useState("")
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [rejectInput, setRejectInput] = useState<{ id: string; reason: string } | null>(null)
   const limit = 20
 
   const fetchProperties = useCallback(async () => {
@@ -107,7 +90,6 @@ export default function PropertiesPage() {
     setError("")
     try {
       const params = new URLSearchParams()
-      if (filter) params.set("status", filter)
       if (search) params.set("search", search)
       params.set("page", String(page))
       params.set("limit", String(limit))
@@ -122,25 +104,11 @@ export default function PropertiesPage() {
     } finally {
       setLoading(false)
     }
-  }, [filter, search, page])
+  }, [search, page])
 
   useEffect(() => {
     fetchProperties()
   }, [fetchProperties])
-
-  async function updateProperty(id: string, data: Record<string, unknown>) {
-    setActionLoading(id)
-    try {
-      const { data: _, error } = await api.patch(`/api/admin/properties/${id}`, data)
-      if (error) throw new Error("Failed to update")
-      setRejectInput(null)
-      await fetchProperties()
-    } catch {
-      setError("Failed to update property.")
-    } finally {
-      setActionLoading(null)
-    }
-  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -171,20 +139,6 @@ export default function PropertiesPage() {
 
       <div className="rounded-xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-          {FILTERS.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => { setFilter(f.value); setPage(1) }}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                filter === f.value
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-gray-100 text-muted hover:bg-gray-200"
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
           <div className="ml-auto">
                 <form onSubmit={handleSearch} className="relative">
                   <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -292,85 +246,6 @@ export default function PropertiesPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {p.moderationStatus === "PENDING_REVIEW" && (
-                            <>
-                              <button
-                                onClick={() => updateProperty(p.id, { moderationStatus: "APPROVED" })}
-                                disabled={actionLoading === p.id}
-                                className="rounded-lg p-1.5 text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
-                                title="Approve"
-                              >
-                                {actionLoading === p.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                              </button>
-                              {rejectInput?.id === p.id ? (
-                                <div className="flex items-center gap-1 animate-in fade-in slide-in-from-right-2">
-                                  <input
-                                    type="text"
-                                    value={rejectInput.reason}
-                                    onChange={(e) => setRejectInput({ ...rejectInput, reason: e.target.value })}
-                                    placeholder="Reason..."
-                                    className="w-36 rounded-lg border border-border bg-card/80 px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted/60 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200"
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        updateProperty(p.id, { moderationStatus: "REJECTED", rejectionReason: rejectInput.reason })
-                                      }
-                                      if (e.key === "Escape") setRejectInput(null)
-                                    }}
-                                  />
-                                  <button
-                                    onClick={() => updateProperty(p.id, { moderationStatus: "REJECTED", rejectionReason: rejectInput.reason })}
-                                    disabled={actionLoading === p.id || !rejectInput.reason.trim()}
-                                    className="rounded-lg p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
-                                    title="Confirm reject"
-                                  >
-                                    {actionLoading === p.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={15} />}
-                                  </button>
-                                  <button
-                                    onClick={() => setRejectInput(null)}
-                                    className="rounded-lg p-1.5 text-muted transition-colors hover:bg-gray-100"
-                                    title="Cancel"
-                                  >
-                                    <XCircle size={15} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => setRejectInput({ id: p.id, reason: "" })}
-                                  className="rounded-lg p-1.5 text-red-600 transition-colors hover:bg-red-50"
-                                  title="Reject"
-                                >
-                                  <XCircle size={16} />
-                                </button>
-                              )}
-                            </>
-                          )}
-                          {p.moderationStatus === "APPROVED" && (
-                            <>
-                              <button
-                                onClick={() => updateProperty(p.id, { isPublished: !p.isPublished })}
-                                disabled={actionLoading === p.id}
-                                className={cn(
-                                  "rounded-lg p-1.5 transition-colors disabled:opacity-50",
-                                  p.isPublished ? "text-green-600 hover:bg-green-50" : "text-muted hover:bg-gray-100"
-                                )}
-                                title={p.isPublished ? "Unpublish" : "Publish"}
-                              >
-                                {actionLoading === p.id ? <Loader2 size={16} className="animate-spin" /> : p.isPublished ? <Globe size={16} /> : <GlobeOff size={16} />}
-                              </button>
-                              <button
-                                onClick={() => updateProperty(p.id, { isFeatured: !p.isFeatured })}
-                                disabled={actionLoading === p.id}
-                                className={cn(
-                                  "rounded-lg p-1.5 transition-colors disabled:opacity-50",
-                                  p.isFeatured ? "text-accent hover:bg-amber-50" : "text-muted hover:bg-gray-100"
-                                )}
-                                title={p.isFeatured ? "Unfeature" : "Feature"}
-                              >
-                                {actionLoading === p.id ? <Loader2 size={16} className="animate-spin" /> : p.isFeatured ? <Star size={16} /> : <StarOff size={16} />}
-                              </button>
-                            </>
-                          )}
                           <Link
                             href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink.co.ke"}/properties/${p.slug}`}
                             target="_blank"
