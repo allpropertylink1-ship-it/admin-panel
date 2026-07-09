@@ -37,8 +37,10 @@
   --color-sidebar: #1A3D35;
   --color-sidebar-hover: #152F29;
   --color-sidebar-active: #286255;
+
   --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
   --font-heading: "Sora", system-ui, sans-serif;
+
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 18px;
@@ -60,4 +62,8 @@ body {
 
 input, textarea, select {
   font-family: inherit;
+}
+
+kbd {
+  font-family: "DM Sans", monospace;
 }

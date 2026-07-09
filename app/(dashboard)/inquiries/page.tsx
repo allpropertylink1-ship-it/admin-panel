@@ -18,6 +18,10 @@ import {
   ChevronUp,
   Send,
   X,
+  RefreshCw,
+  Inbox,
+  ExternalLink,
+  Eye,
 } from "lucide-react"
 
 interface Property {
@@ -51,11 +55,29 @@ const FILTERS = [
   { label: "Closed", value: "CLOSED" },
 ]
 
-const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-  PENDING: { bg: "bg-amber-100", text: "text-amber-800", label: "Pending" },
-  READ: { bg: "bg-blue-100", text: "text-blue-800", label: "Read" },
-  RESPONDED: { bg: "bg-green-100", text: "text-green-800", label: "Responded" },
-  CLOSED: { bg: "bg-gray-100", text: "text-gray-700", label: "Closed" },
+const statusConfig: Record<string, { bg: string; text: string; dot: string; label: string }> = {
+  PENDING: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-400", label: "Pending" },
+  READ: { bg: "bg-blue-50", text: "text-blue-700", dot: "bg-blue-400", label: "Read" },
+  RESPONDED: { bg: "bg-green-50", text: "text-green-700", dot: "bg-green-400", label: "Responded" },
+  CLOSED: { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400", label: "Closed" },
+}
+
+function SkeletonRows() {
+  return (
+    <>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <tr key={i} className="animate-pulse">
+          <td className="px-4 py-4"><div className="h-4 w-28 rounded bg-gray-200" /></td>
+          <td className="px-4 py-4"><div className="h-4 w-36 rounded bg-gray-200" /></td>
+          <td className="px-4 py-4"><div className="h-4 w-48 rounded bg-gray-200" /></td>
+          <td className="px-4 py-4"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+          <td className="px-4 py-4"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+          <td className="px-4 py-4"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+          <td className="px-4 py-4"><div className="ml-auto h-4 w-16 rounded bg-gray-200" /></td>
+        </tr>
+      ))}
+    </>
+  )
 }
 
 export default function InquiriesPage() {
@@ -65,7 +87,7 @@ export default function InquiriesPage() {
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState("")
   const [search, setSearch] = useState("")
-  const [searchInput, setSearchInput] = useState("")
+  const [searchValue, setSearchValue] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -73,6 +95,7 @@ export default function InquiriesPage() {
   const [respondModal, setRespondModal] = useState<{ id: string; name: string; message: string } | null>(null)
   const [respondText, setRespondText] = useState("")
   const [respondSending, setRespondSending] = useState(false)
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
   const limit = 20
 
   const fetchInquiries = useCallback(async () => {
@@ -130,9 +153,15 @@ export default function InquiriesPage() {
     }
   }
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    setSearch(searchInput)
+  function handleSearchChange(v: string) {
+    setSearchValue(v)
+    if (searchTimeout) clearTimeout(searchTimeout)
+    setSearchTimeout(setTimeout(() => { setSearch(v); setPage(1) }, 350))
+  }
+
+  function clearSearch() {
+    setSearchValue("")
+    setSearch("")
     setPage(1)
   }
 
@@ -144,8 +173,21 @@ export default function InquiriesPage() {
     })
   }
 
+  function getPageNumbers(): (number | "...")[] {
+    const pages: (number | "...")[] = []
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+        pages.push(i)
+      } else if (pages[pages.length - 1] !== "...") {
+        pages.push("...")
+      }
+    }
+    return pages
+  }
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Inquiries</h1>
@@ -153,73 +195,84 @@ export default function InquiriesPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
+      {/* Search + Filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchValue}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+          />
+          {searchValue && (
+            <button onClick={clearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 rounded-xl border border-border bg-card p-1">
           {FILTERS.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => { setFilter(f.value); setPage(1) }}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                filter === f.value
-                  ? "bg-primary text-white"
-                  : "bg-gray-100 text-muted hover:bg-gray-200"
-              )}
-            >
+            <button key={f.value} onClick={() => { setFilter(f.value); setPage(1) }}
+              className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                filter === f.value ? "bg-primary text-white shadow-sm" : "text-muted hover:text-foreground"
+              )}>
               {f.label}
             </button>
           ))}
-          <div className="ml-auto">
-            <form onSubmit={handleSearch} className="relative">
-              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by name or email..."
-                className="w-64 rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </form>
-          </div>
         </div>
+      </div>
 
-        {error && (
-          <div className="flex items-center gap-2 border-b border-border bg-red-50 px-4 py-3 text-sm text-red-700">
-            <AlertCircle size={16} />
+      {/* Error */}
+      {error && (
+        <div className="flex items-center justify-between rounded-xl bg-error-50 px-4 py-3 text-sm text-red-700 border border-red-100">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
             {error}
           </div>
-        )}
+          <button onClick={fetchInquiries}
+            className="flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-red-700 border border-red-200 hover:bg-red-50 transition-colors">
+            <RefreshCw size={12} /> Retry
+          </button>
+        </div>
+      )}
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-muted" />
-          </div>
-        ) : inquiries.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted">
-            <MessageSquare size={40} className="mb-3" />
-            <p className="text-sm">No inquiries found</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-gray-50/50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Phone</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Property</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Message</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Date</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
+      {/* Table Card */}
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-gray-50/80">
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Email</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Inquiry</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Property</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Date</th>
+                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {loading ? (
+                <SkeletonRows />
+              ) : inquiries.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-16 text-center">
+                    <div className="flex flex-col items-center text-muted">
+                      <Inbox className="mb-2 opacity-30" size={40} />
+                      <p className="text-sm font-medium">No inquiries found</p>
+                      <p className="mt-1 text-xs text-muted/60">Try adjusting your search or filter</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {inquiries.map((inq) => {
+              ) : (
+                inquiries.map((inq) => {
                   const statusStyle = statusConfig[inq.status] || statusConfig.PENDING
                   const isExpanded = expandedId === inq.id
                   return (
-                    <tr key={inq.id} className="transition-colors hover:bg-gray-50">
+                    <tr key={inq.id} className="transition-colors hover:bg-gray-50/40">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <button
@@ -228,104 +281,113 @@ export default function InquiriesPage() {
                           >
                             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
-                          <span className="text-sm font-medium text-foreground">{inq.name}</span>
+                          <span className="font-medium text-foreground">{inq.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted">
-                        <a href={`mailto:${inq.email}`} className="hover:text-primary">
+                      <td className="px-4 py-3">
+                        <a href={`mailto:${inq.email}`} className="text-xs text-muted hover:text-primary transition-colors">
                           {inq.email}
                         </a>
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted">
-                        {inq.phone ? (
-                          <a href={`tel:${inq.phone}`} className="flex items-center gap-1 hover:text-primary">
-                            <Phone size={12} /> {inq.phone}
-                          </a>
-                        ) : (
-                          "—"
-                        )}
+                      <td className="px-4 py-3">
+                        <p className="max-w-xs truncate text-xs text-muted">{inq.message}</p>
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted">
+                      <td className="px-4 py-3">
+                        <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium", statusStyle.bg, statusStyle.text)}>
+                          <span className={cn("h-1.5 w-1.5 rounded-full", statusStyle.dot)} />
+                          {statusStyle.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
                         {inq.property ? (
                           <a
                             href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink.co.ke"}/properties/${inq.property.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:text-primary"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-hover transition-colors"
                           >
-                            {inq.property.title}
+                            <span className="max-w-[120px] truncate">{inq.property.title}</span>
+                            <ExternalLink size={10} className="shrink-0" />
                           </a>
                         ) : (
-                          "—"
+                          <span className="text-xs text-muted/50">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <p className="max-w-xs truncate text-sm text-muted">
-                          {inq.message}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", statusStyle.bg, statusStyle.text)}>
-                          {statusStyle.label}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-muted">
+                      <td className="whitespace-nowrap px-4 py-3 text-xs text-muted tabular-nums">
                         {formatDate(inq.createdAt)}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setRespondModal({ id: inq.id, name: inq.name, message: inq.message })}
-                              className="rounded-lg p-1.5 text-primary transition-colors hover:bg-primary-50"
-                            title="Respond"
-                          >
-                            <Send size={16} />
-                          </button>
-                          {inq.status !== "READ" && (
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-0.5">
+                          {inq.status === "PENDING" && (
                             <button
                               onClick={() => updateInquiry(inq.id, { status: "READ" })}
                               disabled={actionLoading === inq.id}
-                              className="rounded-lg p-1.5 text-primary transition-colors hover:bg-primary-50 disabled:opacity-50"
+                              className="rounded-lg p-1.5 text-amber-600 transition-colors hover:bg-amber-50 disabled:opacity-50"
                               title="Mark as Read"
                             >
-                              {actionLoading === inq.id ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
+                              {actionLoading === inq.id ? <Loader2 size={15} className="animate-spin" /> : <Eye size={15} />}
                             </button>
                           )}
-                          {inq.status !== "CLOSED" && (
+                          {inq.status === "READ" && (
+                            <button
+                              onClick={() => setRespondModal({ id: inq.id, name: inq.name, message: inq.message })}
+                              className="rounded-lg p-1.5 text-primary transition-colors hover:bg-primary/10"
+                              title="Respond"
+                            >
+                              <Send size={15} />
+                            </button>
+                          )}
+                          {inq.status === "RESPONDED" && (
                             <button
                               onClick={() => updateInquiry(inq.id, { status: "CLOSED" })}
                               disabled={actionLoading === inq.id}
-                              className="rounded-lg p-1.5 text-muted transition-colors hover:bg-gray-100 disabled:opacity-50"
+                              className="rounded-lg p-1.5 text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
                               title="Close"
                             >
-                              {actionLoading === inq.id ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
+                              {actionLoading === inq.id ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
                             </button>
+                          )}
+                          {inq.status !== "PENDING" && inq.status !== "READ" && inq.status !== "RESPONDED" && (
+                            <span className="text-xs text-muted/40 px-1">—</span>
                           )}
                         </div>
                       </td>
                     </tr>
                   )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {expandedId && (
-          <div className="border-t border-border bg-gray-50/50 px-6 py-4">
+        {/* Expanded detail row */}
+        {expandedId && !loading && (
+          <div className="border-t border-border bg-gray-50/30 px-6 py-4">
             {(() => {
               const inq = inquiries.find((i) => i.id === expandedId)
               if (!inq) return null
               return (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Full Message</h4>
-                    <p className="whitespace-pre-wrap rounded-lg bg-white p-4 text-sm text-foreground">{inq.message}</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageSquare size={14} className="text-muted" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted">Full Message</h4>
+                    </div>
+                    <p className="whitespace-pre-wrap rounded-lg bg-white border border-border/50 p-4 text-sm text-foreground leading-relaxed">{inq.message}</p>
                   </div>
                   {inq.responseMessage && (
                     <div>
-                      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-green-600">Response</h4>
-                      <p className="whitespace-pre-wrap rounded-lg bg-green-50 p-4 text-sm text-foreground">{inq.responseMessage}</p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Send size={14} className="text-green-500" />
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-green-600">Response</h4>
+                      </div>
+                      <p className="whitespace-pre-wrap rounded-lg bg-green-50/70 border border-green-100 p-4 text-sm text-foreground leading-relaxed">{inq.responseMessage}</p>
+                    </div>
+                  )}
+                  {inq.phone && (
+                    <div className="flex items-center gap-2 text-xs text-muted">
+                      <Phone size={12} />
+                      <a href={`tel:${inq.phone}`} className="hover:text-primary transition-colors">{inq.phone}</a>
                     </div>
                   )}
                 </div>
@@ -334,50 +396,66 @@ export default function InquiriesPage() {
           </div>
         )}
 
+        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3">
-            <p className="text-sm text-muted">
-              Page {page} of {totalPages}
+          <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-gray-50/30">
+            <p className="text-xs text-muted tabular-nums">
+              {((page - 1) * limit) + 1}&ndash;{Math.min(page * limit, total)} of {total}
             </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronLeft size={14} /> Previous
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+                className="rounded-lg border border-border p-1.5 text-muted transition-colors hover:bg-gray-100 disabled:opacity-30">
+                <ChevronLeft size={16} />
               </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Next <ChevronRight size={14} />
+              {getPageNumbers().map((p, idx) =>
+                p === "..." ? (
+                  <span key={`e-${idx}`} className="px-1 text-xs text-muted">...</span>
+                ) : (
+                  <button key={p} onClick={() => setPage(p)}
+                    className={cn("min-w-[32px] rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
+                      page === p ? "bg-primary text-white shadow-sm" : "text-muted hover:bg-gray-100"
+                    )}>
+                    {p}
+                  </button>
+                )
+              )}
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+                className="rounded-lg border border-border p-1.5 text-muted transition-colors hover:bg-gray-100 disabled:opacity-30">
+                <ChevronRight size={16} />
               </button>
             </div>
           </div>
         )}
       </div>
 
+      {/* Respond Modal */}
       {respondModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-xl">
-            <div className="flex items-center justify-between border-b border-border px-5 py-4">
-              <h3 className="text-lg font-semibold text-foreground">Respond to {respondModal.name}</h3>
-              <button
-                onClick={() => { setRespondModal(null); setRespondText("") }}
-                className="rounded-lg p-1 text-muted transition-colors hover:bg-gray-100"
-              >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => { setRespondModal(null); setRespondText("") }}>
+          <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                  <Send size={16} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Respond to {respondModal.name}</h3>
+                  <p className="text-xs text-muted">Send a response to this inquiry</p>
+                </div>
+              </div>
+              <button onClick={() => { setRespondModal(null); setRespondText("") }}
+                className="rounded-lg p-1.5 text-muted hover:bg-gray-100 hover:text-foreground transition-colors">
                 <X size={18} />
               </button>
             </div>
-            <div className="space-y-3 px-5 py-4">
+            <div className="space-y-4 px-6 py-4">
               <div>
-                <p className="mb-1 text-xs font-medium text-muted">Original message</p>
-                <p className="rounded-lg bg-gray-50 p-3 text-sm text-foreground">{respondModal.message}</p>
+                <p className="mb-1.5 text-xs font-medium text-muted uppercase tracking-wider">Original message</p>
+                <div className="rounded-lg bg-gray-50 border border-border/50 p-3.5">
+                  <p className="text-sm text-foreground leading-relaxed">{respondModal.message}</p>
+                </div>
               </div>
               <div>
-                <label htmlFor="response" className="mb-1.5 block text-sm font-medium text-foreground">
+                <label htmlFor="response" className="mb-1.5 block text-xs font-medium text-foreground">
                   Your response
                 </label>
                 <textarea
@@ -386,23 +464,18 @@ export default function InquiriesPage() {
                   value={respondText}
                   onChange={(e) => setRespondText(e.target.value)}
                   placeholder="Type your response..."
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl border border-border bg-background/50 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all resize-none"
                   autoFocus
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-4">
-              <button
-                onClick={() => { setRespondModal(null); setRespondText("") }}
-                className="rounded-lg border border-border px-4 py-2 text-sm text-muted transition-colors hover:bg-gray-50"
-              >
+            <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
+              <button onClick={() => { setRespondModal(null); setRespondText("") }}
+                className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-gray-50">
                 Cancel
               </button>
-              <button
-                onClick={handleRespond}
-                disabled={respondSending || !respondText.trim()}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
-              >
+              <button onClick={handleRespond} disabled={respondSending || !respondText.trim()}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 shadow-sm">
                 {respondSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 Send Response
               </button>

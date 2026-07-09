@@ -6,6 +6,7 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
   Search,
+  X,
   ChevronLeft,
   ChevronRight,
   CheckCircle,
@@ -17,6 +18,7 @@ import {
   StarOff,
   AlertCircle,
   Loader2,
+  Building2,
 } from "lucide-react"
 
 interface Agent {
@@ -62,6 +64,28 @@ const statusConfig: Record<string, { bg: string; text: string; label: string }> 
   DRAFT: { bg: "bg-gray-100", text: "text-gray-700", label: "Draft" },
   EXPIRED: { bg: "bg-purple-100", text: "text-purple-800", label: "Expired" },
   ARCHIVED: { bg: "bg-gray-200", text: "text-gray-600", label: "Archived" },
+}
+
+function SkeletonRows() {
+  return (
+    <>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <tr key={i} className="border-b border-border">
+          {Array.from({ length: 8 }).map((_, j) => (
+            <td key={j} className="px-4 py-3">
+              {j === 6 ? (
+                <div className="mx-auto h-4 w-4 animate-pulse rounded bg-gray-200" />
+              ) : j === 7 ? (
+                <div className="ml-auto h-8 w-24 animate-pulse rounded-lg bg-gray-200" />
+              ) : (
+                <div className="h-4 w-full max-w-[120px] animate-pulse rounded bg-gray-200" />
+              )}
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  )
 }
 
 export default function PropertiesPage() {
@@ -145,16 +169,16 @@ export default function PropertiesPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card">
+      <div className="rounded-xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
           {FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => { setFilter(f.value); setPage(1) }}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
                 filter === f.value
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-white shadow-sm"
                   : "bg-gray-100 text-muted hover:bg-gray-200"
               )}
             >
@@ -162,42 +186,74 @@ export default function PropertiesPage() {
             </button>
           ))}
           <div className="ml-auto">
-            <form onSubmit={handleSearch} className="relative">
-              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <label htmlFor="search-properties" className="sr-only">Search properties</label>
-              <input
-                id="search-properties"
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by title..."
-                className="w-64 rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </form>
+                <form onSubmit={handleSearch} className="relative">
+                  <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                  <label htmlFor="search-properties" className="sr-only">Search properties</label>
+                  <input
+                    id="search-properties"
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search by title..."
+                    className="w-64 rounded-xl border border-border bg-card/80 px-4 py-2.5 pl-9 pr-8 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  />
+                  {searchInput && (
+                    <button
+                      type="button"
+                      onClick={() => { setSearchInput(""); setSearch(""); setPage(1) }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted transition-colors hover:text-foreground"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </form>
           </div>
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 border-b border-border bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm text-red-700 border-b-red-100 bg-error-50">
             <AlertCircle size={16} />
             {error}
+            <button
+              onClick={fetchProperties}
+              className="ml-auto rounded-lg bg-red-100 px-3 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200"
+            >
+              Retry
+            </button>
           </div>
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-muted" />
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-gray-50/80">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Title</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Price</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">City</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Agent</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted">Published</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                <SkeletonRows />
+              </tbody>
+            </table>
           </div>
         ) : properties.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted">
-            <GlobeOff size={40} className="mb-3" />
-            <p className="text-sm">No properties found</p>
+            <Building2 size={48} className="mb-3 opacity-30" />
+            <p className="text-sm font-medium text-foreground/60">No properties found</p>
+            <p className="mt-1 text-xs text-muted/60">Try adjusting your search or filter</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-gray-50/50">
+                <tr className="border-b border-border bg-gray-50/80">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Title</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Price</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
@@ -212,15 +268,15 @@ export default function PropertiesPage() {
                 {properties.map((p) => {
                   const statusStyle = statusConfig[p.moderationStatus] || statusConfig.DRAFT
                   return (
-                    <tr key={p.id} className="transition-colors hover:bg-gray-50">
+                    <tr key={p.id} className="transition-colors hover:bg-gray-50/60">
                       <td className="px-4 py-3">
-                        <p className="max-w-xs truncate text-sm font-medium text-foreground">{p.title}</p>
+                        <p className="max-w-xs truncate text-sm font-medium text-foreground" title={p.title}>{p.title}</p>
                       </td>
-                      <td className="px-4 py-3 text-sm text-foreground">{formatPrice(p.price, p.currency)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">{formatPrice(p.price, p.currency)}</td>
                       <td className="px-4 py-3 text-sm text-muted">{typeLabel(p.propertyType)}</td>
                       <td className="px-4 py-3 text-sm text-muted">{p.city}</td>
                       <td className="px-4 py-3 text-sm text-muted">
-                        {p.agent ? `${p.agent.firstName} ${p.agent.lastName}` : "—"}
+                        {p.agent ? `${p.agent.firstName} ${p.agent.lastName}` : <span className="italic text-muted/50">—</span>}
                       </td>
                       <td className="px-4 py-3">
                         <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", statusStyle.bg, statusStyle.text)}>
@@ -229,10 +285,10 @@ export default function PropertiesPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         {p.isPublished ? (
-                          <Globe size={16} className="mx-auto text-green-600" />
-                        ) : (
-                          <GlobeOff size={16} className="mx-auto text-muted" />
-                        )}
+                        <Globe size={16} className="mx-auto text-green-600" />
+                      ) : (
+                        <GlobeOff size={16} className="mx-auto text-muted/50" />
+                      )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -247,13 +303,13 @@ export default function PropertiesPage() {
                                 {actionLoading === p.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                               </button>
                               {rejectInput?.id === p.id ? (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1 animate-in fade-in slide-in-from-right-2">
                                   <input
                                     type="text"
                                     value={rejectInput.reason}
                                     onChange={(e) => setRejectInput({ ...rejectInput, reason: e.target.value })}
                                     placeholder="Reason..."
-                                    className="w-32 rounded border border-border px-2 py-1 text-xs focus:border-primary focus:outline-none"
+                                    className="w-36 rounded-lg border border-border bg-card/80 px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted/60 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200"
                                     autoFocus
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") {
@@ -268,14 +324,14 @@ export default function PropertiesPage() {
                                     className="rounded-lg p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
                                     title="Confirm reject"
                                   >
-                                    <CheckCircle size={16} />
+                                    {actionLoading === p.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={15} />}
                                   </button>
                                   <button
                                     onClick={() => setRejectInput(null)}
                                     className="rounded-lg p-1.5 text-muted transition-colors hover:bg-gray-100"
                                     title="Cancel"
                                   >
-                                    <XCircle size={16} />
+                                    <XCircle size={15} />
                                   </button>
                                 </div>
                               ) : (
@@ -307,7 +363,7 @@ export default function PropertiesPage() {
                                 disabled={actionLoading === p.id}
                                 className={cn(
                                   "rounded-lg p-1.5 transition-colors disabled:opacity-50",
-                                  p.isFeatured ? "text-amber-500 hover:bg-amber-50" : "text-muted hover:bg-gray-100"
+                                  p.isFeatured ? "text-accent hover:bg-amber-50" : "text-muted hover:bg-gray-100"
                                 )}
                                 title={p.isFeatured ? "Unfeature" : "Feature"}
                               >
@@ -335,11 +391,12 @@ export default function PropertiesPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+          <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-gray-50/30">
             <p className="text-sm text-muted">
               Page {page} of {totalPages}
+              <span className="ml-2 text-xs text-muted/50">({total} total)</span>
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
@@ -347,6 +404,25 @@ export default function PropertiesPage() {
               >
                 <ChevronLeft size={14} /> Previous
               </button>
+              {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                const startPage = Math.max(1, Math.min(page - 2, totalPages - 4))
+                const pageNum = startPage + i
+                if (pageNum > totalPages) return null
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    className={cn(
+                      "min-w-[32px] rounded-lg px-2 py-1.5 text-sm transition-all",
+                      page === pageNum
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-muted hover:bg-gray-100"
+                    )}
+                  >
+                    {pageNum}
+                  </button>
+                )
+              })}
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
-import { Loader2, Search, Banknote, CheckCircle, XCircle, DollarSign } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle } from "lucide-react"
 
 interface Commission {
   id: string
@@ -17,148 +18,266 @@ interface Commission {
   user: { id: string; firstName: string; lastName: string; email: string }
 }
 
+const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n)
+
+const statuses = ["", "PENDING", "PAID"] as const
+const statusLabels: Record<string, string> = { "": "All", PENDING: "Pending", PAID: "Paid" }
+
 export default function CommissionsPage() {
   const [commissions, setCommissions] = useState<Commission[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [stats, setStats] = useState({ total: 0, pending: 0, paid: 0, totalPaidAmount: 0 })
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search), 300)
+    return () => window.clearTimeout(t)
+  }, [search])
 
   const fetchCommissions = useCallback(async () => {
     setLoading(true)
+    setError("")
     try {
       const params = new URLSearchParams()
-      if (search) params.set("search", search)
+      if (debouncedSearch) params.set("search", debouncedSearch)
       if (statusFilter) params.set("status", statusFilter)
-      const [listRes, statsRes] = await Promise.all([
-        api.get<{ commissions: Commission[]; total: number }>(`/api/admin/commissions?${params.toString()}`),
-        api.get<{ total: number; pending: number; paid: number; totalPaidAmount: number }>("/api/admin/commissions/stats"),
-      ])
-      if (listRes.data?.commissions) setCommissions(listRes.data.commissions)
-      if (statsRes.data) setStats(statsRes.data)
-    } catch {
+      const { data, error: fetchError } = await api.get<{ commissions: Commission[]; total: number }>(`/api/admin/commissions?${params.toString()}`)
+      if (fetchError || !data) throw new Error(fetchError || "Failed to load commissions")
+      setCommissions(data.commissions ?? [])
+      setTotal(data.total ?? 0)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load commissions")
       setCommissions([])
     } finally {
       setLoading(false)
     }
-  }, [search, statusFilter])
+  }, [debouncedSearch, statusFilter])
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true)
+    try {
+      const { data } = await api.get<{ total: number; pending: number; paid: number; totalPaidAmount: number }>("/api/admin/commissions/stats")
+      if (data) setStats(data)
+    } catch {
+      // keep defaults
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [])
 
   useEffect(() => { fetchCommissions() }, [fetchCommissions])
+  useEffect(() => { fetchStats() }, [fetchStats])
 
   async function handleMarkPaid(id: string) {
-    await api.post(`/api/admin/commissions/${id}/mark-paid`)
-    fetchCommissions()
+    setActionLoading(id)
+    try {
+      await api.post(`/api/admin/commissions/${id}/mark-paid`)
+      await Promise.all([fetchCommissions(), fetchStats()])
+    } finally {
+      setActionLoading(null)
+    }
   }
 
-  async function handleMarkUnpaid(id: string) {
-    await api.post(`/api/admin/commissions/${id}/mark-unpaid`)
-    fetchCommissions()
+  const statusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      PAID: "bg-success/10 text-success",
+      PENDING: "bg-warning/10 text-warning",
+      CANCELLED: "bg-error/10 text-error",
+    }
+    return cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", colors[status] ?? "bg-gray-100 text-gray-600")
   }
+
+  const skeleton = (width: string, height = "h-5") => <div className={cn("animate-pulse rounded bg-gray-200", height)} style={{ width }} />
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Commissions</h1>
-        <p className="mt-1 text-sm text-muted">Track and manage APL Agent commissions from referred user listings.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold font-heading">Commissions</h1>
+          <p className="mt-1 text-sm text-muted">Track and manage agent commissions from referred user listings.</p>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><Banknote size={20} className="text-primary" /></div>
-            <div><p className="text-sm text-muted">Total Commissions</p><p className="text-xl font-bold text-foreground">{stats.total}</p></div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10"><XCircle size={20} className="text-warning" /></div>
-            <div><p className="text-sm text-muted">Pending</p><p className="text-xl font-bold text-foreground">{stats.pending}</p></div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10"><CheckCircle size={20} className="text-success" /></div>
-            <div><p className="text-sm text-muted">Paid</p><p className="text-xl font-bold text-foreground">{stats.paid}</p></div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><DollarSign size={20} className="text-success" /></div>
-            <div><p className="text-sm text-muted">Total Paid Amount</p><p className="text-xl font-bold text-foreground">KES {stats.totalPaidAmount.toLocaleString()}</p></div>
-          </div>
-        </div>
+        {statsLoading ? (
+          <>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-2">
+                {skeleton("60%", "h-3")}
+                {skeleton("40%", "h-7")}
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Banknote size={20} className="text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted">Total Commissions</p>
+                  <p className="text-xl font-bold">{stats.total}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
+                  <XCircle size={20} className="text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted">Pending</p>
+                  <p className="text-xl font-bold">{stats.pending}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
+                  <CheckCircle size={20} className="text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted">Paid</p>
+                  <p className="text-xl font-bold">{stats.paid}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Banknote size={20} className="text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted">Total Paid Amount</p>
+                  <p className="text-xl font-bold">{fmt(stats.totalPaidAmount)}</p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="rounded-xl border border-border bg-card">
-        <div className="flex flex-col gap-4 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-            <input type="text" placeholder="Search by agent, property, or user..." value={search} onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
-            <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="PAID">Paid</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
+      {error ? (
+        <div className="rounded-xl bg-error-50 px-4 py-3 text-sm text-red-700 border border-red-100 flex items-center gap-2.5">
+          <AlertCircle size={16} />
+          <span className="flex-1">{error}</span>
+          <button onClick={fetchCommissions} className="underline text-red-700 hover:text-red-800 font-medium">Retry</button>
         </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex flex-col gap-4 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                type="text" placeholder="Search by agent, property, or user..."
+                value={search} onChange={(e) => setSearch(e.target.value)}
+                className="rounded-xl border border-border bg-card/80 pl-10 pr-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <div className="rounded-xl border border-border bg-card p-1 flex">
+              {statuses.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all", s === statusFilter ? "bg-primary text-white shadow-sm" : "text-muted hover:text-foreground")}
+                >
+                  {statusLabels[s]}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-muted" /></div>
-          ) : commissions.length === 0 ? (
-            <div className="py-16 text-center text-sm text-muted">No commissions found.</div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left font-medium text-muted">APL Agent</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted">Property</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted">Referred User</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted">Amount</th>
-                  <th className="px-4 py-3 text-center font-medium text-muted">Status</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted">Paid Date</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {commissions.map((c) => (
-                  <tr key={c.id} className="border-b border-border last:border-0 hover:bg-background/50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-foreground">{c.aplAgent.fullName}</p>
-                      <p className="text-xs font-mono text-muted">{c.aplAgent.agentCode}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="truncate max-w-[200px] text-foreground">{c.property.title}</p>
-                      <p className="text-xs text-muted">{c.property.currency} {Number(c.property.price).toLocaleString()}</p>
-                    </td>
-                    <td className="px-4 py-3 text-muted">{c.user.firstName} {c.user.lastName}</td>
-                    <td className="px-4 py-3 text-right font-medium text-foreground">KES {Number(c.amount).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${c.status === "PAID" ? "bg-success/10 text-success" : c.status === "PENDING" ? "bg-warning/10 text-warning" : "bg-error/10 text-error"}`}>
-                        {c.status === "PAID" ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                        {c.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted text-xs">{c.paidAt ? new Date(c.paidAt).toLocaleDateString() : "—"}</td>
-                    <td className="px-4 py-3 text-right">
-                      {c.status === "PENDING" ? (
-                        <button onClick={() => handleMarkPaid(c.id)}
-                          className="touch-target rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white hover:bg-success/90 transition-colors">Mark Paid</button>
-                      ) : (
-                        <button onClick={() => handleMarkUnpaid(c.id)}
-                          className="touch-target rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted hover:bg-background transition-colors">Mark Unpaid</button>
-                      )}
-                    </td>
-                  </tr>
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    {skeleton(`${100 + Math.random() * 80}px`)}
+                    {skeleton("160px")}
+                    {skeleton(`${80 + Math.random() * 60}px`)}
+                    {skeleton("70px")}
+                    {skeleton("60px")}
+                    {skeleton("70px")}
+                    {skeleton("80px")}
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          )}
+              </div>
+            ) : commissions.length === 0 ? (
+              <div className="flex flex-col items-center py-16">
+                <Banknote size={40} className="opacity-30 text-muted" />
+                <p className="mt-3 text-sm text-muted">{debouncedSearch || statusFilter ? "No commissions match your filters." : "No commissions yet."}</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
+                    <th className="px-4 py-3 text-left">Agent</th>
+                    <th className="px-4 py-3 text-left">User</th>
+                    <th className="px-4 py-3 text-left">Property</th>
+                    <th className="px-4 py-3 text-right">Amount</th>
+                    <th className="px-4 py-3 text-center">Status</th>
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {commissions.map((c) => (
+                    <tr key={c.id} className="hover:bg-gray-50/50">
+                      <td className="px-4 py-3">
+                        <p className="font-medium">{c.aplAgent.fullName}</p>
+                        <p className="text-xs text-muted font-mono">{c.aplAgent.agentCode}</p>
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {c.user.firstName} {c.user.lastName}
+                      </td>
+                      <td className="px-4 py-3 max-w-[180px]">
+                        <p className="truncate font-medium">{c.property.title}</p>
+                        <p className="text-xs text-muted">{fmt(c.property.price)}</p>
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium">{fmt(c.amount)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={statusBadge(c.status)}>
+                          {c.status === "PAID" ? <CheckCircle size={12} className="mr-1" /> : c.status === "PENDING" ? <XCircle size={12} className="mr-1" /> : null}
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted">
+                        {c.paidAt ? new Date(c.paidAt).toLocaleDateString() : new Date(c.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {c.status === "PENDING" ? (
+                          <button
+                            onClick={() => handleMarkPaid(c.id)}
+                            disabled={actionLoading === c.id}
+                            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all disabled:opacity-50 inline-flex items-center gap-1.5"
+                          >
+                            {actionLoading === c.id && <Loader2 size={13} className="animate-spin" />}
+                            {actionLoading === c.id ? "Processing..." : "Mark Paid"}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-muted">&mdash;</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
