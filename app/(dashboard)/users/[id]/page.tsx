@@ -57,11 +57,7 @@ interface UserDetail {
   city?: string;
   address?: string;
   estateSubLocation?: string;
-  aplRepName?: string;
-  aplRepPhone?: string;
-  refereeName?: string;
-  refereePhone?: string;
-  refereeLocation?: string;
+
   nationality?: string;
   gender?: string;
   dateOfBirth?: string;
@@ -302,23 +298,6 @@ export default function UserDetailPage() {
                       ))
                     : <span className="text-sm text-foreground">—</span>}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="mb-4 text-base font-semibold text-foreground">Referee & APL Rep</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">Referee</p>
-                <p className="text-sm font-medium text-foreground">{user.refereeName || "—"}</p>
-                <p className="text-xs text-muted">{user.refereePhone || ""}</p>
-                <p className="text-xs text-muted">{user.refereeLocation || ""}</p>
-              </div>
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">APL Representative</p>
-                <p className="text-sm font-medium text-foreground">{user.aplRepName || "—"}</p>
-                <p className="text-xs text-muted">{user.aplRepPhone || ""}</p>
               </div>
             </div>
           </div>

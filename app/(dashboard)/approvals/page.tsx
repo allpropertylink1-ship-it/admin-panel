@@ -34,11 +34,7 @@ interface PendingUser {
   location?: string
   city?: string
   estateSubLocation?: string
-  aplRepName?: string
-  aplRepPhone?: string
-  refereeName?: string
-  refereePhone?: string
-  refereeLocation?: string
+
   createdAt: string
   kycDocuments: KycDocument[]
 }
@@ -260,23 +256,6 @@ export default function ApprovalsPage() {
                         <Detail icon={MapPin} label="Location" value={user.location || "\u2014"} />
                         <Detail icon={MapPin} label="City" value={user.city || "\u2014"} />
                         <Detail icon={MapPin} label="Sub-Location" value={user.estateSubLocation || "\u2014"} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">APL Representative Reference</h4>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <Detail icon={User} label="APL Rep Name" value={user.aplRepName || "\u2014"} />
-                        <Detail icon={Phone} label="APL Rep Phone" value={user.aplRepPhone || "\u2014"} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Referee Information</h4>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <Detail icon={User} label="Referee Name" value={user.refereeName || "\u2014"} />
-                        <Detail icon={Phone} label="Referee Phone" value={user.refereePhone || "\u2014"} />
-                        <Detail icon={MapPin} label="Referee Location" value={user.refereeLocation || "\u2014"} />
                       </div>
                     </div>
 
