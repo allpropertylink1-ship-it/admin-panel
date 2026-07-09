@@ -1,4 +1,4 @@
-const API_BASE = "https://delightful-encouragement-production-878d.up.railway.app"
+const API_BASE = ""
 
 interface ApiResponse<T = unknown> {
   data?: T
