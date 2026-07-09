@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
@@ -44,6 +45,7 @@ const statusBadge = (status: string) => {
 }
 
 export default function AgentsPage() {
+  const router = useRouter()
   const [agents, setAgents] = useState<AplAgent[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -57,6 +59,8 @@ export default function AgentsPage() {
   const [form, setForm] = useState<FormData>(emptyForm)
   const [formError, setFormError] = useState("")
   const [formLoading, setFormLoading] = useState(false)
+
+  const [newAgentCredentials, setNewAgentCredentials] = useState<{ email: string; password: string; name: string } | null>(null)
 
   const [deleteTarget, setDeleteTarget] = useState<AplAgent | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -126,10 +130,16 @@ export default function AgentsPage() {
         if (editError || !data) { setFormError(editError || "Failed to update agent"); return }
         setAgents((prev) => prev.map((a) => a.id === editAgent.id ? data.agent : a))
       } else {
-        const { data, error: addError } = await api.post<{ agent: AplAgent }>("/api/admin/agents", payload)
+        const { data, error: addError } = await api.post<{ agent: AplAgent; credentials?: { email: string; password: string } }>("/api/admin/agents", payload)
         if (addError || !data) { setFormError(addError || "Failed to create agent"); return }
         setAgents((prev) => [data.agent, ...prev])
         setTotal((prev) => prev + 1)
+        if (data.credentials) {
+          setNewAgentCredentials({ email: data.credentials.email, password: data.credentials.password, name: form.fullName })
+          setModalOpen(false)
+          resetForm()
+          return
+        }
       }
       setModalOpen(false)
       resetForm()
@@ -298,7 +308,7 @@ export default function AgentsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {agents.map((agent) => (
-                    <tr key={agent.id} className="hover:bg-gray-50/50">
+                    <tr key={agent.id} onClick={() => router.push(`/agents/${agent.id}`)} className="hover:bg-primary-50/30 cursor-pointer transition-colors">
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary font-mono gap-1">
                           <Hash size={12} /> {agent.agentCode}
@@ -314,19 +324,19 @@ export default function AgentsPage() {
                       <td className="px-4 py-3 text-muted text-xs">{new Date(agent.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => openEditModal(agent)} className="rounded-xl p-2 text-muted hover:bg-gray-50 hover:text-foreground transition-all" title="Edit">
+                          <button onClick={(e) => { e.stopPropagation(); openEditModal(agent) }} className="rounded-xl p-2 text-muted hover:bg-gray-50 hover:text-foreground transition-all" title="Edit">
                             <Pencil size={15} />
                           </button>
                           {agent.status === "ACTIVE" ? (
-                            <button onClick={() => setSuspendTarget(agent)} className="rounded-xl p-2 text-warning/70 hover:bg-warning/10 hover:text-warning transition-all" title="Suspend">
+                            <button onClick={(e) => { e.stopPropagation(); setSuspendTarget(agent) }} className="rounded-xl p-2 text-warning/70 hover:bg-warning/10 hover:text-warning transition-all" title="Suspend">
                               <Ban size={15} />
                             </button>
                           ) : (
-                            <button onClick={() => handleReactivate(agent)} className="rounded-xl p-2 text-success/70 hover:bg-success/10 hover:text-success transition-all" title="Reactivate">
+                            <button onClick={(e) => { e.stopPropagation(); handleReactivate(agent) }} className="rounded-xl p-2 text-success/70 hover:bg-success/10 hover:text-success transition-all" title="Reactivate">
                               <CheckCircle size={15} />
                             </button>
                           )}
-                          <button onClick={() => setDeleteTarget(agent)} className="rounded-xl p-2 text-error/70 hover:bg-error-50 hover:text-error transition-all" title="Delete">
+                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(agent) }} className="rounded-xl p-2 text-error/70 hover:bg-error-50 hover:text-error transition-all" title="Delete">
                             <Trash2 size={15} />
                           </button>
                         </div>
@@ -415,6 +425,42 @@ export default function AgentsPage() {
                 className="rounded-xl bg-error px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-all disabled:opacity-50 inline-flex items-center gap-2">
                 {deleteLoading && <Loader2 size={14} className="animate-spin" />}
                 {deleteLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {newAgentCredentials && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Representative Created</h2>
+              <button onClick={() => setNewAgentCredentials(null)} className="rounded-xl p-1.5 text-muted hover:bg-gray-50 hover:text-foreground transition-all">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-sm text-muted mb-4">
+              A login account has been created for <strong>{newAgentCredentials.name}</strong>. Share these credentials with them.
+            </p>
+            <div className="rounded-xl bg-primary-50 border border-primary/20 p-4 space-y-3">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted">Email</label>
+                <p className="mt-0.5 font-mono text-sm font-medium">{newAgentCredentials.email}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted">Password</label>
+                <p className="mt-0.5 font-mono text-sm font-medium">{newAgentCredentials.password}</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => {
+                navigator.clipboard.writeText(`Email: ${newAgentCredentials.email}\nPassword: ${newAgentCredentials.password}`)
+              }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">
+                Copy Credentials
+              </button>
+              <button onClick={() => setNewAgentCredentials(null)} className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all">
+                Done
               </button>
             </div>
           </div>
