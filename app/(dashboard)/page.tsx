@@ -11,6 +11,7 @@ import {
   MessageSquare,
   ShieldOff,
   Handshake,
+  Banknote,
   BarChart3,
   Clock,
   Plus,
@@ -50,6 +51,7 @@ interface DashboardData {
   recentInquiries: RecentInquiry[];
   topCities: { city: string; count: number }[];
   registrationsByDay: { date: string; count: number }[];
+  commissions: { total: number; pending: number; paid: number; totalPaidAmount: number };
 }
 
 const statCards = [
@@ -60,6 +62,7 @@ const statCards = [
   { label: "Total Inquiries", key: "totalInquiries", icon: MessageSquare, color: "text-violet-600", bg: "bg-violet-50", link: "/inquiries" },
   { label: "KYC Pending", key: "kycPending", icon: ShieldOff, color: "text-rose-600", bg: "bg-rose-50", link: "/kyc" },
   { label: "APL Agents", key: "totalAgents", icon: Handshake, color: "text-cyan-600", bg: "bg-cyan-50", link: "/agents" },
+  { label: "Commissions Pending", key: "commissionsPending", icon: Banknote, color: "text-amber-600", bg: "bg-amber-50", link: "/commissions" },
   { label: "Pending Inquiries", key: "pendingInquiries", icon: BarChart3, color: "text-gray-600", bg: "bg-gray-50", link: "/inquiries" },
 ];
 
@@ -159,7 +162,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => {
           const Icon = card.icon;
-          const value = data[card.key as keyof DashboardData];
+          const value = card.key === "commissionsPending"
+            ? data.commissions?.pending ?? 0
+            : data[card.key as keyof DashboardData];
           return (
             <Link
               key={card.key}

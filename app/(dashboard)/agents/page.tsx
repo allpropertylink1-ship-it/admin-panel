@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
 import {
   Search,
   Users,
@@ -26,28 +26,10 @@ interface AplAgent {
   _count: { users: number };
 }
 
-interface ReffedUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string | null;
-  phone: string | null;
-  category: string | null;
-  accountStatus: string;
-  kycStatus: string;
-  createdAt: string;
-  _count: { properties: number };
-}
-
-interface AgentDetail extends AplAgent {
-  users: ReffedUser[];
-}
-
 export default function AgentsPage() {
   const [agents, setAgents] = useState<AplAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedAgent, setSelectedAgent] = useState<AgentDetail | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editAgent, setEditAgent] = useState<AplAgent | null>(null);
@@ -121,13 +103,7 @@ export default function AgentsPage() {
     setShowEditModal(true);
   }
 
-  function openDetail(agent: AplAgent) {
-    setActionLoading(agent.id);
-    api.get<{ agent: AgentDetail }>(`/api/admin/agents/${agent.id}`).then(({ data, error }) => {
-      if (data?.agent) setSelectedAgent(data.agent);
-      setActionLoading(null);
-    });
-  }
+  // function openDetail removed — agent detail now at /agents/[id]
 
   const totalReferred = agents.reduce((s, a) => s + a._count.users, 0);
 
@@ -221,10 +197,10 @@ export default function AgentsPage() {
                     <td className="px-4 py-3 text-muted">{new Date(agent.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openDetail(agent)} disabled={actionLoading === agent.id}
-                          className="touch-target rounded-lg p-2 text-muted transition-colors hover:bg-background hover:text-foreground" title="View details">
-                          {actionLoading === agent.id ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} />}
-                        </button>
+                        <Link href={`/agents/${agent.id}`}
+                          className="touch-target rounded-lg p-2 text-muted transition-colors hover:bg-background hover:text-foreground inline-flex items-center" title="View details">
+                          <Eye size={16} />
+                        </Link>
                         <button onClick={() => openEditModal(agent)}
                           className="touch-target rounded-lg p-2 text-muted transition-colors hover:bg-background hover:text-foreground" title="Edit">
                           <Pencil size={16} />
@@ -248,74 +224,6 @@ export default function AgentsPage() {
       )}
       {showEditModal && (
         <AgentFormModal title="Edit APL Agent" form={form} setForm={setForm} error={formError} loading={formLoading} onSave={handleEditAgent} onClose={() => { setShowEditModal(false); setEditAgent(null) }} />
-      )}
-
-      {selectedAgent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <h2 className="text-lg font-semibold text-foreground">APL Agent Details</h2>
-              <button onClick={() => setSelectedAgent(null)} className="touch-target rounded-lg p-1.5 text-muted transition-colors hover:bg-background hover:text-foreground">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="space-y-4 p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
-                  {selectedAgent.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-foreground">{selectedAgent.fullName}</p>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-mono font-medium text-primary">
-                    <Hash size={12} /> {selectedAgent.agentCode}
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><p className="text-muted">Email</p><p className="font-medium text-foreground">{selectedAgent.email}</p></div>
-                <div><p className="text-muted">Phone</p><p className="font-medium text-foreground">{selectedAgent.phone}</p></div>
-                <div><p className="text-muted">Users Referred</p><p className="font-medium text-foreground">{selectedAgent._count.users}</p></div>
-                <div><p className="text-muted">Onboarded</p><p className="font-medium text-foreground">{new Date(selectedAgent.createdAt).toLocaleDateString()}</p></div>
-              </div>
-
-              {selectedAgent.users.length > 0 && (
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold text-foreground">Referred Users ({selectedAgent.users.length})</h3>
-                  <div className="overflow-x-auto rounded-lg border border-border">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border bg-background">
-                          <th className="px-3 py-2 text-left font-medium text-muted">Name</th>
-                          <th className="px-3 py-2 text-left font-medium text-muted">Email</th>
-                          <th className="px-3 py-2 text-left font-medium text-muted">Category</th>
-                          <th className="px-3 py-2 text-center font-medium text-muted">Listings</th>
-                          <th className="px-3 py-2 text-left font-medium text-muted">Status</th>
-                          <th className="px-3 py-2 text-left font-medium text-muted">Joined</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedAgent.users.map((u: ReffedUser) => (
-                          <tr key={u.id} className="border-b border-border last:border-0">
-                            <td className="px-3 py-2 font-medium text-foreground">{u.firstName} {u.lastName}</td>
-                            <td className="px-3 py-2 text-muted">{u.email ?? "—"}</td>
-                            <td className="px-3 py-2 text-muted">{u.category ?? "—"}</td>
-                            <td className="px-3 py-2 text-center text-foreground">{u._count.properties}</td>
-                            <td className="px-3 py-2">
-                              <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", u.accountStatus === "ACTIVE" ? "bg-success/10 text-success" : u.accountStatus === "PENDING_APPROVAL" ? "bg-warning/10 text-warning" : "bg-error/10 text-error")}>
-                                {u.accountStatus}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-muted">{new Date(u.createdAt).toLocaleDateString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
