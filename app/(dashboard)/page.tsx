@@ -7,7 +7,7 @@ import { api } from "@/lib/api-client"
 import {
   Users, UserCheck, Building2, MessageSquare, ShieldOff,
   Handshake, Banknote, Clock, AlertCircle, ArrowUpRight,
-  UserPlus, Mail, ChevronRight, Activity, TrendingUp,
+  UserPlus, Mail, ChevronRight, Activity,
 } from "lucide-react"
 
 interface RecentUser {
@@ -29,70 +29,52 @@ interface DashboardData {
 }
 
 const cards = [
-  { label: "Total Users", key: "totalUsers", icon: Users, gradient: "from-blue-500 to-blue-600", link: "/users" },
-  { label: "Pending Approvals", key: "pendingApprovals", icon: UserCheck, gradient: "from-amber-500 to-amber-600", link: "/approvals" },
-  { label: "Active Properties", key: "activeProperties", icon: Building2, gradient: "from-emerald-500 to-emerald-600", link: "/properties" },
-  { label: "Pending Reviews", key: "pendingReviews", icon: Clock, gradient: "from-orange-500 to-orange-600", link: "/properties" },
-  { label: "Total Inquiries", key: "totalInquiries", icon: MessageSquare, gradient: "from-violet-500 to-violet-600", link: "/inquiries" },
-  { label: "KYC Pending", key: "kycPending", icon: ShieldOff, gradient: "from-rose-500 to-rose-600", link: "/kyc" },
-  { label: "APL Agents", key: "totalAgents", icon: Handshake, gradient: "from-cyan-500 to-cyan-600", link: "/agents" },
-  { label: "Pending Inquiries", key: "pendingInquiries", icon: Mail, gradient: "from-gray-500 to-gray-600", link: "/inquiries" },
+  { label: "Total Users", key: "totalUsers", icon: Users, color: "text-blue-600", bg: "bg-blue-50", link: "/users" },
+  { label: "Pending Approvals", key: "pendingApprovals", icon: UserCheck, color: "text-amber-600", bg: "bg-amber-50", link: "/approvals" },
+  { label: "Active Properties", key: "activeProperties", icon: Building2, color: "text-emerald-600", bg: "bg-emerald-50", link: "/properties" },
+  { label: "Pending Reviews", key: "pendingReviews", icon: Clock, color: "text-orange-600", bg: "bg-orange-50", link: "/properties" },
+  { label: "Total Inquiries", key: "totalInquiries", icon: MessageSquare, color: "text-violet-600", bg: "bg-violet-50", link: "/inquiries" },
+  { label: "KYC Pending", key: "kycPending", icon: ShieldOff, color: "text-rose-600", bg: "bg-rose-50", link: "/kyc" },
+  { label: "APL Agents", key: "totalAgents", icon: Handshake, color: "text-cyan-600", bg: "bg-cyan-50", link: "/agents" },
+  { label: "Pending Inquiries", key: "pendingInquiries", icon: Mail, color: "text-gray-600", bg: "bg-gray-50", link: "/inquiries" },
 ]
 
 const roleBadge: Record<string, string> = {
-  ADMIN: "bg-red-50 text-red-700 ring-1 ring-red-200",
-  AGENT: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-  APPLICANT: "bg-gray-50 text-gray-600 ring-1 ring-gray-200",
+  ADMIN: "bg-red-50 text-red-700", AGENT: "bg-blue-50 text-blue-700", APPLICANT: "bg-gray-50 text-gray-600",
 }
 
 const statusBadge: Record<string, string> = {
-  PENDING: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-  READ: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-  RESPONDED: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-  CLOSED: "bg-gray-50 text-gray-600 ring-1 ring-gray-200",
+  PENDING: "bg-amber-50 text-amber-700 border-amber-200",
+  READ: "bg-blue-50 text-blue-700 border-blue-200",
+  RESPONDED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  CLOSED: "bg-gray-50 text-gray-600 border-gray-200",
 }
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-xl border border-border bg-surface p-5">
-      <div className="mb-3 h-10 w-10 rounded-xl bg-primary-100" />
-      <div className="mb-1.5 h-3.5 w-24 rounded bg-primary-100" />
-      <div className="h-7 w-16 rounded bg-primary-100" />
+    <div className="animate-pulse rounded-xl border border-border bg-card p-5">
+      <div className="mb-3 h-10 w-10 rounded-xl bg-gray-200" />
+      <div className="mb-1.5 h-3.5 w-24 rounded bg-gray-200" />
+      <div className="h-7 w-16 rounded bg-gray-200" />
     </div>
   )
 }
 
 function StatCard({ item, value }: { item: typeof cards[0]; value: number }) {
   const Icon = item.icon
-  const [displayValue, setDisplayValue] = useState(0)
-
-  useEffect(() => {
-    if (value === 0) { setDisplayValue(0); return }
-    const duration = 600
-    const steps = 20
-    const increment = value / steps
-    let current = 0
-    const timer = setInterval(() => {
-      current += increment
-      if (current >= value) { setDisplayValue(value); clearInterval(timer) }
-      else setDisplayValue(Math.round(current))
-    }, duration / steps)
-    return () => clearInterval(timer)
-  }, [value])
-
   return (
     <Link
       href={item.link}
-      className="stat-card rounded-xl border border-border bg-surface p-5"
+      className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-0.5"
     >
       <div className="flex items-start justify-between">
-        <div className={cn("rounded-xl bg-gradient-to-br p-2.5 text-white shadow-sm", item.gradient)}>
-          <Icon size={20} />
+        <div className={cn("rounded-xl p-2.5", item.bg)}>
+          <Icon size={20} className={item.color} />
         </div>
         <ArrowUpRight size={14} className="text-muted/30 group-hover:text-muted transition-colors duration-200" />
       </div>
-      <p className="mt-4 text-xs font-medium text-muted tracking-wider uppercase">{item.label}</p>
-      <p className="mt-1 text-2xl font-bold text-foreground tabular-nums animate-count-up">{displayValue.toLocaleString()}</p>
+      <p className="mt-4 text-xs font-medium text-muted tracking-wide uppercase">{item.label}</p>
+      <p className="mt-1 text-2xl font-bold text-foreground tabular-nums">{value.toLocaleString()}</p>
     </Link>
   )
 }
@@ -112,20 +94,20 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {[1, 2].map((i) => (
-            <div key={i} className="animate-pulse rounded-xl border border-border bg-surface p-6">
-              <div className="mb-4 h-5 w-40 rounded bg-primary-100" />
+            <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-6">
+              <div className="mb-4 h-5 w-40 rounded bg-gray-200" />
               {Array.from({ length: 4 }).map((_, j) => (
                 <div key={j} className="mb-3 flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-primary-100" />
+                  <div className="h-9 w-9 rounded-full bg-gray-200" />
                   <div className="flex-1">
-                    <div className="mb-1 h-3.5 w-32 rounded bg-primary-100" />
-                    <div className="h-3 w-24 rounded bg-primary-100" />
+                    <div className="mb-1 h-3.5 w-32 rounded bg-gray-200" />
+                    <div className="h-3 w-24 rounded bg-gray-200" />
                   </div>
                 </div>
               ))}
@@ -138,15 +120,15 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
+      <div className="flex flex-col items-center justify-center py-24 text-center">
         <div className="rounded-2xl bg-error-50 p-4 mb-4">
           <AlertCircle size={36} className="text-error" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground font-heading">Failed to load dashboard</h3>
+        <h3 className="text-lg font-semibold text-foreground">Failed to load dashboard</h3>
         <p className="mt-1.5 text-sm text-muted max-w-sm">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover shadow-sm shadow-primary/20"
+          className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
           Retry
         </button>
@@ -157,22 +139,16 @@ export default function DashboardPage() {
   if (!data) return null
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-foreground tracking-tight">Dashboard</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-            </span>
-            <p className="text-sm text-muted">All systems operational</p>
-          </div>
+          <h1 className="text-2xl font-bold text-foreground font-heading">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted">Platform overview at a glance</p>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href="/properties"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-hover card-hover"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-hover"
           >
             <Building2 size={16} />
             <span className="hidden sm:inline">Add Property</span>
@@ -190,15 +166,13 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-border bg-surface shadow-sm card-hover">
+        <div className="rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div className="flex items-center gap-2.5">
-              <div className="rounded-lg bg-primary-50 p-1.5">
-                <UserPlus size={16} className="text-primary" />
-              </div>
+              <UserPlus size={16} className="text-primary" />
               <h2 className="text-sm font-semibold text-foreground">Recent Registrations</h2>
             </div>
-            <Link href="/users" className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover transition-colors">
+            <Link href="/users" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors">
               View all <ChevronRight size={12} />
             </Link>
           </div>
@@ -209,9 +183,9 @@ export default function DashboardPage() {
                 <p className="text-sm">No recent registrations</p>
               </div>
             ) : (
-              data.recentRegistrations.slice(0, 5).map((user, idx) => (
-                <div key={user.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-primary-50/30 animate-slide-up" style={{ animationDelay: `${idx * 40}ms` }}>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-600 text-white text-xs font-bold shadow-sm">
+              data.recentRegistrations.slice(0, 5).map((user) => (
+                <div key={user.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-gray-50/50">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
                     {user.firstName[0]}{user.lastName[0]}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -228,15 +202,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface shadow-sm card-hover">
+        <div className="rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div className="flex items-center gap-2.5">
-              <div className="rounded-lg bg-primary-50 p-1.5">
-                <Mail size={16} className="text-primary" />
-              </div>
+              <Mail size={16} className="text-primary" />
               <h2 className="text-sm font-semibold text-foreground">Recent Inquiries</h2>
             </div>
-            <Link href="/inquiries" className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover transition-colors">
+            <Link href="/inquiries" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors">
               View all <ChevronRight size={12} />
             </Link>
           </div>
@@ -247,11 +219,11 @@ export default function DashboardPage() {
                 <p className="text-sm">No recent inquiries</p>
               </div>
             ) : (
-              data.recentInquiries.slice(0, 5).map((inq, idx) => (
-                <div key={inq.id} className="px-5 py-3 transition-colors hover:bg-primary-50/30 animate-slide-up" style={{ animationDelay: `${idx * 40}ms` }}>
+              data.recentInquiries.slice(0, 5).map((inq) => (
+                <div key={inq.id} className="px-5 py-3 transition-colors hover:bg-gray-50/50">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium text-foreground">{inq.name}</p>
-                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium", statusBadge[inq.status] || "")}>
+                    <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium", statusBadge[inq.status] || "")}>
                       {inq.status}
                     </span>
                   </div>
