@@ -18,6 +18,7 @@ interface UserInfo {
 interface KycDocument {
   id: string; documentType: string; documentNumber: string | null
   status: string; frontImage: string | null; backImage: string | null
+  passportPhoto: string | null; businessPermit: string | null
   bioData: { firstName?: string; middleName?: string; lastName?: string; phone?: string; email?: string } | null
   rejectionReason: string | null; createdAt: string; verifiedAt: string | null
   user: UserInfo
@@ -276,7 +277,7 @@ export default function KycPage() {
                   <span>·</span>
                   <span>{timeAgo(doc.createdAt)}</span>
                 </div>
-                {(doc.frontImage || doc.backImage) && (
+                {(doc.frontImage || doc.backImage || doc.passportPhoto || doc.businessPermit) && (
                   <div className="mt-2 flex gap-1.5">
                     {doc.frontImage && (
                       doc.frontImage.match(/\.pdf/i) ? (
@@ -301,6 +302,17 @@ export default function KycPage() {
                       ) : (
                         <ImgWithFallback src={doc.backImage} alt="" className="h-9 w-14 rounded object-cover" />
                       )
+                    )}
+                    {doc.passportPhoto && (
+                      <ImgWithFallback src={doc.passportPhoto} alt="Passport" className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/20" />
+                    )}
+                    {doc.businessPermit && (
+                      <a href={resolvePdfUrl(doc.businessPermit)} target="_blank" rel="noopener noreferrer"
+                        className="flex h-9 w-9 items-center justify-center rounded bg-amber-50 text-amber-400 hover:bg-amber-100 transition-colors"
+                        title="View Business Permit"
+                      >
+                        <FileText size={14} />
+                      </a>
                     )}
                   </div>
                 )}
@@ -446,6 +458,57 @@ export default function KycPage() {
                         <div className="flex items-center justify-center rounded-lg border border-dashed border-muted/50 bg-white py-14 text-xs text-muted">No image</div>
                       )}
                     </div>
+
+                    {/* Passport Photo — centered badge */}
+                    {doc.passportPhoto && (
+                      <div className="col-span-full border-t border-border pt-4 mt-2">
+                        <label className="mb-2 flex items-center gap-2 text-xs font-medium text-muted uppercase tracking-wider">
+                          <span className="rounded-full bg-primary/10 p-1"><CheckCircle size={12} className="text-primary" /></span>
+                          Passport Photo / Logo
+                        </label>
+                        <div className="flex justify-center">
+                          <button onClick={() => openLightbox([{ src: doc.passportPhoto!, label: `Passport Photo — ${selectedDoc!.user.firstName} ${selectedDoc!.user.lastName}` }], 0)}
+                            className="group relative overflow-hidden rounded-full border-4 border-primary/20 shadow-md transition-shadow hover:shadow-lg"
+                          >
+                            <ImgWithFallback src={doc.passportPhoto} alt="Passport"
+                              className="h-32 w-32 object-cover"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/10">
+                              <span className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium text-gray-700 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">Zoom</span>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Business Permit — PDF card */}
+                    {doc.businessPermit && (
+                      <div className="col-span-full border-t border-border pt-4 mt-2">
+                        <label className="mb-2 flex items-center gap-2 text-xs font-medium text-muted uppercase tracking-wider">
+                          <span className="rounded-full bg-amber-50 p-1"><FileText size={12} className="text-amber-600" /></span>
+                          Business Permit
+                          <span className="font-normal normal-case text-muted">(Optional)</span>
+                        </label>
+                        <div className="flex items-center gap-3 rounded-lg border border-border bg-amber-50/30 p-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100">
+                            <FileText size={24} className="text-amber-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-foreground">Business Permit Document</p>
+                            <p className="text-xs text-muted">Uploaded as PDF</p>
+                          </div>
+                          {doc.businessPermit.match(/\.pdf/i) ? (
+                            <PdfViewer url={doc.businessPermit} filename={`Business Permit — ${selectedDoc!.user.firstName} ${selectedDoc!.user.lastName}`} compact />
+                          ) : (
+                            <button onClick={() => openLightbox([{ src: doc.businessPermit!, label: `Business Permit — ${selectedDoc!.user.firstName} ${selectedDoc!.user.lastName}` }], 0)}
+                              className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-medium text-white hover:bg-amber-700 transition-colors"
+                            >
+                              View
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Document info */}
                     <div className="border-t border-border px-5 py-3">
