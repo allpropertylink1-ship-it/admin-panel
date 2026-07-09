@@ -125,8 +125,8 @@ export default function AgentDetailPage() {
   if (!agent) {
     return (
       <div className="py-24 text-center">
-        <p className="text-lg text-muted">Agent not found.</p>
-        <button onClick={() => router.push("/agents")} className="mt-4 text-sm text-primary hover:underline">Back to Agents</button>
+        <p className="text-lg text-muted">Representative not found.</p>
+        <button onClick={() => router.push("/agents")} className="mt-4 text-sm text-primary hover:underline">Back to Representatives</button>
       </div>
     )
   }
@@ -176,7 +176,7 @@ export default function AgentDetailPage() {
 
       {tab === "overview" && (
         <div className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Agent Information</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Representative Information</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <InfoRow label="Full Name" value={agent.fullName} />
             <InfoRow label="Email" value={agent.email} />

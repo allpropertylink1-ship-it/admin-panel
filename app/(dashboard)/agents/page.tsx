@@ -50,11 +50,11 @@ export default function AgentsPage() {
       const params = new URLSearchParams()
       if (debouncedSearch) params.set("search", debouncedSearch)
       const { data, error: fetchError } = await api.get<{ agents: AplAgent[]; total: number }>(`/api/admin/agents?${params.toString()}`)
-      if (fetchError || !data) throw new Error(fetchError || "Failed to load agents")
+      if (fetchError || !data) throw new Error(fetchError || "Failed to load representatives")
       setAgents(data.agents ?? [])
       setTotal(data.total ?? 0)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load agents")
+      setError(e instanceof Error ? e.message : "Failed to load representatives")
       setAgents([])
     } finally {
       setLoading(false)
@@ -127,11 +127,11 @@ export default function AgentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-heading">APL Agents</h1>
+          <h1 className="text-2xl font-bold font-heading">APL Representatives</h1>
           <p className="mt-1 text-sm text-muted">Employees who onboard users onto the platform.</p>
         </div>
         <button onClick={openAddModal} className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all inline-flex items-center gap-2">
-          <UserPlus size={16} /> Add Agent
+          <UserPlus size={16} /> Add Representative
         </button>
       </div>
 
@@ -198,7 +198,7 @@ export default function AgentsPage() {
             ) : agents.length === 0 ? (
               <div className="flex flex-col items-center py-16">
                 <Users size={40} className="opacity-30 text-muted" />
-                <p className="mt-3 text-sm text-muted">{debouncedSearch ? "No agents match your search." : "No agents yet. Add your first agent."}</p>
+                <p className="mt-3 text-sm text-muted">{debouncedSearch ? "No representatives match your search." : "No representatives yet. Add the first one."}</p>
               </div>
             ) : (
               <table className="w-full text-sm">
@@ -249,7 +249,7 @@ export default function AgentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">{editAgent ? "Edit Agent" : "Add Agent"}</h2>
+              <h2 className="text-lg font-semibold">{editAgent ? "Edit Representative" : "Add Representative"}</h2>
               <button onClick={() => { setModalOpen(false); resetForm() }} className="rounded-xl p-1.5 text-muted hover:bg-gray-50 hover:text-foreground transition-all">
                 <X size={18} />
               </button>

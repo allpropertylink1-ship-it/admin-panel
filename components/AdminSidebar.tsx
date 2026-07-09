@@ -38,7 +38,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
   {
     group: "Finance",
     items: [
-      { href: "/agents", label: "APL Agents", icon: Handshake },
+      { href: "/agents", label: "APL Representatives", icon: Handshake },
       { href: "/commissions", label: "Commissions", icon: Banknote },
     ],
   },

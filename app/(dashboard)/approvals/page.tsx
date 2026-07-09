@@ -264,7 +264,7 @@ export default function ApprovalsPage() {
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">APL Agent Reference</h4>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">APL Representative Reference</h4>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Detail icon={User} label="APL Rep Name" value={user.aplRepName || "\u2014"} />
                         <Detail icon={Phone} label="APL Rep Phone" value={user.aplRepPhone || "\u2014"} />
