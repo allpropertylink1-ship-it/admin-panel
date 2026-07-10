@@ -33,6 +33,7 @@ class ApiClient {
       clearTimeout(timeoutId)
 
       if (res.status === 401) {
+        const body = await res.json().catch(() => ({}))
         const refreshed = await this.refresh()
         if (refreshed) {
           const retryRes = await fetch(`${this.baseUrl}${path}`, {
@@ -50,7 +51,7 @@ class ApiClient {
           const retryBody = await retryRes.json()
           return { data: retryBody as T }
         }
-        return { error: "Session expired" }
+        return { error: body.error || "Session expired" }
       }
 
       if (!res.ok) {
