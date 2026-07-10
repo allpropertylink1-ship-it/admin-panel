@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import {
   Users,
   Building2,
-  MessageSquare,
   UserCheck,
   TrendingUp,
   TrendingDown,
@@ -24,27 +23,16 @@ interface RecentUser {
   email: string;
 }
 
-interface RecentInquiry {
-  id: string;
-  name: string;
-  message: string;
-  status: string;
-  createdAt: string;
-}
-
 interface DashboardData {
   totalUsers: number;
   activeProperties: number;
-  totalInquiries: number;
   totalAgents: number;
-  pendingInquiries: number;
   pendingApprovals: number;
   pendingReviews: number;
   kycPending: number;
   registrationsByDay: { date: string; count: number }[];
   topCities: { city: string; count: number }[];
   recentRegistrations: RecentUser[];
-  recentInquiries: RecentInquiry[];
 }
 
 function GrowthIndicator({ value }: { value: number }) {
@@ -214,17 +202,14 @@ export default function ReportsPage() {
   const {
     totalUsers,
     activeProperties,
-    totalInquiries,
     totalAgents,
     registrationsByDay,
     topCities,
     recentRegistrations,
-    recentInquiries,
   } = data;
 
   const [growthUsers] = useState(randGrowth);
   const [growthProperties] = useState(randGrowth);
-  const [growthInquiries] = useState(randGrowth);
   const [growthAgents] = useState(randGrowth);
 
   const stats = [
@@ -234,12 +219,6 @@ export default function ReportsPage() {
       value: activeProperties,
       icon: Building2,
       growth: growthProperties,
-    },
-    {
-      label: "Inquiries",
-      value: totalInquiries,
-      icon: MessageSquare,
-      growth: growthInquiries,
     },
     { label: "Agents", value: totalAgents, icon: UserCheck, growth: growthAgents },
   ];
@@ -398,53 +377,7 @@ export default function ReportsPage() {
           )}
         </div>
 
-        <div className="rounded-xl border border-border bg-card shadow-sm">
-          <div className="border-b border-border px-5 py-4">
-            <h2 className="text-sm font-semibold text-foreground">
-              Recent Inquiries
-            </h2>
-          </div>
-          {recentInquiries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <MessageSquare size={24} className="text-muted/40" />
-              <p className="text-sm text-muted">No recent inquiries.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {recentInquiries.slice(0, 5).map((inq) => (
-                <div key={inq.id} className="px-5 py-3.5 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground">
-                      {inq.name}
-                    </p>
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        inq.status === "pending"
-                          ? "bg-amber-50 text-amber-700"
-                          : inq.status === "resolved"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-background text-muted"
-                      )}
-                    >
-                      {inq.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted line-clamp-1">
-                    {inq.message}
-                  </p>
-                  <div className="flex items-center gap-1 text-[10px] text-muted/60">
-                    <Clock size={10} />
-                    {new Date(inq.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+
       </div>
     </div>
   );

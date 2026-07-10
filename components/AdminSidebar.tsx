@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
 import {
-  LayoutDashboard, Users, UserCheck, Building2, MessageSquare, Shield,
+  LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, Banknote, Wallet, BarChart3, ScrollText, Settings, LogOut,
   Menu, X, ChevronDown, Home,
 } from "lucide-react"
@@ -31,7 +31,6 @@ const navGroups: { group: string; items: NavItem[] }[] = [
       { href: "/users", label: "All Users", icon: Users },
       { href: "/approvals", label: "Approvals", icon: UserCheck },
       { href: "/properties", label: "Properties", icon: Building2 },
-      { href: "/inquiries", label: "Inquiries", icon: MessageSquare },
       { href: "/kyc", label: "KYC Verification", icon: Shield },
     ],
   },
@@ -69,7 +68,6 @@ export function AdminSidebar() {
     if (href === "/users") return pathname.startsWith("/users")
     if (href === "/approvals") return pathname.startsWith("/approvals")
     if (href === "/properties") return pathname.startsWith("/properties")
-    if (href === "/inquiries") return pathname.startsWith("/inquiries")
     if (href === "/kyc") return pathname.startsWith("/kyc")
     return pathname === href
   }
