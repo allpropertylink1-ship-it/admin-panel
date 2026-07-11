@@ -633,7 +633,7 @@ function EditPayoutModal({ payout, onClose, onSubmit }: { payout: Payout; onClos
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h2 className="text-lg font-semibold">Edit Payout</h2>
           <button onClick={onClose} className="touch-target rounded-lg p-1 text-muted hover:text-foreground"><X size={18} /></button>
@@ -689,7 +689,7 @@ function EditPayoutModal({ payout, onClose, onSubmit }: { payout: Payout; onClos
 function ConfirmModal({ title, message, loading, onConfirm, onClose, variant }: { title: string; message: string; loading: boolean; onConfirm: () => void; onClose: () => void; variant?: "warning" | "error" }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-card shadow-2xl">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-card shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-5">
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           <p className="mt-2 text-sm text-muted">{message}</p>

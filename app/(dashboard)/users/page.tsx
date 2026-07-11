@@ -265,8 +265,8 @@ export default function UsersPage() {
                       </div>
                       {deleteConfirm === user.id && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDeleteConfirm(null)}>
-                          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                            <h3 className="text-base font-semibold text-foreground">Delete user?</h3>
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-foreground">Delete user?</h3>
                             <p className="mt-2 text-sm text-muted">This permanently removes {user.firstName} {user.lastName} and all associated data. Cannot be undone.</p>
                             <div className="mt-5 flex justify-end gap-3">
                               <button onClick={() => setDeleteConfirm(null)} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-gray-50">Cancel</button>
@@ -328,7 +328,7 @@ export default function UsersPage() {
 
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
-          <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <h3 className="text-base font-semibold text-foreground">User Details</h3>
               <button onClick={() => setSelectedUser(null)} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors">
