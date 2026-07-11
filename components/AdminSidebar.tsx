@@ -89,7 +89,7 @@ export function AdminSidebar() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar shadow-2xl shadow-black/20 transition-transform duration-300 ease-out lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar shadow-2xl shadow-black/20 transition-transform duration-300 ease-out lg:static lg:translate-x-0 lg:w-56",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -116,7 +116,7 @@ export function AdminSidebar() {
                     href={item.href!}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "touch-target group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                      "touch-target group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 lg:px-4",
                       isActive(item.href!)
                         ? "bg-sidebar-active text-white shadow-sm shadow-black/10"
                         : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"

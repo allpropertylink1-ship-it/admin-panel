@@ -38,10 +38,10 @@ const roleBadge: Record<string, string> = {
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-xl border border-border bg-card p-5">
+    <div className="animate-pulse rounded-xl border border-border bg-card p-4 sm:p-5">
       <div className="mb-3 h-10 w-10 rounded-xl bg-gray-200" />
-      <div className="mb-1.5 h-3.5 w-24 rounded bg-gray-200" />
-      <div className="h-7 w-16 rounded bg-gray-200" />
+      <div className="mb-1.5 h-3 w-20 rounded bg-gray-200 sm:h-3.5 sm:w-24" />
+      <div className="h-6 w-14 rounded bg-gray-200 sm:h-7 sm:w-16" />
     </div>
   )
 }
@@ -51,7 +51,7 @@ function StatCard({ item, value }: { item: typeof cards[0]; value: number }) {
   return (
     <Link
       href={item.link}
-      className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-0.5"
+      className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-0.5 sm:p-5"
     >
       <div className="flex items-start justify-between">
         <div className={cn("rounded-xl p-2.5", item.bg)}>
@@ -59,8 +59,8 @@ function StatCard({ item, value }: { item: typeof cards[0]; value: number }) {
         </div>
         <ArrowUpRight size={14} className="text-muted/30 group-hover:text-muted transition-colors duration-200" />
       </div>
-      <p className="mt-4 text-xs font-medium text-muted tracking-wide uppercase">{item.label}</p>
-      <p className="mt-1 text-2xl font-bold text-foreground tabular-nums">{value.toLocaleString()}</p>
+      <p className="mt-3 text-[10px] font-medium text-muted tracking-wide uppercase sm:mt-4 sm:text-xs">{item.label}</p>
+      <p className="mt-0.5 text-xl font-bold text-foreground tabular-nums sm:mt-1 sm:text-2xl">{value.toLocaleString()}</p>
     </Link>
   )
 }
@@ -81,7 +81,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -142,7 +142,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
         {cards.map((card) => {
           const value = data[card.key as keyof DashboardData] as number
           return <StatCard key={card.key} item={card} value={value} />
