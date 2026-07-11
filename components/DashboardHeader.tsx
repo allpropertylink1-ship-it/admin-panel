@@ -38,11 +38,11 @@ export function DashboardHeader() {
             </button>
             <div className="flex items-center gap-2.5 pl-3 border-l border-border">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white text-xs font-bold shadow-sm">
-                {user.firstName[0]}{user.lastName[0]}
+                {user.fullName?.split(" ").map((n: string) => n[0]).join("").slice(0, 2) || "A"}
               </div>
               <div className="hidden sm:block min-w-0">
                 <p className="text-sm font-medium text-foreground truncate max-w-[160px]">
-                  {user.firstName} {user.lastName}
+                  {user.fullName}
                 </p>
                 <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">
                   Admin

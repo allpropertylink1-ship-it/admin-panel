@@ -6,10 +6,9 @@ import { api } from "./api-client"
 interface User {
   id: string
   email: string
-  firstName: string
-  lastName: string
+  fullName: string
   role: string
-  avatar?: string | null
+  authMethod: string
 }
 
 interface AuthContextType {
@@ -34,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await api.get<{ user: User }>("/api/auth/me")
       if (data?.user) {
-        if (data.user.role !== "ADMIN") {
+        if (data.user.authMethod !== "admin") {
           setUser(null)
           return
         }
@@ -54,11 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchUser])
 
   const login = useCallback(async (email: string, password: string) => {
-    const { data, error } = await api.post<{ user: User }>("/api/auth/login", { email, password })
+    const { data, error } = await api.post<{ user: User }>("/api/auth/admin-login", { email, password })
     if (data?.user) {
-      if (data.user.role !== "ADMIN") {
-        return { error: "Access denied. Admin privileges required." }
-      }
       setUser(data.user)
       return {}
     }
