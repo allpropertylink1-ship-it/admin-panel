@@ -16,7 +16,7 @@ interface Dispute {
   resolvedBy: string | null
   resolvedAt: string | null
   createdAt: string
-  aplAgent: { id: string; fullName: string; email: string; agentCode: string }
+  referralPartner: { id: string; fullName: string; email: string; partnerCode: string }
   commission: { id: string; amount: number; status: string; property: { title: string } } | null
   payout: { id: string; amount: number; status: string } | null
 }
@@ -113,7 +113,7 @@ export default function AdminDisputesPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-card text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Agent</th>
+                <th className="px-4 py-3 font-medium">Partner</th>
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -125,8 +125,8 @@ export default function AdminDisputesPage() {
               {disputes.map((d) => (
                 <tr key={d.id} className="bg-surface hover:bg-card">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-foreground">{d.aplAgent.fullName}</p>
-                    <p className="text-xs text-muted">{d.aplAgent.agentCode}</p>
+                    <p className="font-medium text-foreground">{d.referralPartner.fullName}</p>
+                    <p className="text-xs text-muted">{d.referralPartner.partnerCode}</p>
                   </td>
                   <td className="px-4 py-3 text-foreground">{d.title}</td>
                   <td className="px-4 py-3 font-medium text-foreground">{fmt(d.amount)}</td>
@@ -160,7 +160,7 @@ export default function AdminDisputesPage() {
             <div className="mb-4 flex items-start justify-between">
               <div>
                 <h3 className="font-heading text-lg font-semibold text-foreground">{selectedDispute.title}</h3>
-                <p className="text-sm text-muted">{selectedDispute.aplAgent.fullName} &middot; {selectedDispute.aplAgent.agentCode}</p>
+                <p className="text-sm text-muted">{selectedDispute.referralPartner.fullName} &middot; {selectedDispute.referralPartner.partnerCode}</p>
               </div>
               <button type="button" onClick={() => setSelectedDispute(null)} className="touch-target text-muted hover:text-foreground"><X size={18} /></button>
             </div>

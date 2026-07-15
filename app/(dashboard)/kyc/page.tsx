@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   Shield, ShieldCheck, ShieldX, Search, Loader2, XCircle, CheckCircle,
   RefreshCcw, FileText, X, Clock, ArrowUp, ArrowDown, ImageIcon,
-  ChevronLeft, ChevronRight, AlertCircle, User,
+  ChevronLeft, ChevronRight, AlertCircle, User, Download,
 } from "lucide-react"
 import ImageLightbox from "@/components/ImageLightbox"
 import PdfViewer from "@/components/PdfViewer"
@@ -252,6 +252,13 @@ export default function KycPage() {
                 )}
               </p>
             </div>
+            <a
+              href="/api/admin/exports/kyc"
+              className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-1.5"
+            >
+              <Download size={14} />
+              Export
+            </a>
           </div>
 
           {/* Search */}

@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
   Search, ChevronLeft, ChevronRight, Loader2, Filter, RefreshCw,
-  AlertCircle, ClipboardList,
+  AlertCircle, ClipboardList, Download,
 } from "lucide-react"
 
 interface AuditEntry {
@@ -117,13 +117,22 @@ export default function AuditPage() {
           <h1 className="text-2xl font-bold font-heading text-foreground">Audit Log</h1>
           <p className="mt-1 text-sm text-muted">Track all actions performed across the platform.</p>
         </div>
-        <button
-          onClick={() => { setPage(1); fetchAudit() }}
-          className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-gray-50"
-        >
-          <RefreshCw size={15} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <a
+            href="/api/admin/exports/audit"
+            className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-card"
+          >
+            <Download size={15} />
+            Export
+          </a>
+          <button
+            onClick={() => { setPage(1); fetchAudit() }}
+            className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-gray-50"
+          >
+            <RefreshCw size={15} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm">

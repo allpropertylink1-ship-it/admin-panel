@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
-import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle } from "lucide-react"
+import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle, Download } from "lucide-react"
 
 interface Commission {
   id: string
@@ -13,7 +13,7 @@ interface Commission {
   paidAt: string | null
   notes: string | null
   createdAt: string
-  aplAgent: { id: string; fullName: string; agentCode: string }
+  referralPartner: { id: string; fullName: string; partnerCode: string }
   property: { id: string; title: string; slug: string; price: number; currency: string }
   user: { id: string; firstName: string; lastName: string; email: string }
 }
@@ -104,8 +104,15 @@ export default function CommissionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-heading">Commissions</h1>
-          <p className="mt-1 text-sm text-muted">Track and manage agent commissions from referred user listings.</p>
+          <p className="mt-1 text-sm text-muted">Track and manage partner commissions from referred user listings.</p>
         </div>
+        <a
+          href={`/api/admin/exports/commissions${statusFilter ? `?status=${statusFilter}` : ""}`}
+          className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-2"
+        >
+          <Download size={16} />
+          Export
+        </a>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -227,7 +234,7 @@ export default function CommissionsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="px-4 py-3 text-left">Agent</th>
+                    <th className="px-4 py-3 text-left">Partner</th>
                     <th className="px-4 py-3 text-left">User</th>
                     <th className="px-4 py-3 text-left">Property</th>
                     <th className="px-4 py-3 text-right">Amount</th>
@@ -240,8 +247,8 @@ export default function CommissionsPage() {
                   {commissions.map((c) => (
                     <tr key={c.id} className="hover:bg-gray-50/50">
                       <td className="px-4 py-3">
-                        <p className="font-medium">{c.aplAgent.fullName}</p>
-                        <p className="text-xs text-muted font-mono">{c.aplAgent.agentCode}</p>
+                        <p className="font-medium">{c.referralPartner.fullName}</p>
+                        <p className="text-xs text-muted font-mono">{c.referralPartner.partnerCode}</p>
                       </td>
                       <td className="px-4 py-3 text-muted">
                         {c.user.firstName} {c.user.lastName}

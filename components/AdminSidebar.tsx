@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, Banknote, Wallet, BarChart3, ScrollText, Settings, LogOut,
-  Menu, X, ChevronDown, Home,
+  Menu, X, ChevronDown, Home, Receipt,
 } from "lucide-react"
 
 interface NavItem {
@@ -37,9 +37,10 @@ const navGroups: { group: string; items: NavItem[] }[] = [
   {
     group: "Finance",
     items: [
-      { href: "/agents", label: "APL Representatives", icon: Handshake },
+      { href: "/agents", label: "Referral Partners", icon: Handshake },
       { href: "/commissions", label: "Commissions", icon: Banknote },
       { href: "/payouts", label: "Payouts", icon: Wallet },
+      { href: "/claims", label: "Claims", icon: Receipt },
       { href: "/disputes", label: "Disputes", icon: ScrollText },
     ],
   },
@@ -70,6 +71,7 @@ export function AdminSidebar() {
     if (href === "/approvals") return pathname.startsWith("/approvals")
     if (href === "/properties") return pathname.startsWith("/properties")
     if (href === "/kyc") return pathname.startsWith("/kyc")
+    if (href === "/claims") return pathname.startsWith("/claims")
     return pathname === href
   }
 

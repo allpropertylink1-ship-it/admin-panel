@@ -36,7 +36,7 @@ interface PayoutRecord {
 }
 
 interface AgentDetail {
-  id: string; fullName: string; email: string; phone: string; agentCode: string
+  id: string; fullName: string; email: string; phone: string; partnerCode: string
   status: string; suspendedAt: string | null; suspendedReason: string | null
   commissionRate: number; commissionType: string; commissionCap: number | null
   createdAt: string; _count: { users: number }
@@ -160,9 +160,9 @@ export default function AgentDashboardPage() {
       <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-error-50">
         <AlertCircle size={32} className="text-error" />
       </div>
-      <p className="text-lg font-semibold text-foreground">Representative not found</p>
+      <p className="text-lg font-semibold text-foreground">Partner not found</p>
       <button onClick={() => router.push("/agents")} className="mt-4 text-sm text-accent hover:underline">
-        Back to Representatives
+        Back to Partners
       </button>
     </div>
   )
@@ -205,7 +205,7 @@ export default function AgentDashboardPage() {
                 {agent.status}
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-mono font-medium text-primary">
-                <Hash size={12} /> {agent.agentCode}
+                <Hash size={12} /> {agent.partnerCode}
               </span>
             </div>
             <div className="flex items-center gap-4 mt-1.5 text-sm text-muted flex-wrap">
