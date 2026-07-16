@@ -72,6 +72,13 @@ export function AdminSidebar() {
     if (href === "/properties") return pathname.startsWith("/properties")
     if (href === "/kyc") return pathname.startsWith("/kyc")
     if (href === "/claims") return pathname.startsWith("/claims")
+    if (href === "/agents") return pathname.startsWith("/agents")
+    if (href === "/commissions") return pathname.startsWith("/commissions")
+    if (href === "/payouts") return pathname.startsWith("/payouts")
+    if (href === "/disputes") return pathname.startsWith("/disputes")
+    if (href === "/reports") return pathname.startsWith("/reports")
+    if (href === "/audit") return pathname.startsWith("/audit")
+    if (href === "/settings") return pathname.startsWith("/settings")
     return pathname === href
   }
 
