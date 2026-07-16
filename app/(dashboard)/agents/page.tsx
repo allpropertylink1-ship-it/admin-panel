@@ -8,12 +8,12 @@ import {
   Search, X, UserPlus, Pencil, Trash2, Users, UserCheck, Hash, Loader2, AlertCircle, Ban, CheckCircle
 } from "lucide-react"
 
-interface ReferralPartner {
+interface AplAgent {
   id: string
   fullName: string
   email: string
   phone: string
-  partnerCode: string
+  agentCode: string
   status: string
   suspendedAt: string | null
   suspendedReason: string | null
@@ -46,7 +46,7 @@ const statusBadge = (status: string) => {
 
 export default function AgentsPage() {
   const router = useRouter()
-  const [agents, setAgents] = useState<ReferralPartner[]>([])
+  const [agents, setAgents] = useState<AplAgent[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -57,17 +57,17 @@ export default function AgentsPage() {
   const [totalPages, setTotalPages] = useState(1)
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [editAgent, setEditAgent] = useState<ReferralPartner | null>(null)
+  const [editAgent, setEditAgent] = useState<AplAgent | null>(null)
   const [form, setForm] = useState<FormData>(emptyForm)
   const [formError, setFormError] = useState("")
   const [formLoading, setFormLoading] = useState(false)
 
   const [newAgentCredentials, setNewAgentCredentials] = useState<{ email: string; password: string; name: string } | null>(null)
 
-  const [deleteTarget, setDeleteTarget] = useState<ReferralPartner | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AplAgent | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
-  const [suspendTarget, setSuspendTarget] = useState<ReferralPartner | null>(null)
+  const [suspendTarget, setSuspendTarget] = useState<AplAgent | null>(null)
   const [suspendReason, setSuspendReason] = useState("")
   const [suspendLoading, setSuspendLoading] = useState(false)
 
@@ -84,13 +84,13 @@ export default function AgentsPage() {
       if (debouncedSearch) params.set("search", debouncedSearch)
       if (statusFilter) params.set("status", statusFilter)
       params.set("page", String(page))
-      const { data, error: fetchError } = await api.get<{ agents: ReferralPartner[]; total: number; totalPages: number }>(`/api/admin/agents?${params.toString()}`)
-      if (fetchError || !data) throw new Error(fetchError || "Failed to load partners")
+      const { data, error: fetchError } = await api.get<{ agents: AplAgent[]; total: number; totalPages: number }>(`/api/admin/agents?${params.toString()}`)
+      if (fetchError || !data) throw new Error(fetchError || "Failed to load representatives")
       setAgents(data.agents ?? [])
       setTotal(data.total ?? 0)
       setTotalPages(data.totalPages ?? 1)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load partners")
+      setError(e instanceof Error ? e.message : "Failed to load representatives")
       setAgents([])
     } finally {
       setLoading(false)
@@ -110,7 +110,7 @@ export default function AgentsPage() {
     setModalOpen(true)
   }
 
-  function openEditModal(agent: ReferralPartner) {
+  function openEditModal(agent: AplAgent) {
     setEditAgent(agent)
     setForm({ fullName: agent.fullName, email: agent.email, phone: agent.phone, commissionRate: agent.commissionRate, commissionType: agent.commissionType, commissionCap: agent.commissionCap !== null && agent.commissionCap !== undefined ? String(agent.commissionCap) : "" })
     setFormError("")
@@ -130,11 +130,11 @@ export default function AgentsPage() {
         commissionCap: form.commissionCap ? Number(form.commissionCap) : null,
       }
       if (editAgent) {
-        const { data, error: editError } = await api.patch<{ agent: ReferralPartner }>(`/api/admin/agents/${editAgent.id}`, payload)
+        const { data, error: editError } = await api.patch<{ agent: AplAgent }>(`/api/admin/agents/${editAgent.id}`, payload)
         if (editError || !data) { setFormError(editError || "Failed to update agent"); return }
         setAgents((prev) => prev.map((a) => a.id === editAgent.id ? data.agent : a))
       } else {
-        const { data, error: addError } = await api.post<{ agent: ReferralPartner; credentials?: { email: string; password: string } }>("/api/admin/agents", payload)
+        const { data, error: addError } = await api.post<{ agent: AplAgent; credentials?: { email: string; password: string } }>("/api/admin/agents", payload)
         if (addError || !data) { setFormError(addError || "Failed to create agent"); return }
         setAgents((prev) => [data.agent, ...prev])
         setTotal((prev) => prev + 1)
@@ -171,7 +171,7 @@ export default function AgentsPage() {
     if (!suspendTarget) return
     setSuspendLoading(true)
     try {
-      const { data, error: suspendError } = await api.post<{ agent: ReferralPartner }>(`/api/admin/agents/${suspendTarget.id}/suspend`, { suspendedReason: suspendReason || undefined })
+      const { data, error: suspendError } = await api.post<{ agent: AplAgent }>(`/api/admin/agents/${suspendTarget.id}/suspend`, { suspendedReason: suspendReason || undefined })
       if (suspendError) throw new Error(suspendError)
       if (data?.agent) {
         setAgents((prev) => prev.map((a) => a.id === suspendTarget.id ? data.agent : a))
@@ -185,8 +185,8 @@ export default function AgentsPage() {
     }
   }
 
-  async function handleReactivate(agent: ReferralPartner) {
-    const { data, error: reactivateError } = await api.post<{ agent: ReferralPartner }>(`/api/admin/agents/${agent.id}/reactivate`)
+  async function handleReactivate(agent: AplAgent) {
+    const { data, error: reactivateError } = await api.post<{ agent: AplAgent }>(`/api/admin/agents/${agent.id}/reactivate`)
     if (reactivateError) {
       setFormError(reactivateError)
       return
@@ -202,7 +202,7 @@ export default function AgentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-heading">Referral Partners</h1>
+          <h1 className="text-2xl font-bold font-heading">APL Representatives</h1>
           <p className="mt-1 text-sm text-muted">Employees who onboard users onto the platform.</p>
         </div>
         <button onClick={openAddModal} className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all inline-flex items-center gap-2">
@@ -217,7 +217,7 @@ export default function AgentsPage() {
               <Users size={20} className="text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted">Total Partners</p>
+              <p className="text-sm text-muted">Total Representatives</p>
               <p className="text-xl font-bold">{total}</p>
             </div>
           </div>
@@ -294,13 +294,13 @@ export default function AgentsPage() {
             ) : agents.length === 0 ? (
               <div className="flex flex-col items-center py-16">
                 <Users size={40} className="opacity-30 text-muted" />
-                <p className="mt-3 text-sm text-muted">{debouncedSearch ? "No partners match your search." : "No partners yet. Add the first one."}</p>
+                <p className="mt-3 text-sm text-muted">{debouncedSearch ? "No representatives match your search." : "No representatives yet. Add the first one."}</p>
               </div>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="px-4 py-3 text-left">Partner Code</th>
+                    <th className="px-4 py-3 text-left">Agent Code</th>
                     <th className="px-4 py-3 text-left">Full Name</th>
                     <th className="px-4 py-3 text-left">Email</th>
                     <th className="px-4 py-3 text-left">Phone</th>
@@ -315,7 +315,7 @@ export default function AgentsPage() {
                     <tr key={agent.id} onClick={() => router.push(`/agents/${agent.id}`)} className="hover:bg-primary-50/30 cursor-pointer transition-colors">
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary font-mono gap-1">
-                          <Hash size={12} /> {agent.partnerCode}
+                          <Hash size={12} /> {agent.agentCode}
                         </span>
                       </td>
                       <td className="px-4 py-3 font-medium">{agent.fullName}</td>
@@ -441,7 +441,7 @@ export default function AgentsPage() {
           <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-semibold">Delete Agent</h2>
             <p className="mt-2 text-sm text-muted">
-              Are you sure you want to delete <strong>{deleteTarget.fullName}</strong> ({deleteTarget.partnerCode})? This action cannot be undone.
+              Are you sure you want to delete <strong>{deleteTarget.fullName}</strong> ({deleteTarget.agentCode})? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setDeleteTarget(null)} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">Cancel</button>
@@ -496,7 +496,7 @@ export default function AgentsPage() {
           <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-semibold">Suspend Agent</h2>
             <p className="mt-2 text-sm text-muted">
-              Are you sure you want to suspend <strong>{suspendTarget.fullName}</strong> ({suspendTarget.partnerCode})?
+              Are you sure you want to suspend <strong>{suspendTarget.fullName}</strong> ({suspendTarget.agentCode})?
             </p>
             <div className="mt-4">
               <label className="mb-1.5 block text-sm font-medium" htmlFor="suspendReason">Reason for suspension</label>

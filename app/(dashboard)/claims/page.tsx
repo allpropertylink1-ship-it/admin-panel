@@ -15,7 +15,7 @@ interface Claim {
   adminNotes: string | null
   reviewedAt: string | null
   createdAt: string
-  referralPartner: { id: string; fullName: string; email: string; partnerCode: string }
+  aplAgent: { id: string; fullName: string; email: string; agentCode: string }
 }
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n)
@@ -101,7 +101,7 @@ export default function ClaimsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-heading">Payment Claims</h1>
-          <p className="mt-1 text-sm text-muted">Review and manage payment claims raised by Referral Partners.</p>
+          <p className="mt-1 text-sm text-muted">Review and manage payment claims raised by APL Representatives.</p>
         </div>
         <a
           href={`/api/admin/exports/claims${statusFilter ? `?status=${statusFilter}` : ""}`}
@@ -183,7 +183,7 @@ export default function ClaimsPage() {
           <div className="flex flex-col gap-4 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-md">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input type="text" placeholder="Search by partner..." value={search} onChange={(e) => setSearch(e.target.value)}
+              <input type="text" placeholder="Search by APL Representative..." value={search} onChange={(e) => setSearch(e.target.value)}
                 className="rounded-xl border border-border bg-card/80 pl-10 pr-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15" />
               {search && (
                 <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
@@ -218,7 +218,7 @@ export default function ClaimsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="px-4 py-3 text-left">Partner</th>
+                    <th className="px-4 py-3 text-left">APL Representative</th>
                     <th className="px-4 py-3 text-right">Amount</th>
                     <th className="px-4 py-3 text-left">Period</th>
                     <th className="px-4 py-3 text-center">Status</th>
@@ -230,8 +230,8 @@ export default function ClaimsPage() {
                   {claims.map((c) => (
                     <tr key={c.id} className="hover:bg-gray-50/50">
                       <td className="px-4 py-3">
-                        <p className="font-medium">{c.referralPartner.fullName}</p>
-                        <p className="text-xs text-muted font-mono">{c.referralPartner.partnerCode}</p>
+                        <p className="font-medium">{c.aplAgent.fullName}</p>
+                        <p className="text-xs text-muted font-mono">{c.aplAgent.agentCode}</p>
                       </td>
                       <td className="px-4 py-3 text-right font-medium">{fmt(c.amount)}</td>
                       <td className="px-4 py-3 text-muted">{c.periodLabel || "-"}</td>
@@ -277,12 +277,12 @@ export default function ClaimsPage() {
             </div>
 
             <div className="space-y-3 text-sm mb-4">
-              <div className="flex justify-between"><span className="text-muted">Partner</span><span className="font-medium">{reviewModal.referralPartner.fullName}</span></div>
-              <div className="flex justify-between"><span className="text-muted">Partner Code</span><span className="font-medium font-mono">{reviewModal.referralPartner.partnerCode}</span></div>
+              <div className="flex justify-between"><span className="text-muted">APL Representative</span><span className="font-medium">{reviewModal.aplAgent.fullName}</span></div>
+              <div className="flex justify-between"><span className="text-muted">Agent Code</span><span className="font-medium font-mono">{reviewModal.aplAgent.agentCode}</span></div>
               <div className="flex justify-between"><span className="text-muted">Amount</span><span className="font-medium">{fmt(reviewModal.amount)}</span></div>
               <div className="flex justify-between"><span className="text-muted">Period</span><span className="font-medium">{reviewModal.periodLabel || "-"}</span></div>
               {reviewModal.notes && (
-                <div><p className="text-muted mb-1">Partner Notes</p><p className="rounded-lg bg-surface-secondary p-3 text-text-primary">{reviewModal.notes}</p></div>
+                <div><p className="text-muted mb-1">Agent Notes</p><p className="rounded-lg bg-surface-secondary p-3 text-text-primary">{reviewModal.notes}</p></div>
               )}
             </div>
 

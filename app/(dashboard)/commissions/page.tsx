@@ -13,7 +13,7 @@ interface Commission {
   paidAt: string | null
   notes: string | null
   createdAt: string
-  referralPartner: { id: string; fullName: string; partnerCode: string }
+  aplAgent: { id: string; fullName: string; agentCode: string }
   property: { id: string; title: string; slug: string; price: number; currency: string }
   user: { id: string; firstName: string; lastName: string; email: string }
 }
@@ -104,7 +104,7 @@ export default function CommissionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-heading">Commissions</h1>
-          <p className="mt-1 text-sm text-muted">Track and manage partner commissions from referred user listings.</p>
+          <p className="mt-1 text-sm text-muted">Track and manage APL Representative commissions from referred user listings.</p>
         </div>
         <a
           href={`/api/admin/exports/commissions${statusFilter ? `?status=${statusFilter}` : ""}`}
@@ -234,7 +234,7 @@ export default function CommissionsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="px-4 py-3 text-left">Partner</th>
+                    <th className="px-4 py-3 text-left">APL Representative</th>
                     <th className="px-4 py-3 text-left">User</th>
                     <th className="px-4 py-3 text-left">Property</th>
                     <th className="px-4 py-3 text-right">Amount</th>
@@ -247,8 +247,8 @@ export default function CommissionsPage() {
                   {commissions.map((c) => (
                     <tr key={c.id} className="hover:bg-gray-50/50">
                       <td className="px-4 py-3">
-                        <p className="font-medium">{c.referralPartner.fullName}</p>
-                        <p className="text-xs text-muted font-mono">{c.referralPartner.partnerCode}</p>
+                        <p className="font-medium">{c.aplAgent.fullName}</p>
+                        <p className="text-xs text-muted font-mono">{c.aplAgent.agentCode}</p>
                       </td>
                       <td className="px-4 py-3 text-muted">
                         {c.user.firstName} {c.user.lastName}

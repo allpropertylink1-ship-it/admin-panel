@@ -11,7 +11,7 @@ import {
 interface AgentOption {
   id: string
   fullName: string
-  partnerCode: string
+  agentCode: string
 }
 
 interface Payout {
@@ -24,7 +24,7 @@ interface Payout {
   notes: string | null
   paidAt: string | null
   createdAt: string
-  referralPartner: { id: string; fullName: string; email: string; partnerCode: string }
+  aplAgent: { id: string; fullName: string; email: string; agentCode: string }
   properties?: { id: string; title: string; slug?: string; price: number; city: string }[]
 }
 
@@ -40,7 +40,7 @@ interface PropertyOption {
 interface AgentSelectOption {
   id: string
   fullName: string
-  partnerCode: string
+  agentCode: string
 }
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n)
@@ -154,7 +154,7 @@ export default function PayoutsPage() {
     }
   }
 
-  async function handleCreate(formData: { referralPartnerId: string; amount: number; method: string; reference: string; notes: string; propertyIds?: string[] }) {
+  async function handleCreate(formData: { aplAgentId: string; amount: number; method: string; reference: string; notes: string; propertyIds?: string[] }) {
     await api.post("/api/admin/payouts", formData)
     setShowCreateModal(false)
     await Promise.all([fetchPayouts(), fetchStats()])
@@ -182,7 +182,7 @@ export default function PayoutsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-heading">Payouts</h1>
-          <p className="mt-1 text-sm text-muted">Manage payouts to Referral Partners.</p>
+          <p className="mt-1 text-sm text-muted">Manage payouts to APL Representatives.</p>
         </div>
         <div className="flex items-center gap-3">
           <a
@@ -274,7 +274,7 @@ export default function PayoutsPage() {
             <div className="relative flex-1 max-w-md">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
               <input
-                type="text" placeholder="Search by partner name..."
+                type="text" placeholder="Search by agent name..."
                 value={search} onChange={(e) => setSearch(e.target.value)}
                 className="rounded-xl border border-border bg-card/80 pl-10 pr-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
@@ -335,8 +335,8 @@ export default function PayoutsPage() {
                   {payouts.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50/50">
                       <td className="px-4 py-3">
-                        <p className="font-medium">{p.referralPartner.fullName}</p>
-                        <p className="text-xs text-muted font-mono">{p.referralPartner.partnerCode}</p>
+                        <p className="font-medium">{p.aplAgent.fullName}</p>
+                        <p className="text-xs text-muted font-mono">{p.aplAgent.agentCode}</p>
                       </td>
                       <td className="px-4 py-3 text-right font-medium">{fmt(p.amount)}</td>
                       <td className="px-4 py-3 max-w-[200px]">
@@ -457,7 +457,7 @@ export default function PayoutsPage() {
       {confirmPaid && (
         <ConfirmModal
           title="Mark Payout as Paid"
-           message={`Confirm that the payout of ${fmt(confirmPaid.amount)} to ${confirmPaid.referralPartner.fullName} has been completed?`}
+           message={`Confirm that the payout of ${fmt(confirmPaid.amount)} to ${confirmPaid.aplAgent.fullName} has been completed?`}
           loading={actionLoading === confirmPaid.id}
           onConfirm={() => { handleMarkPaid(confirmPaid.id); setConfirmPaid(null) }}
           onClose={() => setConfirmPaid(null)}
@@ -466,7 +466,7 @@ export default function PayoutsPage() {
       {confirmCancel && (
         <ConfirmModal
           title="Cancel Payout"
-           message={`Are you sure you want to cancel the payout of ${fmt(confirmCancel.amount)} to ${confirmCancel.referralPartner.fullName}?`}
+           message={`Are you sure you want to cancel the payout of ${fmt(confirmCancel.amount)} to ${confirmCancel.aplAgent.fullName}?`}
           loading={actionLoading === confirmCancel.id}
           onConfirm={() => handleCancel(confirmCancel.id)}
           onClose={() => setConfirmCancel(null)}
@@ -477,7 +477,7 @@ export default function PayoutsPage() {
       {confirmDelete && (
         <ConfirmModal
           title="Delete Payout"
-           message={`Are you sure you want to delete the pending payout of ${fmt(confirmDelete.amount)} to ${confirmDelete.referralPartner.fullName}? This cannot be undone.`}
+           message={`Are you sure you want to delete the pending payout of ${fmt(confirmDelete.amount)} to ${confirmDelete.aplAgent.fullName}? This cannot be undone.`}
           loading={actionLoading === confirmDelete.id}
           onConfirm={() => handleDelete(confirmDelete.id)}
           onClose={() => setConfirmDelete(null)}
@@ -488,8 +488,8 @@ export default function PayoutsPage() {
   )
 }
 
-function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectOption[]; onClose: () => void; onSubmit: (data: { referralPartnerId: string; amount: number; method: string; reference: string; notes: string; propertyIds?: string[] }) => Promise<void> }) {
-  const [referralPartnerId, setReferralPartnerId] = useState("")
+function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectOption[]; onClose: () => void; onSubmit: (data: { aplAgentId: string; amount: number; method: string; reference: string; notes: string; propertyIds?: string[] }) => Promise<void> }) {
+  const [aplAgentId, setReferralPartnerId] = useState("")
   const [amount, setAmount] = useState("")
   const [method, setMethod] = useState("MPESA")
   const [reference, setReference] = useState("")
@@ -500,13 +500,13 @@ function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectO
   const [propertiesLoading, setPropertiesLoading] = useState(false)
 
   useEffect(() => {
-    if (!referralPartnerId) { setAvailableProperties([]); setSelectedPropertyIds([]); return }
+    if (!aplAgentId) { setAvailableProperties([]); setSelectedPropertyIds([]); return }
     setPropertiesLoading(true)
-    api.get<{ properties: PropertyOption[] }>(`/api/admin/payouts/available-properties/${referralPartnerId}`)
+    api.get<{ properties: PropertyOption[] }>(`/api/admin/payouts/available-properties/${aplAgentId}`)
       .then(({ data }) => setAvailableProperties(data?.properties ?? []))
       .catch(() => setAvailableProperties([]))
       .finally(() => setPropertiesLoading(false))
-  }, [referralPartnerId])
+  }, [aplAgentId])
 
   function toggleProperty(id: string) {
     setSelectedPropertyIds((prev) =>
@@ -516,10 +516,10 @@ function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectO
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!referralPartnerId || !amount) return
+    if (!aplAgentId || !amount) return
     setSubmitting(true)
     try {
-      await onSubmit({ referralPartnerId, amount: Number(amount), method, reference, notes, propertyIds: selectedPropertyIds.length > 0 ? selectedPropertyIds : undefined })
+      await onSubmit({ aplAgentId, amount: Number(amount), method, reference, notes, propertyIds: selectedPropertyIds.length > 0 ? selectedPropertyIds : undefined })
     } finally {
       setSubmitting(false)
     }
@@ -534,14 +534,14 @@ function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectO
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted">Referral Partner</label>
+            <label className="mb-1.5 block text-xs font-medium text-muted">APL Representative</label>
             <select
-              value={referralPartnerId} onChange={(e) => setReferralPartnerId(e.target.value)} required
+              value={aplAgentId} onChange={(e) => setReferralPartnerId(e.target.value)} required
               className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             >
-              <option value="">Select a partner...</option>
+              <option value="">Select an APL Representative...</option>
               {agents.map((a) => (
-                <option key={a.id} value={a.id}>{a.fullName} ({a.partnerCode})</option>
+                <option key={a.id} value={a.id}>{a.fullName} ({a.agentCode})</option>
               ))}
             </select>
           </div>
@@ -552,7 +552,7 @@ function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectO
             />
           </div>
 
-          {referralPartnerId && (
+          {aplAgentId && (
             <div>
               <label className="mb-1.5 block text-xs font-medium text-muted">
                 Link Properties (optional)
@@ -610,7 +610,7 @@ function CreatePayoutModal({ agents, onClose, onSubmit }: { agents: AgentSelectO
               className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted hover:bg-background transition-all">
               Cancel
             </button>
-            <button type="submit" disabled={submitting || !referralPartnerId || !amount}
+            <button type="submit" disabled={submitting || !aplAgentId || !amount}
               className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-all disabled:opacity-50 inline-flex items-center gap-2">
               {submitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
               {submitting ? "Creating..." : "Create"}
@@ -650,7 +650,7 @@ function EditPayoutModal({ payout, onClose, onSubmit }: { payout: Payout; onClos
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted">Agent</label>
-            <p className="text-sm font-medium">{payout.referralPartner.fullName} ({payout.referralPartner.partnerCode})</p>
+            <p className="text-sm font-medium">{payout.aplAgent.fullName} ({payout.aplAgent.agentCode})</p>
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted">Amount (KES)</label>
