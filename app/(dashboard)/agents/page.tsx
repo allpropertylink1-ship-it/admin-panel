@@ -71,6 +71,11 @@ export default function AgentsPage() {
   const [suspendReason, setSuspendReason] = useState("")
   const [suspendLoading, setSuspendLoading] = useState(false)
 
+  const [emailChangeTarget, setEmailChangeTarget] = useState<AplAgent | null>(null)
+  const [emailChangeNew, setEmailChangeNew] = useState("")
+  const [emailChangeLoading, setEmailChangeLoading] = useState(false)
+  const [emailChangeSent, setEmailChangeSent] = useState(false)
+
   useEffect(() => {
     const t = window.setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
     return () => window.clearTimeout(t)
@@ -130,6 +135,18 @@ export default function AgentsPage() {
         commissionCap: form.commissionCap ? Number(form.commissionCap) : null,
       }
       if (editAgent) {
+        const emailChanged = form.email.trim().toLowerCase() !== editAgent.email.toLowerCase()
+        if (emailChanged) {
+          const { data, error: editError } = await api.patch<{ agent: AplAgent }>(`/api/admin/agents/${editAgent.id}`, { ...payload, email: undefined })
+          if (editError || !data) { setFormError(editError || "Failed to update agent"); return }
+          setAgents((prev) => prev.map((a) => a.id === editAgent.id ? data.agent : a))
+          setModalOpen(false)
+          resetForm()
+          setEmailChangeTarget(editAgent)
+          setEmailChangeNew(form.email.trim())
+          setEmailChangeSent(false)
+          return
+        }
         const { data, error: editError } = await api.patch<{ agent: AplAgent }>(`/api/admin/agents/${editAgent.id}`, payload)
         if (editError || !data) { setFormError(editError || "Failed to update agent"); return }
         setAgents((prev) => prev.map((a) => a.id === editAgent.id ? data.agent : a))
@@ -149,6 +166,21 @@ export default function AgentsPage() {
       resetForm()
     } finally {
       setFormLoading(false)
+    }
+  }
+
+  async function handleEmailChange() {
+    if (!emailChangeTarget) return
+    setEmailChangeLoading(true)
+    setFormError("")
+    try {
+      const { error } = await api.post(`/api/admin/agents/${emailChangeTarget.id}/change-email`, { newEmail: emailChangeNew })
+      if (error) { setFormError(error); return }
+      setEmailChangeSent(true)
+    } catch {
+      setFormError("Failed to send verification email")
+    } finally {
+      setEmailChangeLoading(false)
     }
   }
 
@@ -512,6 +544,63 @@ export default function AgentsPage() {
                 {suspendLoading ? "Suspending..." : "Suspend"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {emailChangeTarget && !emailChangeSent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Change Email Address</h2>
+              <button onClick={() => { setEmailChangeTarget(null); setEmailChangeNew("") }} className="rounded-xl p-1.5 text-muted hover:bg-gray-50 hover:text-foreground transition-all">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-xl bg-primary-50 border border-primary/20 p-4 text-sm text-foreground">
+                <p className="font-medium">Current email: <span className="font-mono">{emailChangeTarget.email}</span></p>
+                <p className="mt-2 font-medium">New email: <span className="font-mono">{emailChangeNew}</span></p>
+              </div>
+              <div className="rounded-xl bg-warning/10 border border-warning/20 p-4 text-sm text-warning-800">
+                <p className="font-medium">What will happen:</p>
+                <ul className="mt-1.5 list-inside list-disc space-y-1 text-muted">
+                  <li>A verification email will be sent to <strong>{emailChangeNew}</strong></li>
+                  <li>A notification will be sent to <strong>{emailChangeTarget.email}</strong></li>
+                  <li>The representative must click the link and set a new password to complete the change</li>
+                  <li>The verification link expires in 7 days</li>
+                </ul>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => { setEmailChangeTarget(null); setEmailChangeNew("") }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">Cancel</button>
+              <button onClick={handleEmailChange} disabled={emailChangeLoading}
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all disabled:opacity-50 inline-flex items-center gap-2">
+                {emailChangeLoading && <Loader2 size={14} className="animate-spin" />}
+                {emailChangeLoading ? "Sending..." : "Send Verification"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {emailChangeTarget && emailChangeSent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+              <CheckCircle size={24} className="text-success" />
+            </div>
+            <h2 className="text-lg font-semibold">Verification Email Sent</h2>
+            <p className="mt-2 text-sm text-muted">
+              A verification email has been sent to <strong>{emailChangeNew}</strong>. The representative must click the link and set a new password to complete the email change.
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              A notification was also sent to the current email <strong>{emailChangeTarget.email}</strong>.
+            </p>
+            <button onClick={() => { setEmailChangeTarget(null); setEmailChangeNew(""); setEmailChangeSent(false) }}
+              className="mt-6 rounded-xl bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all">
+              Done
+            </button>
           </div>
         </div>
       )}
