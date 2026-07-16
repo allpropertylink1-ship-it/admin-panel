@@ -62,7 +62,7 @@ export default function AgentsPage() {
   const [formError, setFormError] = useState("")
   const [formLoading, setFormLoading] = useState(false)
 
-  const [newAgentCredentials, setNewAgentCredentials] = useState<{ email: string; password: string; name: string } | null>(null)
+  const [newAgentCredentials, setNewAgentCredentials] = useState<{ email: string; agentCode: string; name: string } | null>(null)
 
   const [deleteTarget, setDeleteTarget] = useState<AplAgent | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -151,12 +151,12 @@ export default function AgentsPage() {
         if (editError || !data) { setFormError(editError || "Failed to update agent"); return }
         setAgents((prev) => prev.map((a) => a.id === editAgent.id ? data.agent : a))
       } else {
-        const { data, error: addError } = await api.post<{ agent: AplAgent; credentials?: { email: string; password: string } }>("/api/admin/agents", payload)
+        const { data, error: addError } = await api.post<{ agent: AplAgent; credentials?: { email: string; agentCode: string } }>("/api/admin/agents", payload)
         if (addError || !data) { setFormError(addError || "Failed to create agent"); return }
         setAgents((prev) => [data.agent, ...prev])
         setTotal((prev) => prev + 1)
         if (data.credentials) {
-          setNewAgentCredentials({ email: data.credentials.email, password: data.credentials.password, name: form.fullName })
+          setNewAgentCredentials({ email: data.credentials.email, agentCode: data.credentials.agentCode, name: form.fullName })
           setModalOpen(false)
           resetForm()
           return
@@ -497,7 +497,7 @@ export default function AgentsPage() {
               </button>
             </div>
             <p className="text-sm text-muted mb-4">
-              A login account has been created for <strong>{newAgentCredentials.name}</strong>. Share these credentials with them.
+              An activation email has been sent to <strong>{newAgentCredentials.name}</strong>. They can also use their agent code to sign in.
             </p>
             <div className="rounded-xl bg-primary-50 border border-primary/20 p-4 space-y-3">
               <div>
@@ -505,13 +505,13 @@ export default function AgentsPage() {
                 <p className="mt-0.5 font-mono text-sm font-medium">{newAgentCredentials.email}</p>
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted">Password</label>
-                <p className="mt-0.5 font-mono text-sm font-medium">{newAgentCredentials.password}</p>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted">Agent Code</label>
+                <p className="mt-0.5 font-mono text-sm font-medium">{newAgentCredentials.agentCode}</p>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => {
-                navigator.clipboard.writeText(`Email: ${newAgentCredentials.email}\nPassword: ${newAgentCredentials.password}`)
+                navigator.clipboard.writeText(`Email: ${newAgentCredentials.email}\nAgent Code: ${newAgentCredentials.agentCode}`)
               }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">
                 Copy Credentials
               </button>
