@@ -300,7 +300,7 @@ export default function AgentsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="px-4 py-3 text-left">Agent Code</th>
+                    <th className="px-4 py-3 text-left">APL Rep Code</th>
                     <th className="px-4 py-3 text-left">Full Name</th>
                     <th className="px-4 py-3 text-left">Email</th>
                     <th className="px-4 py-3 text-left">Phone</th>

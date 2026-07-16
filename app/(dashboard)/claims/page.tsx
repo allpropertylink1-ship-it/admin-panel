@@ -278,11 +278,11 @@ export default function ClaimsPage() {
 
             <div className="space-y-3 text-sm mb-4">
               <div className="flex justify-between"><span className="text-muted">APL Representative</span><span className="font-medium">{reviewModal.aplAgent.fullName}</span></div>
-              <div className="flex justify-between"><span className="text-muted">Agent Code</span><span className="font-medium font-mono">{reviewModal.aplAgent.agentCode}</span></div>
+              <div className="flex justify-between"><span className="text-muted">APL Rep Code</span><span className="font-medium font-mono">{reviewModal.aplAgent.agentCode}</span></div>
               <div className="flex justify-between"><span className="text-muted">Amount</span><span className="font-medium">{fmt(reviewModal.amount)}</span></div>
               <div className="flex justify-between"><span className="text-muted">Period</span><span className="font-medium">{reviewModal.periodLabel || "-"}</span></div>
               {reviewModal.notes && (
-                <div><p className="text-muted mb-1">Agent Notes</p><p className="rounded-lg bg-surface-secondary p-3 text-text-primary">{reviewModal.notes}</p></div>
+                <div><p className="text-muted mb-1">APL Rep Notes</p><p className="rounded-lg bg-surface-secondary p-3 text-text-primary">{reviewModal.notes}</p></div>
               )}
             </div>
 
@@ -290,7 +290,7 @@ export default function ClaimsPage() {
               <label className="block text-sm font-medium text-muted mb-1">Admin Notes</label>
               <textarea value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} rows={3}
                 className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 resize-none"
-                placeholder="Add notes for the agent..." />
+                placeholder="Add notes for the representative..." />
             </div>
 
             <div className="flex gap-3">

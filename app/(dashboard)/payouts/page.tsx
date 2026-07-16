@@ -321,7 +321,7 @@ export default function PayoutsPage() {
                   <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="px-4 py-3 text-left">Agent</th>
+                    <th className="px-4 py-3 text-left">APL Rep</th>
                     <th className="px-4 py-3 text-right">Amount</th>
                     <th className="px-4 py-3 text-left">Properties</th>
                     <th className="px-4 py-3 text-left">Method</th>
@@ -649,7 +649,7 @@ function EditPayoutModal({ payout, onClose, onSubmit }: { payout: Payout; onClos
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted">Agent</label>
+            <label className="mb-1.5 block text-xs font-medium text-muted">APL Rep</label>
             <p className="text-sm font-medium">{payout.aplAgent.fullName} ({payout.aplAgent.agentCode})</p>
           </div>
           <div>

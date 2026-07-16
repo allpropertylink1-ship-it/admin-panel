@@ -119,7 +119,7 @@ export default function AgentDashboardPage() {
     setResetPwLoading(true)
     const { error } = await api.post(`/api/admin/agents/${agent.id}/reset-password`)
     if (!error) {
-      alert("Password reset email sent to agent")
+      alert("Password reset email sent to representative")
     } else {
       alert(error || "Failed to reset password")
     }
