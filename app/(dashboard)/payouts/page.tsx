@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search, X, Wallet, Banknote, CheckCircle, XCircle,
   Loader2, AlertCircle, Plus, Pencil, Trash2, CreditCard, Download,
@@ -70,6 +71,7 @@ export default function PayoutsPage() {
   const [confirmDelete, setConfirmDelete] = useState<Payout | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [agents, setAgents] = useState<AgentSelectOption[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   useEffect(() => {
     const t = window.setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
@@ -302,6 +304,7 @@ export default function PayoutsPage() {
               <div className="p-4 space-y-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-4">
+                    {skeleton("24px", "h-4")}
                     {skeleton("120px")}
                     {skeleton("100px")}
                     {skeleton("80px")}
@@ -320,8 +323,18 @@ export default function PayoutsPage() {
             ) : (
                   <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="px-4 py-3 text-left">APL Rep</th>
+                    <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
+                      <th className="w-10 px-2 py-3.5 text-left">
+                        <input type="checkbox"
+                          checked={payouts.length > 0 && selectedIds.length === payouts.length}
+                          onChange={() => {
+                            if (selectedIds.length === payouts.length) { setSelectedIds([]) }
+                            else { setSelectedIds(payouts.map(p => p.id)) }
+                          }}
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                        />
+                      </th>
+                      <th className="px-4 py-3 text-left">APL Rep</th>
                     <th className="px-4 py-3 text-right">Amount</th>
                     <th className="px-4 py-3 text-left">Properties</th>
                     <th className="px-4 py-3 text-left">Method</th>
@@ -333,7 +346,14 @@ export default function PayoutsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {payouts.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50/50">
+                    <tr key={p.id} className={cn("hover:bg-gray-50/50", selectedIds.includes(p.id) && "bg-primary/5")}>
+                      <td className="w-10 px-2 py-3 text-center">
+                        <input type="checkbox"
+                          checked={selectedIds.includes(p.id)}
+                          onChange={() => setSelectedIds(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <p className="font-medium">{p.aplAgent.fullName}</p>
                         <p className="text-xs text-muted font-mono">{p.aplAgent.agentCode}</p>
@@ -435,6 +455,30 @@ export default function PayoutsPage() {
               </div>
             </div>
           )}
+
+          <BulkActionsBar
+            selectedIds={selectedIds}
+            onClear={() => setSelectedIds([])}
+            actions={[
+              { label: "Mark Paid", action: "mark-paid", requiresConfirmation: true },
+              { label: "Cancel", action: "cancel", variant: "destructive", requiresConfirmation: true },
+              { label: "Delete", action: "delete", variant: "destructive", requiresConfirmation: true },
+            ]}
+            onAction={async (action) => {
+              setLoading(true)
+              try {
+                const { error } = await api.post("/api/admin/payouts/bulk", { ids: selectedIds, action })
+                if (error) throw new Error(error)
+                setSelectedIds([])
+                await fetchPayouts()
+              } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Bulk action failed")
+              } finally {
+                setLoading(false)
+              }
+            }}
+            loading={loading}
+          />
         </div>
       )}
 

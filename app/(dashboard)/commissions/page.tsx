@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle, Download } from "lucide-react"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface Commission {
   id: string
@@ -36,6 +37,7 @@ export default function CommissionsPage() {
   const [stats, setStats] = useState({ total: 0, pending: 0, paid: 0, totalPaidAmount: 0 })
   const [statsLoading, setStatsLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   useEffect(() => {
     const t = window.setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
@@ -215,6 +217,7 @@ export default function CommissionsPage() {
               <div className="p-4 space-y-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-4">
+                    {skeleton("20px")}
                     {skeleton(`${100 + Math.random() * 80}px`)}
                     {skeleton("160px")}
                     {skeleton(`${80 + Math.random() * 60}px`)}
@@ -233,8 +236,18 @@ export default function CommissionsPage() {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="px-4 py-3 text-left">APL Representative</th>
+                    <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
+                      <th className="w-10 px-2 py-3.5 text-left">
+                        <input type="checkbox"
+                          checked={commissions.length > 0 && selectedIds.length === commissions.length}
+                          onChange={() => {
+                            if (selectedIds.length === commissions.length) { setSelectedIds([]) }
+                            else { setSelectedIds(commissions.map(c => c.id)) }
+                          }}
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                        />
+                      </th>
+                      <th className="px-4 py-3 text-left">APL Representative</th>
                     <th className="px-4 py-3 text-left">User</th>
                     <th className="px-4 py-3 text-left">Property</th>
                     <th className="px-4 py-3 text-right">Amount</th>
@@ -245,7 +258,14 @@ export default function CommissionsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {commissions.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50/50">
+                    <tr key={c.id} className={cn("hover:bg-gray-50/50", selectedIds.includes(c.id) && "bg-primary/5")}>
+                      <td className="w-10 px-2 py-3 text-center">
+                        <input type="checkbox"
+                          checked={selectedIds.includes(c.id)}
+                          onChange={() => setSelectedIds(prev => prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id])}
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <p className="font-medium">{c.aplAgent.fullName}</p>
                         <p className="text-xs text-muted font-mono">{c.aplAgent.agentCode}</p>
@@ -307,6 +327,28 @@ export default function CommissionsPage() {
               </div>
             </div>
           )}
+          <BulkActionsBar
+            selectedIds={selectedIds}
+            onClear={() => setSelectedIds([])}
+            actions={[
+              { label: "Mark Paid", action: "mark-paid" },
+              { label: "Mark Unpaid", action: "mark-unpaid" },
+            ]}
+            onAction={async (action) => {
+              setLoading(true)
+              try {
+                const { error } = await api.post("/api/admin/commissions/bulk", { ids: selectedIds, action })
+                if (error) throw new Error(error)
+                setSelectedIds([])
+                await fetchCommissions()
+              } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Bulk action failed")
+              } finally {
+                setLoading(false)
+              }
+            }}
+            loading={loading}
+          />
         </div>
       )}
     </div>

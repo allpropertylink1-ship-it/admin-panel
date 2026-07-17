@@ -11,6 +11,7 @@ import {
 import ImageLightbox from "@/components/ImageLightbox"
 import PdfViewer from "@/components/PdfViewer"
 import { resolvePdfUrl } from "@/lib/pdf-utils"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface UserInfo {
   id: string; firstName: string; lastName: string; email: string; avatar: string | null; kycStatus?: string
@@ -124,6 +125,7 @@ export default function KycPage() {
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [selectedDoc, setSelectedDoc] = useState<KycDocument | null>(null)
   const [userDocs, setUserDocs] = useState<KycDocument[]>([])
@@ -301,6 +303,25 @@ export default function KycPage() {
           </div>
         </div>
 
+        {/* Bulk select */}
+        {filtered.length > 0 && (
+          <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+            <input type="checkbox"
+              checked={filtered.length > 0 && selectedIds.length === filtered.length}
+              onChange={() => {
+                if (selectedIds.length === filtered.length) { setSelectedIds([]) }
+                else { setSelectedIds(filtered.map(d => d.id)) }
+              }}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+            />
+            <span className="text-xs text-muted">
+              {selectedIds.length > 0
+                ? `${selectedIds.length} of ${filtered.length} selected`
+                : "Select all"}
+            </span>
+          </div>
+        )}
+
         {/* List */}
         <div className="flex-1 overflow-y-auto" ref={listRef}>
           {loading ? (
@@ -338,10 +359,17 @@ export default function KycPage() {
                   "w-full border-b border-border px-4 py-3 text-left transition-all",
                   selectedDoc?.id === doc.id
                     ? "bg-primary/5 shadow-[inset_3px_0_0_0_#286255]"
-                    : "hover:bg-gray-50/40"
+                    : "hover:bg-gray-50/40",
+                  selectedIds.includes(doc.id) && "bg-primary/5"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
+                  <input type="checkbox"
+                    checked={selectedIds.includes(doc.id)}
+                    onChange={() => setSelectedIds(prev => prev.includes(doc.id) ? prev.filter(id => id !== doc.id) : [...prev, doc.id])}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-primary focus:ring-primary/30"
+                    onClick={(e) => e.stopPropagation()}
+                  />
                   <div className="flex min-w-0 items-center gap-2.5">
                     {doc.user.avatar ? (
                       <img src={doc.user.avatar} alt=""
@@ -758,6 +786,29 @@ export default function KycPage() {
           />
         )}
       </div>
+
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        actions={[
+          { label: "Approve", action: "approve", requiresConfirmation: true },
+          { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
+        ]}
+        onAction={async (action) => {
+          setLoading(true)
+          try {
+            const { error } = await api.post("/api/admin/kyc/bulk", { ids: selectedIds, action })
+            if (error) throw new Error(error)
+            setSelectedIds([])
+            await fetchDocs()
+          } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Bulk action failed")
+          } finally {
+            setLoading(false)
+          }
+        }}
+        loading={loading}
+      />
     </div>
   )
 }

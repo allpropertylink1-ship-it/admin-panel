@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle, Download } from "lucide-react"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface Claim {
   id: string
@@ -48,6 +49,7 @@ export default function ClaimsPage() {
   const [reviewModal, setReviewModal] = useState<Claim | null>(null)
   const [reviewNotes, setReviewNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   useEffect(() => {
     const t = window.setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
@@ -205,7 +207,7 @@ export default function ClaimsPage() {
               <div className="p-4 space-y-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-4">
-                    {skeleton("120px")} {skeleton("80px")} {skeleton("70px")} {skeleton("60px")} {skeleton("80px")}
+                    {skeleton("24px")} {skeleton("120px")} {skeleton("80px")} {skeleton("70px")} {skeleton("60px")} {skeleton("80px")}
                   </div>
                 ))}
               </div>
@@ -218,6 +220,12 @@ export default function ClaimsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
+                    <th className="px-4 py-3 w-10">
+                      {claims && claims.length > 0 && (
+                        <input type="checkbox" checked={selectedIds.length === claims.length} onChange={(e) => setSelectedIds(e.target.checked ? claims.map(c => c.id) : [])}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      )}
+                    </th>
                     <th className="px-4 py-3 text-left">APL Representative</th>
                     <th className="px-4 py-3 text-right">Amount</th>
                     <th className="px-4 py-3 text-left">Period</th>
@@ -228,7 +236,11 @@ export default function ClaimsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {claims.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50/50">
+                    <tr key={c.id} className={cn("hover:bg-gray-50/50", selectedIds.includes(c.id) && "bg-primary/5")}>
+                      <td className="px-4 py-3 w-10">
+                        <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={(e) => setSelectedIds(e.target.checked ? [...selectedIds, c.id] : selectedIds.filter(id => id !== c.id))}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      </td>
                       <td className="px-4 py-3">
                         <p className="font-medium">{c.aplAgent.fullName}</p>
                         <p className="text-xs text-muted font-mono">{c.aplAgent.agentCode}</p>
@@ -265,6 +277,29 @@ export default function ClaimsPage() {
               </div>
             </div>
           )}
+
+          <BulkActionsBar
+            selectedIds={selectedIds}
+            onClear={() => setSelectedIds([])}
+            actions={[
+              { label: "Approve", action: "approve", requiresConfirmation: true },
+              { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
+            ]}
+            onAction={async (action) => {
+              setLoading(true)
+              try {
+                const { error } = await api.post("/api/admin/claims/bulk", { ids: selectedIds, action })
+                if (error) throw new Error(error)
+                setSelectedIds([])
+                await fetchClaims()
+              } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Bulk action failed")
+              } finally {
+                setLoading(false)
+              }
+            }}
+            loading={loading}
+          />
         </div>
       )}
 

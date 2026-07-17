@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   AlertCircle, Loader2, Plus, Trash2, ShieldCheck,
 } from "lucide-react"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface Admin {
   id: string; email: string; fullName: string; role: string; createdAt: string
@@ -21,6 +22,7 @@ export default function AdminAccountsPage() {
   const [formLoading, setFormLoading] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const fetchAdmins = useCallback(async () => {
     setLoading(true)
@@ -112,6 +114,16 @@ export default function AdminAccountsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
+                  <th className="w-10 px-2 py-3.5 text-left">
+                    <input type="checkbox"
+                      checked={admins.length > 0 && selectedIds.length === admins.length}
+                      onChange={() => {
+                        if (selectedIds.length === admins.length) { setSelectedIds([]) }
+                        else { setSelectedIds(admins.map(a => a.id)) }
+                      }}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                    />
+                  </th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Email</th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Role</th>
@@ -121,7 +133,14 @@ export default function AdminAccountsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {admins.map((admin) => (
-                  <tr key={admin.id} className="transition-colors hover:bg-gray-50/40">
+                  <tr key={admin.id} className={cn("transition-colors hover:bg-gray-50/40", selectedIds.includes(admin.id) && "bg-primary/5")}>
+                    <td className="w-10 px-2 py-3">
+                      <input type="checkbox"
+                        checked={selectedIds.includes(admin.id)}
+                        onChange={() => setSelectedIds(prev => prev.includes(admin.id) ? prev.filter(id => id !== admin.id) : [...prev, admin.id])}
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/20 to-accent/5 text-xs font-bold text-accent">
@@ -169,6 +188,28 @@ export default function AdminAccountsPage() {
           </div>
         )}
       </div>
+
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        actions={[
+          { label: "Delete", action: "delete", variant: "destructive", requiresConfirmation: true },
+        ]}
+        onAction={async (action) => {
+          setLoading(true)
+          try {
+            const { error } = await api.post("/api/admin/admins/bulk", { ids: selectedIds, action })
+            if (error) throw new Error(error)
+            setSelectedIds([])
+            await fetchAdmins()
+          } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Bulk action failed")
+          } finally {
+            setLoading(false)
+          }
+        }}
+        loading={loading}
+      />
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setShowModal(false)}>

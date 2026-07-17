@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api-client"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { cn } from "@/lib/utils"
 import {
   Search, X, UserPlus, Pencil, Trash2, Users, UserCheck, Hash, Loader2, AlertCircle, Ban, CheckCircle
@@ -66,6 +67,8 @@ export default function AgentsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<AplAgent | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const [suspendTarget, setSuspendTarget] = useState<AplAgent | null>(null)
   const [suspendReason, setSuspendReason] = useState("")
@@ -314,24 +317,43 @@ export default function AgentsPage() {
 
           <div className="overflow-x-auto">
             {loading ? (
-              <div className="p-4 space-y-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <div className="animate-pulse rounded bg-gray-200 h-5" style={{ width: `${80 + Math.random() * 100}px` }} />
-                    <div className="animate-pulse rounded bg-gray-200 h-5 flex-1" />
-                    <div className="animate-pulse rounded bg-gray-200 h-5" style={{ width: `${60 + Math.random() * 80}px` }} />
-                  </div>
-                ))}
-              </div>
+              <table className="w-full text-sm">
+                <tbody className="divide-y divide-border">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="w-10 px-2 py-3"><div className="h-4 w-4 rounded bg-gray-200 animate-pulse" /></td>
+                      <td className="px-4 py-3"><div className="animate-pulse rounded bg-gray-200 h-5" style={{ width: `${80 + Math.random() * 100}px` }} /></td>
+                      <td className="px-4 py-3"><div className="animate-pulse rounded bg-gray-200 h-5 flex-1" /></td>
+                      <td className="px-4 py-3"><div className="animate-pulse rounded bg-gray-200 h-5" style={{ width: `${60 + Math.random() * 80}px` }} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : agents.length === 0 ? (
-              <div className="flex flex-col items-center py-16">
-                <Users size={40} className="opacity-30 text-muted" />
-                <p className="mt-3 text-sm text-muted">{debouncedSearch ? "No representatives match your search." : "No representatives yet. Add the first one."}</p>
-              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr>
+                    <td colSpan={9} className="py-16 text-center">
+                      <Users size={40} className="mx-auto opacity-30 text-muted" />
+                      <p className="mt-3 text-sm text-muted">{debouncedSearch ? "No representatives match your search." : "No representatives yet. Add the first one."}</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
+                    <th className="w-10 px-2 py-3.5 text-left">
+                      <input type="checkbox"
+                        checked={agents.length > 0 && selectedIds.length === agents.length}
+                        onChange={() => {
+                          if (selectedIds.length === agents.length) { setSelectedIds([]) }
+                          else { setSelectedIds(agents.map(a => a.id)) }
+                        }}
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                      />
+                    </th>
                     <th className="px-4 py-3 text-left">APL Rep Code</th>
                     <th className="px-4 py-3 text-left">Full Name</th>
                     <th className="px-4 py-3 text-left">Email</th>
@@ -344,7 +366,14 @@ export default function AgentsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {agents.map((agent) => (
-                    <tr key={agent.id} onClick={() => router.push(`/agents/${agent.id}`)} className="hover:bg-primary-50/30 cursor-pointer transition-colors">
+                    <tr key={agent.id} onClick={() => router.push(`/agents/${agent.id}`)} className={cn("hover:bg-primary-50/30 cursor-pointer transition-colors", selectedIds.includes(agent.id) && "bg-primary/5")}>
+                      <td className="w-10 px-2 py-3 text-center">
+                        <input type="checkbox"
+                          checked={selectedIds.includes(agent.id)}
+                          onChange={() => setSelectedIds(prev => prev.includes(agent.id) ? prev.filter(id => id !== agent.id) : [...prev, agent.id])}
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary font-mono gap-1">
                           <Hash size={12} /> {agent.agentCode}
@@ -403,6 +432,30 @@ export default function AgentsPage() {
               </div>
             </div>
           )}
+
+          <BulkActionsBar
+            selectedIds={selectedIds}
+            onClear={() => setSelectedIds([])}
+            actions={[
+              { label: "Delete", action: "delete", variant: "destructive", requiresConfirmation: true },
+              { label: "Suspend", action: "suspend", requiresConfirmation: true },
+              { label: "Reactivate", action: "reactivate", requiresConfirmation: true },
+            ]}
+            onAction={async (action) => {
+              setLoading(true)
+              try {
+                const { error } = await api.post("/api/admin/agents/bulk", { ids: selectedIds, action })
+                if (error) throw new Error(error)
+                setSelectedIds([])
+                await fetchAgents()
+              } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Bulk action failed")
+              } finally {
+                setLoading(false)
+              }
+            }}
+            loading={loading}
+          />
         </div>
       )}
 

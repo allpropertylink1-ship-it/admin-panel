@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search,
   X,
@@ -15,6 +16,7 @@ import {
   AlertCircle,
   Building2,
   Download,
+  Check,
 } from "lucide-react"
 
 interface Agent {
@@ -59,6 +61,7 @@ function SkeletonRows() {
     <>
       {Array.from({ length: 6 }).map((_, i) => (
         <tr key={i} className="border-b border-border">
+          <td className="w-10 px-2 py-3"><div className="h-4 w-4 rounded bg-gray-200" /></td>
           {Array.from({ length: 8 }).map((_, j) => (
             <td key={j} className="px-4 py-3">
               {j === 6 ? (
@@ -85,6 +88,7 @@ export default function PropertiesPage() {
   const [searchInput, setSearchInput] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
   const [purposeFilter, setPurposeFilter] = useState("")
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const limit = 20
@@ -217,6 +221,11 @@ export default function PropertiesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
+                  <th className="w-10 px-2 py-3.5 text-left">
+                    <input type="checkbox"
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Title</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Price</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
@@ -243,6 +252,16 @@ export default function PropertiesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
+                  <th className="w-10 px-2 py-3.5 text-left">
+                    <input type="checkbox"
+                      checked={properties.length > 0 && selectedIds.length === properties.length}
+                      onChange={() => {
+                        if (selectedIds.length === properties.length) { setSelectedIds([]) }
+                        else { setSelectedIds(properties.map(p => p.id)) }
+                      }}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Title</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Price</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
@@ -257,7 +276,14 @@ export default function PropertiesPage() {
                 {properties.map((p) => {
                   const statusStyle = statusConfig[p.moderationStatus] || statusConfig.DRAFT
                   return (
-                    <tr key={p.id} className="transition-colors hover:bg-gray-50/60">
+                    <tr key={p.id} className={cn("transition-colors hover:bg-gray-50/60", selectedIds.includes(p.id) && "bg-primary/5")}>
+                      <td className="w-10 px-2 py-3 text-center">
+                        <input type="checkbox"
+                          checked={selectedIds.includes(p.id)}
+                          onChange={() => setSelectedIds(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <p className="max-w-xs truncate text-sm font-medium text-foreground" title={p.title}>{p.title}</p>
                       </td>
@@ -350,6 +376,32 @@ export default function PropertiesPage() {
             </div>
           </div>
         )}
+
+        <BulkActionsBar
+          selectedIds={selectedIds}
+          onClear={() => setSelectedIds([])}
+          actions={[
+            { label: "Delete", action: "delete", variant: "destructive", requiresConfirmation: true },
+            { label: "Approve", action: "approve", requiresConfirmation: true },
+            { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
+            { label: "Publish", action: "publish" },
+            { label: "Unpublish", action: "unpublish" },
+          ]}
+          onAction={async (action) => {
+            setLoading(true)
+            try {
+              const { error } = await api.post("/api/admin/properties/bulk", { ids: selectedIds, action })
+              if (error) throw new Error(error)
+              setSelectedIds([])
+              await fetchProperties()
+            } catch (err: unknown) {
+              setError(err instanceof Error ? err.message : "Bulk action failed")
+            } finally {
+              setLoading(false)
+            }
+          }}
+          loading={loading}
+        />
       </div>
     </div>
   )

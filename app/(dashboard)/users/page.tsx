@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search, ChevronLeft, ChevronRight, Shield, ShieldOff, Trash2,
-  X, AlertCircle, Eye, ChevronDown, UserPlus, Filter, Loader2, Download,
+  X, AlertCircle, Eye, ChevronDown, UserPlus, Filter, Loader2, Download, Check,
 } from "lucide-react"
 
 interface User {
@@ -46,6 +47,7 @@ function SkeletonRows() {
     <>
       {Array.from({ length: 8 }).map((_, i) => (
         <tr key={i} className="animate-pulse">
+          <td className="w-10 px-2 py-3"><div className="h-4 w-4 rounded bg-gray-200" /></td>
           {Array.from({ length: 8 }).map((_, j) => (
             <td key={j} className="px-4 py-4">
               <div className={cn("h-4 rounded bg-gray-200", j === 0 ? "w-32" : j === 1 ? "w-40" : "w-20")} />
@@ -71,6 +73,8 @@ export default function UsersPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [bulkRole, setBulkRole] = useState<string | null>(null)
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -211,6 +215,16 @@ export default function UsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-gray-50/80">
+                <th className="w-10 px-2 py-3.5 text-left">
+                  <input type="checkbox"
+                    checked={data !== null && data.users.length > 0 && selectedIds.length === data.users.length}
+                    onChange={() => {
+                      if (data && selectedIds.length === data.users.length) { setSelectedIds([]) }
+                      else if (data) { setSelectedIds(data.users.map(u => u.id)) }
+                    }}
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                  />
+                </th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Email</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
@@ -224,7 +238,14 @@ export default function UsersPage() {
             <tbody className="divide-y divide-border">
               {loading ? <SkeletonRows /> : data && data.users.length > 0 ? (
                 data.users.map((user) => (
-                  <tr key={user.id} className="transition-colors hover:bg-gray-50/40">
+                  <tr key={user.id} className={cn("transition-colors hover:bg-gray-50/40", selectedIds.includes(user.id) && "bg-primary/5")}>
+                    <td className="w-10 px-2 py-3 text-center">
+                      <input type="checkbox"
+                        checked={selectedIds.includes(user.id)}
+                        onChange={() => setSelectedIds(prev => prev.includes(user.id) ? prev.filter(id => id !== user.id) : [...prev, user.id])}
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
@@ -312,7 +333,7 @@ export default function UsersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center">
+                  <td colSpan={9} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center text-muted">
                       <UserPlus className="mb-2 opacity-30" size={32} />
                       <p className="text-sm">No users found</p>
@@ -354,6 +375,75 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        actions={[
+          { label: "Delete", action: "delete", variant: "destructive", requiresConfirmation: true },
+          { label: "Suspend", action: "suspend", requiresConfirmation: true },
+          { label: "Activate", action: "activate", requiresConfirmation: true },
+          { label: "Change Role", action: "changeRole" },
+        ]}
+        onAction={async (action) => {
+          if (action === "changeRole") { setBulkRole("APPLICANT"); return }
+          setActionLoading("bulk")
+          try {
+            const { error } = await api.post("/api/admin/users/bulk", { ids: selectedIds, action })
+            if (error) throw new Error(error)
+            setSelectedIds([])
+            await fetchUsers()
+          } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Bulk action failed")
+          } finally {
+            setActionLoading(null)
+          }
+        }}
+        loading={actionLoading === "bulk"}
+      />
+
+      {bulkRole !== null && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-foreground">Change role for {selectedIds.length} user{selectedIds.length !== 1 ? "s" : ""}</h3>
+            <div className="mt-3 flex flex-col gap-2">
+              {ROLES.map((r) => (
+                <button key={r} onClick={() => setBulkRole(r)}
+                  className={cn("flex items-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
+                    bulkRole === r ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:bg-gray-50"
+                  )}>
+                  <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border",
+                    bulkRole === r ? "border-primary bg-primary text-white" : "border-muted")}>
+                    {bulkRole === r && <Check size={12} />}
+                  </div>
+                  {r}
+                </button>
+              ))}
+            </div>
+            <div className="mt-5 flex justify-end gap-3">
+              <button onClick={() => setBulkRole(null)}
+                className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-colors">Cancel</button>
+              <button onClick={async () => {
+                setActionLoading("bulk")
+                try {
+                  const { error } = await api.post("/api/admin/users/bulk", { ids: selectedIds, action: "changeRole", role: bulkRole })
+                  if (error) throw new Error(error)
+                  setSelectedIds([])
+                  setBulkRole(null)
+                  await fetchUsers()
+                } catch (err: unknown) {
+                  setError(err instanceof Error ? err.message : "Bulk action failed")
+                } finally {
+                  setActionLoading(null)
+                }
+              }} disabled={actionLoading === "bulk"}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
+                {actionLoading === "bulk" ? "Processing..." : "Change Role"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>

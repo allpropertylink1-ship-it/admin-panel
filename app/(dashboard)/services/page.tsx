@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search, X, ChevronLeft, ChevronRight, AlertCircle,
   Wrench, Download, Check, XCircle, Clock,
@@ -51,8 +52,9 @@ function formatPrice(price: number | null, currency: string, period: string) {
 function SkeletonRows() {
   return (
     <>
-      {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 6 }).map((_, i) => (
         <tr key={i} className="animate-pulse border-b border-border">
+          <td className="w-10 px-2 py-3"><div className="h-4 w-4 rounded bg-gray-200" /></td>
           {Array.from({ length: 6 }).map((_, j) => (
             <td key={j} className="px-4 py-3">
               <div className={cn("h-4 rounded bg-gray-200", j === 0 ? "w-48" : j === 1 ? "w-24" : j === 5 ? "w-20 ml-auto" : "w-20")} />
@@ -75,6 +77,7 @@ export default function ServicesPage() {
   const [statusFilter, setStatusFilter] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [modLoading, setModLoading] = useState<string | null>(null)
   const limit = 20
 
@@ -179,6 +182,12 @@ export default function ServicesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
+                  <th className="w-10 px-2 py-3.5 text-left">
+                    <input type="checkbox"
+                      disabled
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Title</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Category</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Provider</th>
@@ -201,6 +210,16 @@ export default function ServicesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
+                  <th className="w-10 px-2 py-3.5 text-left">
+                    <input type="checkbox"
+                      checked={services.length > 0 && selectedIds.length === services.length}
+                      onChange={() => {
+                        if (selectedIds.length === services.length) { setSelectedIds([]) }
+                        else { setSelectedIds(services.map(s => s.id)) }
+                      }}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Title</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Category</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Provider</th>
@@ -212,7 +231,14 @@ export default function ServicesPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {services.map((s) => (
-                  <tr key={s.id} className="transition-colors hover:bg-gray-50/60">
+                  <tr key={s.id} className={cn("transition-colors hover:bg-gray-50/60", selectedIds.includes(s.id) && "bg-primary/5")}>
+                    <td className="w-10 px-2 py-3 text-center">
+                      <input type="checkbox"
+                        checked={selectedIds.includes(s.id)}
+                        onChange={() => setSelectedIds(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="max-w-xs">
                         <p className="truncate text-sm font-medium text-foreground" title={s.title}>{s.title}</p>
@@ -278,6 +304,30 @@ export default function ServicesPage() {
             </div>
           </div>
         )}
+
+        <BulkActionsBar
+          selectedIds={selectedIds}
+          onClear={() => setSelectedIds([])}
+          actions={[
+            { label: "Approve", action: "approve" },
+            { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
+            { label: "Send Back", action: "pending" },
+          ]}
+          onAction={async (action) => {
+            setLoading(true)
+            try {
+              const { error } = await api.post("/api/admin/services/bulk", { ids: selectedIds, action })
+              if (error) throw new Error(error)
+              setSelectedIds([])
+              await fetchServices()
+            } catch (err: unknown) {
+              setError(err instanceof Error ? err.message : "Bulk action failed")
+            } finally {
+              setLoading(false)
+            }
+          }}
+          loading={loading}
+        />
       </div>
     </div>
   )

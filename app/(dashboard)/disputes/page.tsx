@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { Search, X, Loader2, AlertCircle, CheckCircle, Clock, Eye } from "lucide-react"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface Dispute {
   id: string
@@ -45,6 +46,7 @@ export default function AdminDisputesPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [resolutionText, setResolutionText] = useState("")
   const [updateLoading, setUpdateLoading] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const fetchDisputes = useCallback(async () => {
     setLoading(true)
@@ -99,7 +101,20 @@ export default function AdminDisputesPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-muted" /></div>
+        <div className="rounded-xl border border-border">
+          <div className="p-4 space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="h-5 w-5 animate-pulse rounded bg-gray-200" />
+                <div className="h-5 w-[120px] animate-pulse rounded bg-gray-200" />
+                <div className="h-5 w-[200px] animate-pulse rounded bg-gray-200" />
+                <div className="h-5 w-[80px] animate-pulse rounded bg-gray-200" />
+                <div className="h-5 w-[70px] animate-pulse rounded bg-gray-200" />
+                <div className="h-5 w-[60px] animate-pulse rounded bg-gray-200" />
+              </div>
+            ))}
+          </div>
+        </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-4 py-20">
           <AlertCircle size={24} className="text-error-500" />
@@ -113,6 +128,12 @@ export default function AdminDisputesPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-card text-muted">
               <tr>
+                <th className="px-4 py-3 font-medium w-10">
+                  {disputes.length > 0 && (
+                    <input type="checkbox" checked={selectedIds.length === disputes.length} onChange={(e) => setSelectedIds(e.target.checked ? disputes.map(d => d.id) : [])}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                  )}
+                </th>
                 <th className="px-4 py-3 font-medium">APL Representative</th>
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
@@ -123,7 +144,11 @@ export default function AdminDisputesPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {disputes.map((d) => (
-                <tr key={d.id} className="bg-surface hover:bg-card">
+                <tr key={d.id} className={cn("bg-surface hover:bg-card", selectedIds.includes(d.id) && "bg-primary/5")}>
+                  <td className="px-4 py-3 w-10">
+                    <input type="checkbox" checked={selectedIds.includes(d.id)} onChange={(e) => setSelectedIds(e.target.checked ? [...selectedIds, d.id] : selectedIds.filter(id => id !== d.id))}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                  </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{d.aplAgent.fullName}</p>
                     <p className="text-xs text-muted">{d.aplAgent.agentCode}</p>
@@ -153,6 +178,30 @@ export default function AdminDisputesPage() {
           <button type="button" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="touch-target rounded-lg border border-border px-4 py-2 text-sm text-foreground disabled:opacity-40">Next</button>
         </div>
       )}
+
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        actions={[
+          { label: "Under Review", action: "under-review" },
+          { label: "Resolve", action: "resolve", requiresConfirmation: true },
+          { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
+        ]}
+        onAction={async (action) => {
+          setLoading(true)
+          try {
+            const { error } = await api.post("/api/admin/disputes/bulk", { ids: selectedIds, action })
+            if (error) throw new Error(error)
+            setSelectedIds([])
+            await fetchDisputes()
+          } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Bulk action failed")
+          } finally {
+            setLoading(false)
+          }
+        }}
+        loading={loading}
+      />
 
       {selectedDispute && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={() => setSelectedDispute(null)}>
