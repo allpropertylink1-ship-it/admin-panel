@@ -47,6 +47,8 @@ interface UserDetail {
   role: string;
   accountStatus: string;
   kycStatus: string;
+  userTypes?: string[];
+  primaryUserType?: string;
   category?: string;
   specialties: string[];
   companyName?: string;
@@ -63,6 +65,17 @@ interface UserDetail {
   lastLogin?: string;
   kycDocuments: KycDocument[];
   auditLogs: AuditLogEntry[];
+  properties?: {
+    id: string; slug: string; title: string; price: number
+    propertyType: string; listingPurpose: string | null
+    moderationStatus: string; city: string | null; createdAt: string
+    images: unknown
+  }[];
+  serviceListings?: {
+    id: string; title: string; price: number | null
+    moderationStatus: string; city: string | null; createdAt: string
+    images: unknown
+  }[];
 }
 
 interface AuditLogEntry {
@@ -267,7 +280,7 @@ export default function UserDetailPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <InfoRow icon={Mail} label="Email" value={user.email} />
               <InfoRow icon={Phone} label="Phone" value={user.phone || "—"} />
-
+              <InfoRow icon={User} label="User Type" value={user.userTypes?.join(", ") || user.primaryUserType || "—"} />
               <InfoRow icon={MapPin} label="Address" value={user.address || "—"} />
               <InfoRow icon={MapPin} label="City" value={user.city || "—"} />
               <InfoRow icon={Building2} label="Category" value={user.category || "—"} />
@@ -360,6 +373,63 @@ export default function UserDetailPage() {
                         </div>
                       )}
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {user.properties && user.properties.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="mb-4 text-base font-semibold text-foreground">Properties ({user.properties.length})</h3>
+              <div className="divide-y divide-border rounded-lg border border-border">
+                {user.properties.map((prop) => (
+                  <div key={prop.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{prop.title}</p>
+                      <p className="text-xs text-muted">
+                        {prop.propertyType} · KES {Number(prop.price).toLocaleString()}
+                        {prop.listingPurpose && (
+                          <span className="ml-1.5 text-primary">· {prop.listingPurpose === "FOR_RENT_SHORT_TERM" ? "Airbnb" : prop.listingPurpose === "FOR_RENT_LONG_TERM" ? "Rent" : "Sale"}</span>
+                        )}
+                        {prop.city && <span className="ml-1.5">· {prop.city}</span>}
+                      </p>
+                    </div>
+                    <span className={cn("ml-3 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium", {
+                      "bg-emerald-50 text-emerald-700": prop.moderationStatus === "APPROVED",
+                      "bg-amber-50 text-amber-700": prop.moderationStatus === "PENDING_REVIEW",
+                      "bg-red-50 text-red-700": prop.moderationStatus === "REJECTED",
+                      "bg-gray-50 text-gray-600": prop.moderationStatus === "DRAFT",
+                    })}>
+                      {prop.moderationStatus}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {user.serviceListings && user.serviceListings.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="mb-4 text-base font-semibold text-foreground">Services ({user.serviceListings.length})</h3>
+              <div className="divide-y divide-border rounded-lg border border-border">
+                {user.serviceListings.map((svc) => (
+                  <div key={svc.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{svc.title}</p>
+                      <p className="text-xs text-muted">
+                        {svc.price ? `KES ${Number(svc.price).toLocaleString()}` : "Price not set"}
+                        {svc.city && <span className="ml-1.5">· {svc.city}</span>}
+                      </p>
+                    </div>
+                    <span className={cn("ml-3 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium", {
+                      "bg-emerald-50 text-emerald-700": svc.moderationStatus === "APPROVED",
+                      "bg-amber-50 text-amber-700": svc.moderationStatus === "PENDING_REVIEW",
+                      "bg-red-50 text-red-700": svc.moderationStatus === "REJECTED",
+                      "bg-gray-50 text-gray-600": svc.moderationStatus === "DRAFT",
+                    })}>
+                      {svc.moderationStatus}
+                    </span>
                   </div>
                 ))}
               </div>

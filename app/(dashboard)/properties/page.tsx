@@ -31,6 +31,7 @@ interface Property {
   price: number
   currency: string
   propertyType: string
+  listingPurpose: string | null
   city: string
   moderationStatus: string
   isPublished: boolean
@@ -82,6 +83,8 @@ export default function PropertiesPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
+  const [typeFilter, setTypeFilter] = useState("")
+  const [purposeFilter, setPurposeFilter] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const limit = 20
@@ -92,6 +95,8 @@ export default function PropertiesPage() {
     try {
       const params = new URLSearchParams()
       if (search) params.set("search", search)
+      if (typeFilter) params.set("type", typeFilter)
+      if (purposeFilter) params.set("listingPurpose", purposeFilter)
       params.set("page", String(page))
       params.set("limit", String(limit))
 
@@ -105,7 +110,7 @@ export default function PropertiesPage() {
     } finally {
       setLoading(false)
     }
-  }, [search, page])
+  }, [search, typeFilter, purposeFilter, page])
 
   useEffect(() => {
     fetchProperties()
@@ -147,6 +152,28 @@ export default function PropertiesPage() {
 
       <div className="rounded-xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-medium text-muted mr-1">Type:</span>
+            {["", "HOUSE", "APARTMENT", "LAND", "COMMERCIAL"].map((t) => (
+              <button key={t} onClick={() => { setTypeFilter(t); setPage(1) }}
+                className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-all border border-border",
+                  typeFilter === t ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
+                )}>
+                {t || "All"}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-medium text-muted mr-1">Purpose:</span>
+            {["", "FOR_SALE", "FOR_RENT_LONG_TERM", "FOR_RENT_SHORT_TERM"].map((p) => (
+              <button key={p} onClick={() => { setPurposeFilter(p); setPage(1) }}
+                className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-all border border-border",
+                  purposeFilter === p ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
+                )}>
+                {p ? { FOR_SALE: "For Sale", FOR_RENT_LONG_TERM: "Long-term", FOR_RENT_SHORT_TERM: "Short-term / Airbnb" }[p] : "All"}
+              </button>
+            ))}
+          </div>
           <div className="ml-auto">
                 <form onSubmit={handleSearch} className="relative">
                   <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -235,7 +262,14 @@ export default function PropertiesPage() {
                         <p className="max-w-xs truncate text-sm font-medium text-foreground" title={p.title}>{p.title}</p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">{formatPrice(p.price, p.currency)}</td>
-                      <td className="px-4 py-3 text-sm text-muted">{typeLabel(p.propertyType)}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-muted">{typeLabel(p.propertyType)}</span>
+                        {p.listingPurpose && (
+                          <span className="ml-1.5 rounded-full bg-primary/5 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                            {p.listingPurpose === "FOR_RENT_SHORT_TERM" ? "Airbnb" : p.listingPurpose === "FOR_RENT_LONG_TERM" ? "Rent" : "Sale"}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-muted">{p.city}</td>
                       <td className="px-4 py-3 text-sm text-muted">
                         {p.agent ? `${p.agent.firstName} ${p.agent.lastName}` : <span className="italic text-muted/50">—</span>}

@@ -12,7 +12,8 @@ import {
 interface User {
   id: string; firstName: string; lastName: string; email: string
   role: string; accountStatus: string; kycStatus: string; createdAt: string
-  phone?: string; category?: string
+  phone?: string; category?: string; userTypes?: string[]; primaryUserType?: string
+  _count?: { properties: number; serviceListings: number }
 }
 
 interface UsersResponse {
@@ -21,6 +22,8 @@ interface UsersResponse {
 
 const FILTERS = ["All", "Active", "Pending", "Suspended"]
 const ROLES = ["APPLICANT", "AGENT", "ADMIN"]
+const USER_TYPE_TABS = ["", "PROPERTY_OWNER", "AGENT", "FUNDI", "SERVICE_PROVIDER"]
+const USER_TYPE_LABELS: Record<string, string> = { "": "All Types", PROPERTY_OWNER: "Property Owners", AGENT: "Agents", FUNDI: "Fundis", SERVICE_PROVIDER: "Service Providers" }
 
 const badge: Record<string, string> = {
   APPROVED: "bg-emerald-50 text-emerald-700",
@@ -43,7 +46,7 @@ function SkeletonRows() {
     <>
       {Array.from({ length: 8 }).map((_, i) => (
         <tr key={i} className="animate-pulse">
-          {Array.from({ length: 7 }).map((_, j) => (
+          {Array.from({ length: 8 }).map((_, j) => (
             <td key={j} className="px-4 py-4">
               <div className={cn("h-4 rounded bg-gray-200", j === 0 ? "w-32" : j === 1 ? "w-40" : "w-20")} />
             </td>
@@ -61,6 +64,7 @@ export default function UsersPage() {
   const [search, setSearch] = useState("")
   const [searchValue, setSearchValue] = useState("")
   const [activeFilter, setActiveFilter] = useState("All")
+  const [userTypeFilter, setUserTypeFilter] = useState("")
   const [page, setPage] = useState(1)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [roleDropdown, setRoleDropdown] = useState<string | null>(null)
@@ -75,6 +79,7 @@ export default function UsersPage() {
       const p = new URLSearchParams()
       if (search) p.set("search", search)
       if (activeFilter !== "All") p.set("status", statusFilterMap[activeFilter])
+      if (userTypeFilter) p.set("userType", userTypeFilter)
       p.set("page", String(page))
       p.set("pageSize", "20")
       const { data: d, error } = await api.get<UsersResponse>(`/api/admin/users?${p}`)
@@ -85,7 +90,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
-  }, [search, activeFilter, page])
+  }, [search, activeFilter, userTypeFilter, page])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
@@ -183,6 +188,17 @@ export default function UsersPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-1.5">
+        {USER_TYPE_TABS.map((ut) => (
+          <button key={ut} onClick={() => { setUserTypeFilter(ut); setPage(1) }}
+            className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all border border-border",
+              userTypeFilter === ut ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
+            )}>
+            {USER_TYPE_LABELS[ut] || ut}
+          </button>
+        ))}
+      </div>
+
       {error && (
         <div className="flex items-center gap-2.5 rounded-xl bg-error-50 px-4 py-3 text-sm text-red-700 border border-red-100">
           <AlertCircle size={16} className="shrink-0" />
@@ -197,6 +213,7 @@ export default function UsersPage() {
               <tr className="border-b border-border bg-gray-50/80">
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Email</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Role</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">KYC</th>
@@ -217,6 +234,11 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted text-xs">{user.email}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/5 text-primary">
+                        {user.userTypes?.join(", ") || user.primaryUserType || "—"}
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="relative">
                         <button onClick={() => setRoleDropdown(roleDropdown === user.id ? null : user.id)}
@@ -290,7 +312,7 @@ export default function UsersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center">
+                  <td colSpan={8} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center text-muted">
                       <UserPlus className="mb-2 opacity-30" size={32} />
                       <p className="text-sm">No users found</p>

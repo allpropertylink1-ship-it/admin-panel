@@ -8,53 +8,59 @@ import { cn } from "@/lib/utils"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, Banknote, Wallet, BarChart3, ScrollText, Settings, LogOut,
-  Menu, X, ChevronDown, Home, Receipt,
+  Menu, X, Receipt, Home, TreePine, Wrench, Tent, ShieldCheck, BookUser,
 } from "lucide-react"
 
 interface NavItem {
   href?: string
   label: string
   icon: React.ElementType
-  children?: { href: string; label: string; icon: React.ElementType }[]
 }
 
 const navGroups: { group: string; items: NavItem[] }[] = [
   {
-    group: "Overview",
+    group: "Dashboard",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     ],
   },
   {
-    group: "Management",
+    group: "Users",
     items: [
       { href: "/users", label: "All Users", icon: Users },
-      { href: "/approvals", label: "Approvals", icon: UserCheck },
       { href: "/properties", label: "Properties", icon: Building2 },
+      { href: "/services", label: "Fundis & Service Providers", icon: Wrench },
+    ],
+  },
+  {
+    group: "APL Representatives",
+    items: [
+      { href: "/agents", label: "All Representatives", icon: Handshake },
+      { href: "/commissions", label: "Commissions", icon: Banknote },
+      { href: "/payouts", label: "Payouts", icon: Wallet },
+      { href: "/claims", label: "Claims", icon: Receipt },
+    ],
+  },
+  {
+    group: "Approvals & Verification",
+    items: [
+      { href: "/approvals", label: "Pending Approvals", icon: UserCheck },
       { href: "/kyc", label: "KYC Verification", icon: Shield },
     ],
   },
   {
-    group: "Finance",
+    group: "Disputes & Reports",
     items: [
-      { href: "/agents", label: "APL Representatives", icon: Handshake },
-      { href: "/commissions", label: "Commissions", icon: Banknote },
-      { href: "/payouts", label: "Payouts", icon: Wallet },
-      { href: "/claims", label: "Claims", icon: Receipt },
       { href: "/disputes", label: "Disputes", icon: ScrollText },
-    ],
-  },
-  {
-    group: "Analytics",
-    items: [
       { href: "/reports", label: "Reports", icon: BarChart3 },
-      { href: "/audit", label: "Audit Log", icon: ScrollText },
+      { href: "/audit", label: "Audit Log", icon: BookUser },
     ],
   },
   {
-    group: "System",
+    group: "Admin",
     items: [
-      { href: "/settings", label: "Settings", icon: Settings },
+      { href: "/admin-accounts", label: "Admin Accounts", icon: ShieldCheck },
+      { href: "/settings", label: "Platform Settings", icon: Settings },
     ],
   },
 ]
@@ -79,6 +85,8 @@ export function AdminSidebar() {
     if (href === "/reports") return pathname.startsWith("/reports")
     if (href === "/audit") return pathname.startsWith("/audit")
     if (href === "/settings") return pathname.startsWith("/settings")
+    if (href === "/services") return pathname.startsWith("/services")
+    if (href === "/admin-accounts") return pathname.startsWith("/admin-accounts")
     return pathname === href
   }
 
