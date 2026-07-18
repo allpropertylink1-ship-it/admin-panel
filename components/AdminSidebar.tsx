@@ -15,53 +15,54 @@ interface NavItem {
   href?: string
   label: string
   icon: React.ElementType
+  permission: string
 }
 
 const navGroups: { group: string; items: NavItem[] }[] = [
   {
     group: "Dashboard",
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" },
     ],
   },
   {
     group: "Users",
     items: [
-      { href: "/users", label: "All Users", icon: Users },
-      { href: "/properties", label: "Properties", icon: Building2 },
-      { href: "/services", label: "Fundis & Service Providers", icon: Wrench },
-      { href: "/users/deleted", label: "Deleted Accounts", icon: Archive },
+      { href: "/users", label: "All Users", icon: Users, permission: "users" },
+      { href: "/properties", label: "Properties", icon: Building2, permission: "properties" },
+      { href: "/services", label: "Fundis & Service Providers", icon: Wrench, permission: "services" },
+      { href: "/users/deleted", label: "Deleted Accounts", icon: Archive, permission: "users" },
     ],
   },
   {
     group: "APL Representatives",
     items: [
-      { href: "/agents", label: "All Representatives", icon: Handshake },
-      { href: "/commissions", label: "Commissions", icon: Banknote },
-      { href: "/payouts", label: "Payouts", icon: Wallet },
-      { href: "/claims", label: "Claims", icon: Receipt },
+      { href: "/agents", label: "All Representatives", icon: Handshake, permission: "agents" },
+      { href: "/commissions", label: "Commissions", icon: Banknote, permission: "commissions" },
+      { href: "/payouts", label: "Payouts", icon: Wallet, permission: "payouts" },
+      { href: "/claims", label: "Claims", icon: Receipt, permission: "claims" },
     ],
   },
   {
     group: "Approvals & Verification",
     items: [
-      { href: "/approvals", label: "Pending Approvals", icon: UserCheck },
-      { href: "/kyc", label: "KYC Verification", icon: Shield },
+      { href: "/approvals", label: "Pending Approvals", icon: UserCheck, permission: "approvals" },
+      { href: "/kyc", label: "KYC Verification", icon: Shield, permission: "kyc" },
     ],
   },
   {
     group: "Disputes & Reports",
     items: [
-      { href: "/disputes", label: "Disputes", icon: ScrollText },
-      { href: "/reports", label: "Reports", icon: BarChart3 },
-      { href: "/audit", label: "Audit Log", icon: BookUser },
+      { href: "/disputes", label: "Disputes", icon: ScrollText, permission: "disputes" },
+      { href: "/reports", label: "Reports", icon: BarChart3, permission: "reports" },
+      { href: "/audit", label: "Audit Log", icon: BookUser, permission: "audit" },
     ],
   },
   {
     group: "Admin",
     items: [
-      { href: "/admin-accounts", label: "Admin Accounts", icon: ShieldCheck },
-      { href: "/settings", label: "Platform Settings", icon: Settings },
+      { href: "/admin-accounts", label: "Admin Accounts", icon: ShieldCheck, permission: "adminAccounts" },
+      { href: "/settings", label: "Platform Settings", icon: Settings, permission: "settings" },
     ],
   },
 ]
@@ -69,8 +70,14 @@ const navGroups: { group: string; items: NavItem[] }[] = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { logout: signOut } = useAuth()
+  const { user, logout: signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  function canAccess(permission: string): boolean {
+    if (!user) return false
+    if (user.role === "SUPER_ADMIN") return true
+    return !!user.permissions?.[permission]?.read
+  }
 
   function isActive(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard"
@@ -123,13 +130,16 @@ export function AdminSidebar() {
         </div>
 
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 scrollbar-thin scrollbar-thumb-primary-800/50 scrollbar-track-transparent">
-          {navGroups.map((group) => (
+          {navGroups.map((group) => {
+            const visibleItems = group.items.filter((item) => canAccess(item.permission))
+            if (visibleItems.length === 0) return null
+            return (
             <div key={group.group} className="mb-5 last:mb-0">
               <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-200/50">
                 {group.group}
               </p>
               <div className="space-y-0.5">
-                {group.items.map((item) => (
+                {visibleItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href!}
@@ -152,7 +162,8 @@ export function AdminSidebar() {
                 ))}
               </div>
             </div>
-          ))}
+            )
+          })}
         </nav>
 
         <div className="border-t border-primary-800/30 p-3">

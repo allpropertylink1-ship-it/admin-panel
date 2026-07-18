@@ -3,13 +3,15 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 import {
-  AlertCircle, Loader2, Plus, Trash2, ShieldCheck,
+  AlertCircle, Loader2, Plus, Trash2, ShieldCheck, UserPlus, ChevronDown, ChevronUp,
 } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface Admin {
   id: string; email: string; fullName: string; role: string; createdAt: string
+  permissions?: Record<string, { read: boolean; write: boolean }>
 }
 
 export default function AdminAccountsPage() {
@@ -22,7 +24,8 @@ export default function AdminAccountsPage() {
   const [formLoading, setFormLoading] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [expandedPerms, setExpandedPerms] = useState<string | null>(null)
 
   const fetchAdmins = useCallback(async () => {
     setLoading(true)
@@ -84,11 +87,18 @@ const [selectedIds, setSelectedIds] = useState<string[]>([])
           <h1 className="text-2xl font-bold text-foreground font-heading">Admin Accounts</h1>
           <p className="mt-1 text-sm text-muted">Manage platform administrators</p>
         </div>
-        <button onClick={() => setShowModal(true)}
-          className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-all inline-flex items-center gap-2 shadow-sm">
-          <Plus size={16} />
-          Add Admin
-        </button>
+        <div className="flex items-center gap-3">
+          <Link href="/invite"
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-gray-50 transition-all inline-flex items-center gap-2">
+            <UserPlus size={16} />
+            Invite Admin
+          </Link>
+          <button onClick={() => setShowModal(true)}
+            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-all inline-flex items-center gap-2 shadow-sm">
+            <Plus size={16} />
+            Add Admin
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -127,6 +137,7 @@ const [selectedIds, setSelectedIds] = useState<string[]>([])
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Email</th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Role</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Permissions</th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Created</th>
                   <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
                 </tr>
@@ -151,9 +162,39 @@ const [selectedIds, setSelectedIds] = useState<string[]>([])
                     </td>
                     <td className="px-4 py-3 text-muted text-xs">{admin.email}</td>
                     <td className="px-4 py-3">
-                      <span className="inline-block rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                      <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        admin.role === "SUPER_ADMIN" ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"
+                      )}>
                         {admin.role}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {admin.permissions ? (
+                        <div>
+                          <button onClick={() => setExpandedPerms(expandedPerms === admin.id ? null : admin.id)}
+                            className="inline-flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors">
+                            {Object.keys(admin.permissions).length} sections
+                            {expandedPerms === admin.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                          {expandedPerms === admin.id && (
+                            <div className="absolute z-10 mt-1 w-56 rounded-lg border border-border bg-card p-3 shadow-lg">
+                              <div className="space-y-1.5">
+                                {Object.entries(admin.permissions).map(([key, val]) => (
+                                  <div key={key} className="flex items-center justify-between text-xs">
+                                    <span className="text-foreground capitalize">{key}</span>
+                                    <span className="flex items-center gap-2 text-muted">
+                                      {val.read && <span className="text-emerald-600 font-medium">R</span>}
+                                      {val.write && <span className="text-blue-600 font-medium">W</span>}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted tabular-nums">
                       {new Date(admin.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}

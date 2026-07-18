@@ -9,6 +9,7 @@ interface User {
   fullName: string
   role: string
   authMethod: string
+  permissions?: Record<string, { read: boolean; write: boolean }>
 }
 
 interface AuthContextType {
