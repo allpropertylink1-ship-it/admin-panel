@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, Banknote, Wallet, BarChart3, ScrollText, Settings, LogOut,
-  Menu, X, Receipt, Home, TreePine, Wrench, Tent, ShieldCheck, BookUser,
+  Menu, X, Receipt, Home, TreePine, Wrench, Tent, ShieldCheck, BookUser, Archive,
 } from "lucide-react"
 
 interface NavItem {
@@ -30,6 +30,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
       { href: "/users", label: "All Users", icon: Users },
       { href: "/properties", label: "Properties", icon: Building2 },
       { href: "/services", label: "Fundis & Service Providers", icon: Wrench },
+      { href: "/users/deleted", label: "Deleted Accounts", icon: Archive },
     ],
   },
   {
@@ -73,7 +74,8 @@ export function AdminSidebar() {
 
   function isActive(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard"
-    if (href === "/users") return pathname.startsWith("/users")
+    if (href === "/users") return pathname === "/users"
+    if (href === "/users/deleted") return pathname === "/users/deleted"
     if (href === "/approvals") return pathname.startsWith("/approvals")
     if (href === "/properties") return pathname.startsWith("/properties")
     if (href === "/kyc") return pathname.startsWith("/kyc")
@@ -136,7 +138,9 @@ export function AdminSidebar() {
                       "touch-target group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 lg:px-4",
                       isActive(item.href!)
                         ? "bg-sidebar-active text-white shadow-sm shadow-black/10"
-                        : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"
+                        : item.label === "Deleted Accounts"
+                          ? "text-primary-300/50 hover:bg-sidebar-hover hover:text-primary-200/70"
+                          : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"
                     )}
                   >
                     {isActive(item.href!) && (
