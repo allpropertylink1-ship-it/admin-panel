@@ -126,12 +126,15 @@ export default function PropertiesPage() {
     setPage(1)
   }
 
-  function formatPrice(price: number, currency: string) {
-    return new Intl.NumberFormat("en-KE", {
+  function formatPrice(price: number, currency: string, listingPurpose?: string | null) {
+    const formatted = new Intl.NumberFormat("en-KE", {
       style: "currency",
       currency,
       minimumFractionDigits: 0,
     }).format(price)
+    if (listingPurpose === "FOR_RENT_SHORT_TERM") return `${formatted}/night`
+    if (listingPurpose === "FOR_RENT_LONG_TERM") return `${formatted}/month`
+    return formatted
   }
 
   function typeLabel(type: string) {
@@ -287,7 +290,7 @@ export default function PropertiesPage() {
                       <td className="px-4 py-3">
                         <p className="max-w-xs truncate text-sm font-medium text-foreground" title={p.title}>{p.title}</p>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">{formatPrice(p.price, p.currency)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">{formatPrice(p.price, p.currency, p.listingPurpose)}</td>
                       <td className="px-4 py-3">
                         <span className="text-sm text-muted">{typeLabel(p.propertyType)}</span>
                         {p.listingPurpose && (
