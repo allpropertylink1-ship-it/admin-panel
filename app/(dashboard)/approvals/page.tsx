@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronUp, CheckCircle, XCircle, AlertCircle,
   FileText, Building2, MapPin, User, Phone, Mail, Globe, Search,
   ExternalLink, Loader2, ShieldCheck, Ban, BadgeCheck,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface KycDocument {
   id: string

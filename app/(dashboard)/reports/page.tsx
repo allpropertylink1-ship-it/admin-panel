@@ -14,7 +14,7 @@ import {
   MapPin,
   Loader2,
   Clock,
-} from "lucide-react";
+} from "@/components/ui/icons";
 
 interface RecentUser {
   id: string;

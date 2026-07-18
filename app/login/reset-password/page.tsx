@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Shield, Eye, EyeOff, CheckCircle } from "lucide-react"
+import { Shield, Eye, EyeOff, CheckCircle } from "@/components/ui/icons"
 import { api } from "@/lib/api-client"
 
 function ResetPasswordForm() {

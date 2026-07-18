@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, ExternalLink, Download, X } from "lucide-react"
+import { FileText, ExternalLink, Download, X } from "@/components/ui/icons"
 import { resolvePdfUrl } from "@/lib/pdf-utils"
 
 interface PdfViewerProps {

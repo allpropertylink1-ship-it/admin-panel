@@ -8,7 +8,7 @@ import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search, ChevronLeft, ChevronRight, Shield, ShieldOff, Trash2,
   X, AlertCircle, Eye, ChevronDown, UserPlus, Filter, Loader2, Download, Check,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface User {
   id: string; firstName: string; lastName: string; email: string

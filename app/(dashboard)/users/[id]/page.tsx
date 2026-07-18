@@ -23,7 +23,7 @@ import {
   FileText,
   Clock,
   ChevronRight,
-} from "lucide-react";
+} from "@/components/ui/icons";
 
 interface KycDocument {
   id: string;

@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, Banknote, Wallet, BarChart3, ScrollText, Settings, LogOut,
   Menu, X, Receipt, Home, TreePine, Wrench, Tent, ShieldCheck, BookUser, Archive,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface NavItem {
   href?: string

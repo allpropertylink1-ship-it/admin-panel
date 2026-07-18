@@ -7,7 +7,7 @@ import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search, X, Wallet, Banknote, CheckCircle, XCircle,
   Loader2, AlertCircle, Plus, Pencil, Trash2, CreditCard, Download,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface AgentOption {
   id: string

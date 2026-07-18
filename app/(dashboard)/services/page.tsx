@@ -7,7 +7,7 @@ import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search, X, ChevronLeft, ChevronRight, AlertCircle,
   Wrench, Download, Check, XCircle, Clock,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface ServiceCategory {
   id: string; name: string; slug: string

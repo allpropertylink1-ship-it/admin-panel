@@ -11,7 +11,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-} from "lucide-react";
+} from "@/components/ui/icons";
 
 interface Settings {
   platformName: string;

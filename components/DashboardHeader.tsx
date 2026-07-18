@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
-import { Bell } from "lucide-react"
+import { Bell } from "@/components/ui/icons"
 
 function DashboardDate() {
   const [dateStr, setDateStr] = useState("")

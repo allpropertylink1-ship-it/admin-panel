@@ -7,7 +7,7 @@ import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { cn } from "@/lib/utils"
 import {
   Search, X, UserPlus, Pencil, Trash2, Users, UserCheck, Hash, Loader2, AlertCircle, Ban, CheckCircle
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface AplAgent {
   id: string

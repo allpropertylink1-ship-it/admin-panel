@@ -9,7 +9,7 @@ import {
   CheckCircle, XCircle, DollarSign, Ban, Wallet, TrendingUp,
   Calendar, Phone, Mail, UserPlus, Home, Clock, AlertCircle,
   Search, Filter, ChevronDown, Plus, Eye, Lock,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface ReferredUser {
   id: string; firstName: string; lastName: string; email: string | null

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Shield, ArrowLeft, Mail, CheckCircle } from "lucide-react"
+import { Shield, ArrowLeft, Mail, CheckCircle } from "@/components/ui/icons"
 import { api } from "@/lib/api-client"
 
 export default function ForgotPasswordPage() {

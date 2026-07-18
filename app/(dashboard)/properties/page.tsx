@@ -17,7 +17,7 @@ import {
   Building2,
   Download,
   Check,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface Agent {
   id: string

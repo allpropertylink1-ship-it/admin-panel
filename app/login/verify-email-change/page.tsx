@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
-import { Shield, Eye, EyeOff, CheckCircle, Loader2, AlertCircle } from "lucide-react"
+import { Shield, Eye, EyeOff, CheckCircle, Loader2, AlertCircle } from "@/components/ui/icons"
 import { api } from "@/lib/api-client"
 
 function VerifyEmailForm() {

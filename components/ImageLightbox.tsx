@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useCallback, useState, useRef } from "react"
-import { X, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, FileText } from "lucide-react"
+import { X, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, FileText } from "@/components/ui/icons"
 import { resolvePdfUrl } from "@/lib/pdf-utils"
 
 interface ImageLightboxProps {

@@ -8,7 +8,7 @@ import {
   Users, UserCheck, Building2, ShieldOff,
   Handshake, Banknote, Clock, AlertCircle, ArrowUpRight,
   UserPlus, ChevronRight, Activity,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface RecentUser {
   id: string; firstName: string; lastName: string; email: string; role: string; createdAt: string

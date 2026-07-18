@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
   AlertCircle, Loader2, Plus, Trash2, ShieldCheck,
-} from "lucide-react"
+} from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface Admin {

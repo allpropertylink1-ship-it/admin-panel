@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
-import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle, Download } from "lucide-react"
+import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle, Download } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface Claim {

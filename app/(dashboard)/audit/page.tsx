@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   Search, ChevronLeft, ChevronRight, Loader2, Filter, RefreshCw,
   AlertCircle, ClipboardList, Download,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface AuditEntry {
   id: string

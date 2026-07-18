@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
-import { Search, X, AlertCircle, Archive, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { Search, X, AlertCircle, Archive, ChevronLeft, ChevronRight, Loader2 } from "@/components/ui/icons"
 
 interface User {
   id: string; firstName: string; lastName: string; email: string; phone?: string

@@ -7,7 +7,7 @@ import {
   Shield, ShieldCheck, ShieldX, Search, Loader2, XCircle, CheckCircle,
   RefreshCcw, FileText, X, Clock, ArrowUp, ArrowDown, ImageIcon,
   ChevronLeft, ChevronRight, AlertCircle, User, Download,
-} from "lucide-react"
+} from "@/components/ui/icons"
 import ImageLightbox from "@/components/ImageLightbox"
 import PdfViewer from "@/components/PdfViewer"
 import { resolvePdfUrl } from "@/lib/pdf-utils"
