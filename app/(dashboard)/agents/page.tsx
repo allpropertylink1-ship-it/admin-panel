@@ -18,16 +18,13 @@ interface AplAgent {
   status: string
   suspendedAt: string | null
   suspendedReason: string | null
-  commissionRate: number
-  commissionType: string
-  commissionCap: number | null
   createdAt: string
   _count: { users: number }
 }
 
-type FormData = { fullName: string; email: string; phone: string; commissionRate: number; commissionType: string; commissionCap: string }
+type FormData = { fullName: string; email: string; phone: string }
 
-const emptyForm: FormData = { fullName: "", email: "", phone: "", commissionRate: 0, commissionType: "PERCENTAGE", commissionCap: "" }
+const emptyForm: FormData = { fullName: "", email: "", phone: "" }
 
 const statusFilters = ["", "ACTIVE", "SUSPENDED", "INACTIVE"]
 
@@ -120,7 +117,7 @@ export default function AgentsPage() {
 
   function openEditModal(agent: AplAgent) {
     setEditAgent(agent)
-    setForm({ fullName: agent.fullName, email: agent.email, phone: agent.phone, commissionRate: agent.commissionRate, commissionType: agent.commissionType, commissionCap: agent.commissionCap !== null && agent.commissionCap !== undefined ? String(agent.commissionCap) : "" })
+    setForm({ fullName: agent.fullName, email: agent.email, phone: agent.phone })
     setFormError("")
     setModalOpen(true)
   }
@@ -133,10 +130,7 @@ export default function AgentsPage() {
     }
     setFormLoading(true)
     try {
-      const payload = {
-        ...form,
-        commissionCap: form.commissionCap ? Number(form.commissionCap) : null,
-      }
+      const payload = { ...form }
       if (editAgent) {
         const emailChanged = form.email.trim().toLowerCase() !== editAgent.email.toLowerCase()
         if (emailChanged) {
@@ -495,26 +489,6 @@ export default function AgentsPage() {
                 <input id="phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   placeholder="+254 7XX XXX XXX" />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium" htmlFor="commissionRate">Commission Rate</label>
-                <input id="commissionRate" type="number" step="0.01" min="0" value={form.commissionRate} onChange={(e) => setForm({ ...form, commissionRate: Number(e.target.value) })}
-                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
-                  placeholder="e.g. 5" />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium" htmlFor="commissionType">Commission Type</label>
-                <select id="commissionType" value={form.commissionType} onChange={(e) => setForm({ ...form, commissionType: e.target.value })}
-                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15">
-                  <option value="PERCENTAGE">Percentage (%)</option>
-                  <option value="FIXED">Fixed (KES)</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium" htmlFor="commissionCap">Commission Cap (optional)</label>
-                <input id="commissionCap" type="number" step="0.01" min="0" value={form.commissionCap} onChange={(e) => setForm({ ...form, commissionCap: e.target.value })}
-                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
-                  placeholder="e.g. 50000" />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">

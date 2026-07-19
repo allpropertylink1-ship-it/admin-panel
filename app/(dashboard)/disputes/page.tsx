@@ -18,8 +18,7 @@ interface Dispute {
   resolvedAt: string | null
   createdAt: string
   aplAgent: { id: string; fullName: string; email: string; agentCode: string }
-  commission: { id: string; amount: number; status: string; property: { title: string } } | null
-  payout: { id: string; amount: number; status: string } | null
+  claim: { id: string; amount: number; status: string; property: { title: string } } | null
 }
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n)
@@ -223,18 +222,11 @@ export default function AdminDisputesPage() {
               <p className="text-lg font-bold text-foreground">{fmt(selectedDispute.amount)}</p>
             </div>
 
-            {selectedDispute.commission && (
+            {selectedDispute.claim && (
               <div className="mb-4 rounded-lg bg-card p-3">
-                <p className="text-xs text-muted">Related Commission</p>
-                <p className="text-sm font-medium text-foreground">{selectedDispute.commission.property.title}</p>
-                <p className="text-xs text-muted">{fmt(selectedDispute.commission.amount)} &middot; {selectedDispute.commission.status}</p>
-              </div>
-            )}
-
-            {selectedDispute.payout && (
-              <div className="mb-4 rounded-lg bg-card p-3">
-                <p className="text-xs text-muted">Related Payout</p>
-                <p className="text-sm font-medium text-foreground">{fmt(selectedDispute.payout.amount)} &middot; {selectedDispute.payout.status}</p>
+                <p className="text-xs text-muted">Related Claim</p>
+                <p className="text-sm font-medium text-foreground">{selectedDispute.claim.property?.title || "N/A"}</p>
+                <p className="text-xs text-muted">{fmt(selectedDispute.claim.amount)} &middot; {selectedDispute.claim.status}</p>
               </div>
             )}
 

@@ -20,7 +20,6 @@ interface DashboardData {
   recentRegistrations: RecentUser[]
   topCities: { city: string; count: number }[]
   registrationsByDay: { date: string; count: number }[]
-  commissions: { total: number; pending: number; paid: number; totalPaidAmount: number }
 }
 
 const cards = [

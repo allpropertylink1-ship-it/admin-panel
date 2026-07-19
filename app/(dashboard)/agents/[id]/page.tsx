@@ -8,7 +8,7 @@ import {
   Loader2, ArrowLeft, Hash, Users, Building2, Banknote,
   CheckCircle, XCircle, DollarSign, Ban, Wallet, TrendingUp,
   Calendar, Phone, Mail, UserPlus, Home, Clock, AlertCircle,
-  Search, Filter, ChevronDown, Plus, Eye, Lock,
+  Search, Plus, Lock, Receipt,
 } from "@/components/ui/icons"
 
 interface ReferredUser {
@@ -22,30 +22,21 @@ interface ReferredUser {
   }[]
 }
 
-interface CommissionRecord {
-  id: string; amount: number; currency: string; status: string
-  paidAt: string | null; notes: string | null; createdAt: string
-  property: { id: string; title: string; slug: string; price: number; currency: string; images: string[] }
-  user: { id: string; firstName: string; lastName: string; email: string }
-}
-
-interface PayoutRecord {
-  id: string; amount: number; currency: string; method: string
-  reference: string | null; status: string; notes: string | null
-  paidAt: string | null; createdAt: string
+interface ClaimRecord {
+  id: string; amount: number; currency: string; adminModifiedAmount: number | null
+  status: string; paidAt: string | null; adminNotes: string | null
+  agentNotes: string | null; createdAt: string; reviewedAt: string | null
+  property: { id: string; title: string; slug: string; price: number } | null
 }
 
 interface AgentDetail {
   id: string; fullName: string; email: string; phone: string; agentCode: string
   status: string; suspendedAt: string | null; suspendedReason: string | null
-  commissionRate: number; commissionType: string; commissionCap: number | null
   createdAt: string; _count: { users: number }
-  _commissionCounts: { total: number; pending: number; paid: number; totalPaid: number }
-  _payoutCounts?: { pending: number; paid: number; totalPaidAmount: number }
   users: ReferredUser[]
 }
 
-type Tab = "referrals" | "commissions" | "payouts"
+type Tab = "referrals" | "claims"
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE").format(n)
 const fmtCurr = (n: number) => `KES ${fmt(n)}`
@@ -57,13 +48,9 @@ export default function AgentDashboardPage() {
 
   const [agent, setAgent] = useState<AgentDetail | null>(null)
   const [referrals, setReferrals] = useState<ReferredUser[]>([])
-  const [commissions, setCommissions] = useState<CommissionRecord[]>([])
-  const [payouts, setPayouts] = useState<PayoutRecord[]>([])
+  const [claims, setClaims] = useState<ClaimRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>("referrals")
-  const [editCommission, setEditCommission] = useState<{ id: string; amount: number; notes: string } | null>(null)
-  const [showEditRate, setShowEditRate] = useState(false)
-  const [editRate, setEditRate] = useState({ commissionType: "", commissionRate: 0, commissionCap: 0 })
   const [actionLoading, setActionLoading] = useState(false)
   const [resetPwLoading, setResetPwLoading] = useState(false)
   const [referralSearch, setReferralSearch] = useState("")
@@ -71,32 +58,21 @@ export default function AgentDashboardPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [agentRes, referralsRes, commissionsRes, payoutsRes] = await Promise.all([
+      const [agentRes, claimsRes] = await Promise.all([
         api.get<{ agent: AgentDetail }>(`/api/admin/agents/${agentId}`),
-        api.get<{ users: ReferredUser[] }>(`/api/admin/commissions/agents/${agentId}/referrals`),
-        api.get<{ commissions: CommissionRecord[] }>(`/api/admin/commissions/agents/${agentId}/commissions`),
-        api.get<{ payouts: PayoutRecord[] }>(`/api/admin/payouts?agentId=${agentId}`),
+        api.get<{ claims: ClaimRecord[] }>(`/api/admin/claims?agentId=${agentId}&limit=100`),
       ])
-      if (agentRes.data?.agent) setAgent(agentRes.data.agent)
-      if (referralsRes.data?.users) setReferrals(referralsRes.data.users)
-      if (commissionsRes.data?.commissions) setCommissions(commissionsRes.data.commissions)
-      if (payoutsRes.data?.payouts) setPayouts(payoutsRes.data.payouts)
+      if (agentRes.data?.agent) {
+        setAgent(agentRes.data.agent)
+        setReferrals(agentRes.data.agent.users || [])
+      }
+      if (claimsRes.data?.claims) setClaims(claimsRes.data.claims)
     } finally {
       setLoading(false)
     }
   }, [agentId])
 
   useEffect(() => { fetchData() }, [fetchData])
-
-  async function handleMarkPaid(id: string) {
-    const { data } = await api.post<{ commission: CommissionRecord }>(`/api/admin/commissions/${id}/mark-paid`)
-    if (data?.commission) setCommissions((prev) => prev.map((c) => (c.id === id ? data.commission : c)))
-  }
-
-  async function handleMarkUnpaid(id: string) {
-    const { data } = await api.post<{ commission: CommissionRecord }>(`/api/admin/commissions/${id}/mark-unpaid`)
-    if (data?.commission) setCommissions((prev) => prev.map((c) => (c.id === id ? data.commission : c)))
-  }
 
   async function handleSuspend() {
     if (!agent) return
@@ -124,17 +100,6 @@ export default function AgentDashboardPage() {
       alert(error || "Failed to reset password")
     }
     setResetPwLoading(false)
-  }
-
-  async function handleUpdateCommission() {
-    if (!editCommission) return
-    const { data } = await api.patch<{ commission: CommissionRecord }>(`/api/admin/commissions/${editCommission.id}`, {
-      amount: editCommission.amount, notes: editCommission.notes || null,
-    })
-    if (data?.commission) {
-      setCommissions((prev) => prev.map((c) => (c.id === editCommission.id ? data.commission : c)))
-      setEditCommission(null)
-    }
   }
 
   if (loading) return (
@@ -168,11 +133,9 @@ export default function AgentDashboardPage() {
   )
 
   const totalProperties = referrals.reduce((s, u) => s + u._count.properties, 0)
-  const totalEarned = agent._commissionCounts.totalPaid || 0
-  const pendingCommissionsTotal = commissions.filter((c) => c.status === "PENDING").reduce((s, c) => s + Number(c.amount), 0)
-  const paidCommissionsTotal = commissions.filter((c) => c.status === "PAID").reduce((s, c) => s + Number(c.amount), 0)
-  const pendingPayoutsTotal = payouts.filter((p) => p.status === "PENDING").reduce((s, p) => s + Number(p.amount), 0)
-  const paidPayoutsTotal = payouts.filter((p) => p.status === "PAID").reduce((s, p) => s + Number(p.amount), 0)
+  const totalPaid = claims.filter((c) => c.status === "PAID").reduce((s, c) => s + Number(c.amount), 0)
+  const pendingClaims = claims.filter((c) => c.status === "PENDING").length
+  const paidClaims = claims.filter((c) => c.status === "PAID").length
 
   const filteredReferrals = referrals.filter((u) =>
     !referralSearch || `${u.firstName} ${u.lastName} ${u.email || ""}`.toLowerCase().includes(referralSearch.toLowerCase())
@@ -241,13 +204,12 @@ export default function AgentDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         <MetricCard icon={Users} label="Total Referrals" value={String(agent._count.users)} />
         <MetricCard icon={Building2} label="Properties" value={String(totalProperties)} />
-        <MetricCard icon={Banknote} label="Pending Comm." value={fmtCurr(pendingCommissionsTotal)} color="text-warning" />
-        <MetricCard icon={CheckCircle} label="Paid Comm." value={fmtCurr(paidCommissionsTotal)} color="text-success" />
-        <MetricCard icon={TrendingUp} label="Total Earned" value={fmtCurr(totalEarned)} color="text-accent" />
-        <MetricCard icon={Wallet} label="Pending Payouts" value={fmtCurr(pendingPayoutsTotal)} color="text-warning" />
+        <MetricCard icon={Clock} label="Pending Claims" value={String(pendingClaims)} color="text-warning" />
+        <MetricCard icon={CheckCircle} label="Paid Claims" value={String(paidClaims)} color="text-success" />
+        <MetricCard icon={TrendingUp} label="Total Paid Out" value={fmtCurr(totalPaid)} color="text-accent" />
       </div>
 
       {agent.suspendedReason && agent.status === "SUSPENDED" && (
@@ -265,8 +227,7 @@ export default function AgentDashboardPage() {
 
       <div className="flex items-center gap-1.5 rounded-xl border border-border bg-surface p-1">
         {([{ key: "referrals" as Tab, label: "Referrals & Listings", icon: Building2, count: referrals.length },
-          { key: "commissions" as Tab, label: "Commissions", icon: Banknote, count: commissions.length },
-          { key: "payouts" as Tab, label: "Payout History", icon: Wallet, count: payouts.length },
+          { key: "claims" as Tab, label: "Claims", icon: Receipt, count: claims.length },
         ]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={cn(
@@ -330,42 +291,30 @@ export default function AgentDashboardPage() {
                   {user.properties.length > 0 && (
                     <div className="border-t border-border">
                       <div className="divide-y divide-border">
-                        {user.properties.map((p) => {
-                          const commission = commissions.find((c) => c.property.id === p.id)
-                          return (
-                            <div key={p.id} className="flex items-center gap-4 px-5 py-3 hover:bg-primary-50/20 transition-colors">
-                              <div className="h-10 w-14 shrink-0 rounded-lg bg-primary-100 overflow-hidden">
-                                {p.images?.[0] ? (
-                                  <img src={p.images[0]} alt="" className="h-full w-full object-cover" />
-                                ) : (
-                                  <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={16} /></div>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
-                                <p className="text-xs text-muted">{p.city} · {p.propertyType}</p>
-                              </div>
-                              <p className="text-sm font-medium text-foreground tabular-nums shrink-0">
-                                {p.currency} {fmt(p.price)}
-                              </p>
-                              <span className={cn(
-                                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset shrink-0",
-                                p.moderationStatus === "APPROVED" ? "bg-success/10 text-success ring-success/20" :
-                                p.moderationStatus === "PENDING_REVIEW" ? "bg-warning/10 text-warning ring-warning/20" :
-                                "bg-error/10 text-error ring-error/20"
-                              )}>{p.moderationStatus}</span>
-                              {commission && (
-                                <span className={cn(
-                                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0",
-                                  commission.status === "PAID" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                                )}>
-                                  {commission.status === "PAID" ? <CheckCircle size={10} /> : <Clock size={10} />}
-                                  {commission.status === "PAID" ? `Paid ${commission.paidAt ? new Date(commission.paidAt).toLocaleDateString() : ""}` : `${fmtCurr(Number(commission.amount))} pending`}
-                                </span>
+                        {user.properties.map((p) => (
+                          <div key={p.id} className="flex items-center gap-4 px-5 py-3 hover:bg-primary-50/20 transition-colors">
+                            <div className="h-10 w-14 shrink-0 rounded-lg bg-primary-100 overflow-hidden">
+                              {p.images?.[0] ? (
+                                <img src={p.images[0]} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={16} /></div>
                               )}
                             </div>
-                          )
-                        })}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
+                              <p className="text-xs text-muted">{p.city} · {p.propertyType}</p>
+                            </div>
+                            <p className="text-sm font-medium text-foreground tabular-nums shrink-0">
+                              {p.currency} {fmt(p.price)}
+                            </p>
+                            <span className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset shrink-0",
+                              p.moderationStatus === "APPROVED" ? "bg-success/10 text-success ring-success/20" :
+                              p.moderationStatus === "PENDING_REVIEW" ? "bg-warning/10 text-warning ring-warning/20" :
+                              "bg-error/10 text-error ring-error/20"
+                            )}>{p.moderationStatus}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -376,12 +325,12 @@ export default function AgentDashboardPage() {
         </div>
       )}
 
-      {tab === "commissions" && (
+      {tab === "claims" && (
         <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
-          {commissions.length === 0 ? (
+          {claims.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Banknote size={32} className="mb-3 text-muted/40" />
-              <p className="text-sm text-muted">No commissions yet. Commissions are created when a referred user&apos;s property is approved.</p>
+              <Receipt size={32} className="mb-3 text-muted/40" />
+              <p className="text-sm text-muted">No claims yet for this representative.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -389,157 +338,40 @@ export default function AgentDashboardPage() {
                 <thead>
                   <tr className="border-b border-border bg-background/50">
                     <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Property</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Referred User</th>
                     <th className="px-4 py-3 text-right font-medium text-muted text-xs uppercase tracking-wider">Amount</th>
+                    <th className="px-4 py-3 text-right font-medium text-muted text-xs uppercase tracking-wider">Modified</th>
                     <th className="px-4 py-3 text-center font-medium text-muted text-xs uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Paid Date</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Date</th>
                     <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Notes</th>
-                    <th className="px-4 py-3 text-right font-medium text-muted text-xs uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {commissions.map((c) => (
+                  {claims.map((c) => (
                     <tr key={c.id} className="hover:bg-primary-50/20 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-14 shrink-0 rounded-lg bg-primary-100 overflow-hidden">
-                            {c.property.images?.[0] ? (
-                              <img src={c.property.images[0]} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={16} /></div>
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-foreground max-w-[200px]">{c.property.title}</p>
-                            <p className="text-xs text-muted">{c.property.currency} {fmt(c.property.price)}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-muted">{c.user.firstName} {c.user.lastName}</td>
-                      <td className="px-4 py-3 text-right font-medium text-foreground tabular-nums">
-                        {editCommission?.id === c.id ? (
-                          <div className="flex items-center gap-1 justify-end">
-                            <span className="text-xs text-muted">KES</span>
-                            <input type="number" value={editCommission.amount} onChange={(e) => setEditCommission({ ...editCommission, amount: Number(e.target.value) })}
-                              className="w-20 rounded border border-border bg-background px-2 py-1 text-right text-sm" min="0" step="0.01" />
-                          </div>
-                        ) : fmtCurr(Number(c.amount))}
+                      <td className="px-4 py-3 text-muted max-w-[200px] truncate">{c.property?.title || "—"}</td>
+                      <td className="px-4 py-3 text-right font-medium text-foreground tabular-nums">{fmtCurr(Number(c.amount))}</td>
+                      <td className="px-4 py-3 text-right text-muted text-xs tabular-nums">
+                        {c.adminModifiedAmount ? fmtCurr(Number(c.adminModifiedAmount)) : "—"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={cn(
                           "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                          c.status === "PAID" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
+                          c.status === "PAID" ? "bg-success/10 text-success" :
+                          c.status === "PENDING" ? "bg-warning/10 text-warning" :
+                          c.status === "AWAITING_AGENT_ACCEPTANCE" ? "bg-blue-50 text-blue-600" :
+                          "bg-error/10 text-error"
                         )}>
-                          {c.status === "PAID" ? <CheckCircle size={12} /> : <Clock size={12} />}
-                          {c.status}
+                          {c.status === "PAID" ? <CheckCircle size={12} /> :
+                           c.status === "PENDING" ? <Clock size={12} /> : <XCircle size={12} />}
+                          {c.status === "AWAITING_AGENT_ACCEPTANCE" ? "AWAITING REP" : c.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted text-xs tabular-nums">
-                        {c.paidAt ? new Date(c.paidAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                        {c.paidAt ? new Date(c.paidAt).toLocaleDateString() : new Date(c.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-muted text-xs max-w-[150px] truncate">
-                        {editCommission?.id === c.id ? (
-                          <input type="text" value={editCommission.notes} onChange={(e) => setEditCommission({ ...editCommission, notes: e.target.value })}
-                            className="w-full rounded border border-border bg-background px-2 py-1 text-xs" placeholder="Notes" />
-                        ) : c.notes || "—"}
+                        {c.adminNotes || c.agentNotes || "—"}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {editCommission?.id === c.id ? (
-                            <>
-                              <button onClick={handleUpdateCommission}
-                                className="touch-target rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-hover transition-all">Save</button>
-                              <button onClick={() => setEditCommission(null)}
-                                className="touch-target rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted hover:bg-background transition-all">Cancel</button>
-                            </>
-                          ) : (
-                            <>
-                              <button onClick={() => setEditCommission({ id: c.id, amount: Number(c.amount), notes: c.notes || "" })}
-                                className="touch-target rounded-lg p-1.5 text-muted hover:text-foreground hover:bg-background transition-all" title="Edit amount & notes">
-                                <DollarSign size={14} />
-                              </button>
-                              {c.status === "PENDING" ? (
-                                <button onClick={() => handleMarkPaid(c.id)}
-                                  className="touch-target rounded-lg bg-success/10 p-1.5 text-success hover:bg-success/20 transition-all" title="Mark as paid">
-                                  <CheckCircle size={14} />
-                                </button>
-                              ) : (
-                                <button onClick={() => handleMarkUnpaid(c.id)}
-                                  className="touch-target rounded-lg bg-warning/10 p-1.5 text-warning hover:bg-warning/20 transition-all" title="Mark as unpaid">
-                                  <XCircle size={14} />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "payouts" && (
-        <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-primary-50 p-1.5"><Wallet size={16} className="text-primary" /></div>
-              <h3 className="font-semibold text-foreground">Payout History</h3>
-              <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary">
-                {fmtCurr(paidPayoutsTotal)} paid
-              </span>
-            </div>
-            <button onClick={() => router.push(`/payouts?agentId=${agentId}`)}
-              className="rounded-xl bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover transition-all inline-flex items-center gap-1.5">
-              <Plus size={13} /> Create Payout
-            </button>
-          </div>
-          {payouts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Wallet size={32} className="mb-3 text-muted/40" />
-              <p className="text-sm text-muted">No payouts yet for this representative.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-background/50">
-                    <th className="px-4 py-3 text-right font-medium text-muted text-xs uppercase tracking-wider">Amount</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Method</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Reference</th>
-                    <th className="px-4 py-3 text-center font-medium text-muted text-xs uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Paid Date</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted text-xs uppercase tracking-wider">Notes</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {payouts.map((p) => (
-                    <tr key={p.id} className="hover:bg-primary-50/20 transition-colors">
-                      <td className="px-4 py-3 text-right font-medium text-foreground tabular-nums">{fmtCurr(Number(p.amount))}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted">
-                          {p.method === "MPESA" ? <Phone size={12} /> : p.method === "BANK" ? <Building2 size={12} /> : <Wallet size={12} />}
-                          {p.method}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted font-mono">{p.reference || "—"}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                          p.status === "PAID" ? "bg-success/10 text-success" :
-                          p.status === "PENDING" ? "bg-warning/10 text-warning" : "bg-error/10 text-error"
-                        )}>
-                          {p.status === "PAID" ? <CheckCircle size={12} /> : p.status === "PENDING" ? <Clock size={12} /> : <XCircle size={12} />}
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-muted text-xs tabular-nums">
-                        {p.paidAt ? new Date(p.paidAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-muted text-xs max-w-[150px] truncate">{p.notes || "—"}</td>
                     </tr>
                   ))}
                 </tbody>

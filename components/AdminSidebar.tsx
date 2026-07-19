@@ -7,8 +7,8 @@ import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
-  Handshake, Banknote, Wallet, BarChart3, ScrollText, Settings, LogOut,
-  Menu, X, Receipt, Home, TreePine, Wrench, Tent, ShieldCheck, BookUser, Archive,
+  Handshake, BarChart3, ScrollText, Settings, LogOut,
+  Menu, X, Receipt, Wrench, ShieldCheck, BookUser, Archive,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -38,8 +38,6 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     group: "APL Representatives",
     items: [
       { href: "/agents", label: "All Representatives", icon: Handshake, permission: "agents" },
-      { href: "/commissions", label: "Commissions", icon: Banknote, permission: "commissions" },
-      { href: "/payouts", label: "Payouts", icon: Wallet, permission: "payouts" },
       { href: "/claims", label: "Claims", icon: Receipt, permission: "claims" },
     ],
   },
@@ -88,8 +86,6 @@ export function AdminSidebar() {
     if (href === "/kyc") return pathname.startsWith("/kyc")
     if (href === "/claims") return pathname.startsWith("/claims")
     if (href === "/agents") return pathname.startsWith("/agents")
-    if (href === "/commissions") return pathname.startsWith("/commissions")
-    if (href === "/payouts") return pathname.startsWith("/payouts")
     if (href === "/disputes") return pathname.startsWith("/disputes")
     if (href === "/reports") return pathname.startsWith("/reports")
     if (href === "/audit") return pathname.startsWith("/audit")

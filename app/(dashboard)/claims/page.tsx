@@ -10,24 +10,27 @@ interface Claim {
   id: string
   amount: number
   currency: string
-  periodLabel: string | null
-  notes: string | null
+  adminModifiedAmount: number | null
   status: string
   adminNotes: string | null
+  agentNotes: string | null
   reviewedAt: string | null
+  paidAt: string | null
   createdAt: string
   aplAgent: { id: string; fullName: string; email: string; agentCode: string }
+  property: { id: string; title: string; slug: string; city: string } | null
 }
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n)
 
-const statuses = ["", "PENDING", "APPROVED", "REJECTED"] as const
-const statusLabels: Record<string, string> = { "": "All", PENDING: "Pending", APPROVED: "Approved", REJECTED: "Rejected" }
+const statuses = ["", "PENDING", "AWAITING_AGENT_ACCEPTANCE", "PAID", "REJECTED"]
+const statusLabels: Record<string, string> = { "": "All", PENDING: "Pending", AWAITING_AGENT_ACCEPTANCE: "Awaiting Rep", PAID: "Paid", REJECTED: "Rejected" }
 
 const statusBadge = (status: string) => {
   const colors: Record<string, string> = {
-    APPROVED: "bg-success/10 text-success",
+    PAID: "bg-success/10 text-success",
     PENDING: "bg-warning/10 text-warning",
+    AWAITING_AGENT_ACCEPTANCE: "bg-blue-50 text-blue-600",
     REJECTED: "bg-error/10 text-error",
   }
   return cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", colors[status] ?? "bg-gray-100 text-gray-600")
@@ -43,11 +46,11 @@ export default function ClaimsPage() {
   const [statusFilter, setStatusFilter] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 })
+  const [stats, setStats] = useState({ total: 0, pending: 0, paid: 0, rejected: 0 })
   const [statsLoading, setStatsLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [reviewModal, setReviewModal] = useState<Claim | null>(null)
   const [reviewNotes, setReviewNotes] = useState("")
+  const [modifiedAmount, setModifiedAmount] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
@@ -78,7 +81,7 @@ export default function ClaimsPage() {
     setStatsLoading(true)
     try {
       const { data } = await api.get<{ total: number; pending: number; approved: number; rejected: number }>("/api/admin/claims/stats")
-      if (data) setStats(data)
+      if (data) setStats({ total: data.total, pending: data.pending, paid: data.approved, rejected: data.rejected })
     } catch { /* keep defaults */ }
     finally { setStatsLoading(false) }
   }, [])
@@ -86,12 +89,15 @@ export default function ClaimsPage() {
   useEffect(() => { fetchClaims() }, [fetchClaims])
   useEffect(() => { fetchStats() }, [fetchStats])
 
-  async function handleReview(claimId: string, status: string) {
+  async function handleReview(claimId: string, status: string, adminModifiedAmount?: number) {
     setSubmitting(true)
     try {
-      await api.patch(`/api/admin/claims/${claimId}`, { status, adminNotes: reviewNotes || null })
+      const body: Record<string, unknown> = { status, adminNotes: reviewNotes || null }
+      if (adminModifiedAmount !== undefined) body.adminModifiedAmount = adminModifiedAmount
+      await api.patch(`/api/admin/claims/${claimId}`, body)
       setReviewModal(null)
       setReviewNotes("")
+      setModifiedAmount("")
       await Promise.all([fetchClaims(), fetchStats()])
     } finally { setSubmitting(false) }
   }
@@ -154,8 +160,8 @@ export default function ClaimsPage() {
                   <CheckCircle size={20} className="text-success" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted">Approved</p>
-                  <p className="text-xl font-bold">{stats.approved}</p>
+                  <p className="text-sm text-muted">Paid</p>
+                  <p className="text-xl font-bold">{stats.paid}</p>
                 </div>
               </div>
             </div>
@@ -227,8 +233,8 @@ export default function ClaimsPage() {
                       )}
                     </th>
                     <th className="px-4 py-3 text-left">APL Representative</th>
+                    <th className="px-4 py-3 text-left">Property</th>
                     <th className="px-4 py-3 text-right">Amount</th>
-                    <th className="px-4 py-3 text-left">Period</th>
                     <th className="px-4 py-3 text-center">Status</th>
                     <th className="px-4 py-3 text-left">Date</th>
                     <th className="px-4 py-3 text-right">Actions</th>
@@ -245,13 +251,21 @@ export default function ClaimsPage() {
                         <p className="font-medium">{c.aplAgent.fullName}</p>
                         <p className="text-xs text-muted font-mono">{c.aplAgent.agentCode}</p>
                       </td>
-                      <td className="px-4 py-3 text-right font-medium">{fmt(c.amount)}</td>
-                      <td className="px-4 py-3 text-muted">{c.periodLabel || "-"}</td>
-                      <td className="px-4 py-3 text-center"><span className={statusBadge(c.status)}>{c.status}</span></td>
+                      <td className="px-4 py-3 max-w-[200px]">
+                        <p className="truncate text-sm">{c.property?.title || "—"}</p>
+                        {c.property?.city && <p className="text-xs text-muted">{c.property.city}</p>}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium">
+                        {fmt(c.amount)}
+                        {c.adminModifiedAmount && (
+                          <p className="text-[10px] text-muted line-through">{fmt(c.adminModifiedAmount)} proposed</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center"><span className={statusBadge(c.status)}>{statusLabels[c.status] || c.status}</span></td>
                       <td className="px-4 py-3 text-xs text-muted">{new Date(c.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-right">
-                        {c.status === "PENDING" ? (
-                          <button onClick={() => { setReviewModal(c); setReviewNotes(c.adminNotes || "") }}
+                        {(c.status === "PENDING" || c.status === "AWAITING_AGENT_ACCEPTANCE") ? (
+                          <button onClick={() => { setReviewModal(c); setReviewNotes(c.adminNotes || ""); setModifiedAmount(c.adminModifiedAmount ? String(c.adminModifiedAmount) : "") }}
                             className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all inline-flex items-center gap-1.5"
                           >Review</button>
                         ) : (
@@ -315,9 +329,11 @@ export default function ClaimsPage() {
               <div className="flex justify-between"><span className="text-muted">APL Representative</span><span className="font-medium">{reviewModal.aplAgent.fullName}</span></div>
               <div className="flex justify-between"><span className="text-muted">APL Rep Code</span><span className="font-medium font-mono">{reviewModal.aplAgent.agentCode}</span></div>
               <div className="flex justify-between"><span className="text-muted">Amount</span><span className="font-medium">{fmt(reviewModal.amount)}</span></div>
-              <div className="flex justify-between"><span className="text-muted">Period</span><span className="font-medium">{reviewModal.periodLabel || "-"}</span></div>
-              {reviewModal.notes && (
-                <div><p className="text-muted mb-1">APL Rep Notes</p><p className="rounded-lg bg-surface-secondary p-3 text-text-primary">{reviewModal.notes}</p></div>
+              {reviewModal.property && (
+                <div className="flex justify-between"><span className="text-muted">Property</span><span className="font-medium">{reviewModal.property.title}</span></div>
+              )}
+              {reviewModal.agentNotes && (
+                <div><p className="text-muted mb-1">APL Rep Notes</p><p className="rounded-lg bg-surface-secondary p-3 text-text-primary">{reviewModal.agentNotes}</p></div>
               )}
             </div>
 
@@ -328,14 +344,38 @@ export default function ClaimsPage() {
                 placeholder="Add notes for the representative..." />
             </div>
 
-            <div className="flex gap-3">
-              <button onClick={() => handleReview(reviewModal.id, "APPROVED")} disabled={submitting}
-                className="flex-1 rounded-xl bg-success px-5 py-2.5 text-sm font-medium text-white hover:bg-success/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
-              >{submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={16} />}Approve</button>
-              <button onClick={() => handleReview(reviewModal.id, "REJECTED")} disabled={submitting}
-                className="flex-1 rounded-xl bg-error px-5 py-2.5 text-sm font-medium text-white hover:bg-error/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
-              >{submitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={16} />}Reject</button>
-            </div>
+            {reviewModal.status === "PENDING" && (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-muted mb-1">Modify Amount (leave empty to accept original)</label>
+                  <input type="number" value={modifiedAmount} onChange={(e) => setModifiedAmount(e.target.value)} min="0" step="0.01"
+                    className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                    placeholder="KES amount" />
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => handleReview(reviewModal.id, "PAID")} disabled={submitting}
+                    className="flex-1 rounded-xl bg-success px-5 py-2.5 text-sm font-medium text-white hover:bg-success/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                  >{submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={16} />}Accept & Pay</button>
+                  <button onClick={() => handleReview(reviewModal.id, "MODIFIED", Number(modifiedAmount))} disabled={submitting || !modifiedAmount || Number(modifiedAmount) <= 0}
+                    className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                  >{submitting ? <Loader2 size={14} className="animate-spin" /> : <Banknote size={16} />}Modify Amount</button>
+                  <button onClick={() => handleReview(reviewModal.id, "REJECTED")} disabled={submitting}
+                    className="flex-1 rounded-xl bg-error px-5 py-2.5 text-sm font-medium text-white hover:bg-error/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                  >{submitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={16} />}Reject</button>
+                </div>
+              </>
+            )}
+
+            {reviewModal.status === "AWAITING_AGENT_ACCEPTANCE" && (
+              <div className="flex gap-3">
+                <button onClick={() => handleReview(reviewModal.id, "PAID")} disabled={submitting}
+                  className="flex-1 rounded-xl bg-success px-5 py-2.5 text-sm font-medium text-white hover:bg-success/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                >{submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={16} />}Override & Pay</button>
+                <button onClick={() => handleReview(reviewModal.id, "REJECTED")} disabled={submitting}
+                  className="flex-1 rounded-xl bg-error px-5 py-2.5 text-sm font-medium text-white hover:bg-error/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                >{submitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={16} />}Reject</button>
+              </div>
+            )}
           </div>
         </div>
       )}
