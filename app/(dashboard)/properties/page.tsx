@@ -6,17 +6,9 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Globe,
-  GlobeOff,
-  AlertCircle,
-  Building2,
-  Download,
-  Check,
+  Search, X, ChevronLeft, ChevronRight, Eye, Globe, GlobeOff,
+  AlertCircle, Building2, Download, Check, Loader2, MapPin, Home,
+  Bed, Bath, User, Mail, Phone, Calendar, DollarSign, Expand,
 } from "@/components/ui/icons"
 
 interface Agent {
@@ -91,6 +83,9 @@ export default function PropertiesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
+  const [propertyDetail, setPropertyDetail] = useState<Record<string, any> | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
   const limit = 20
 
   const fetchProperties = useCallback(async () => {
@@ -124,6 +119,17 @@ export default function PropertiesPage() {
     e.preventDefault()
     setSearch(searchInput)
     setPage(1)
+  }
+
+  async function openPropertyDetail(prop: Property) {
+    setSelectedProperty(prop)
+    setPropertyDetail(null)
+    setDetailLoading(true)
+    try {
+      const { data } = await api.get<Record<string, any>>(`/api/admin/properties/${prop.id}`)
+      if (data?.property) setPropertyDetail(data.property)
+    } catch { }
+    setDetailLoading(false)
   }
 
   function formatPrice(price: number, currency: string, listingPurpose?: string | null) {
@@ -279,8 +285,9 @@ export default function PropertiesPage() {
                 {properties.map((p) => {
                   const statusStyle = statusConfig[p.moderationStatus] || statusConfig.DRAFT
                   return (
-                    <tr key={p.id} className={cn("transition-colors hover:bg-gray-50/60", selectedIds.includes(p.id) && "bg-primary/5")}>
-                      <td className="w-10 px-2 py-3 text-center">
+                    <tr key={p.id} onClick={() => openPropertyDetail(p)}
+                      className={cn("cursor-pointer transition-colors hover:bg-gray-50/60", selectedIds.includes(p.id) && "bg-primary/5")}>
+                      <td className="w-10 px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                         <input type="checkbox"
                           checked={selectedIds.includes(p.id)}
                           onChange={() => setSelectedIds(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])}
@@ -315,16 +322,19 @@ export default function PropertiesPage() {
                         <GlobeOff size={16} className="mx-auto text-muted/50" />
                       )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
-                          <Link
-                            href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink.co.ke"}/properties/${p.slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors"
-                          >
+                          <button onClick={() => openPropertyDetail(p)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
                             <Eye size={13} />
                             View
+                          </button>
+                          <Link
+                            href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink.co.ke"}/properties/${p.slug}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5 transition-colors">
+                            <Globe size={13} />
+                            Site
                           </Link>
                         </div>
                       </td>
@@ -406,6 +416,84 @@ export default function PropertiesPage() {
           loading={loading}
         />
       </div>
+
+      {selectedProperty && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => { setSelectedProperty(null); setPropertyDetail(null) }}>
+          <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <Building2 size={20} className="shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <h3 className="text-base font-semibold text-foreground truncate">{selectedProperty.title}</h3>
+                  <p className="text-xs text-muted">{selectedProperty.city}{selectedProperty.agent ? ` — ${selectedProperty.agent.firstName} ${selectedProperty.agent.lastName}` : ""}</p>
+                </div>
+              </div>
+              <button onClick={() => { setSelectedProperty(null); setPropertyDetail(null) }} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors shrink-0">
+                <X size={18} />
+              </button>
+            </div>
+
+            {detailLoading ? (
+              <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-muted" /></div>
+            ) : propertyDetail ? (
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {[
+                    { icon: <DollarSign size={14} />, label: "Price", value: formatPrice(propertyDetail.price, propertyDetail.currency, propertyDetail.listingPurpose) },
+                    { icon: <Home size={14} />, label: "Type", value: typeLabel(propertyDetail.propertyType) },
+                    { icon: <MapPin size={14} />, label: "Location", value: [propertyDetail.city, propertyDetail.region].filter(Boolean).join(", ") || "—" },
+                    { icon: <Bed size={14} />, label: "Bedrooms", value: propertyDetail.bedrooms != null ? String(propertyDetail.bedrooms) : "—" },
+                    { icon: <Bath size={14} />, label: "Bathrooms", value: propertyDetail.bathrooms != null ? String(propertyDetail.bathrooms) : "—" },
+                    { icon: <Expand size={14} />, label: "Area", value: propertyDetail.area ? `${propertyDetail.area} sqft` : "—" },
+                    { icon: <Globe size={14} />, label: "Published", value: propertyDetail.isPublished ? "Yes" : "No" },
+                    { icon: <Calendar size={14} />, label: "Created", value: new Date(propertyDetail.createdAt).toLocaleDateString() },
+                    { icon: <Calendar size={14} />, label: "Updated", value: propertyDetail.updatedAt ? new Date(propertyDetail.updatedAt).toLocaleDateString() : "—" },
+                  ].map((f) => (
+                    <div key={f.label} className="rounded-lg bg-gray-50/50 p-3">
+                      <div className="flex items-center gap-1.5 text-xs text-muted mb-1">{f.icon} {f.label}</div>
+                      <p className="text-sm font-medium text-foreground">{f.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-lg border border-border p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Agent / Owner</p>
+                  {propertyDetail.agent ? (
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
+                        {propertyDetail.agent.firstName?.[0]}{propertyDetail.agent.lastName?.[0]}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{propertyDetail.agent.firstName} {propertyDetail.agent.lastName}</p>
+                        <p className="text-xs text-muted">{propertyDetail.agent.email}{propertyDetail.agent.phone ? ` | ${propertyDetail.agent.phone}` : ""}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted">No agent assigned</p>
+                  )}
+                </div>
+
+                {propertyDetail.images?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Images ({propertyDetail.images.length})</p>
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {(typeof propertyDetail.images === "string" ? JSON.parse(propertyDetail.images) : propertyDetail.images).map((img: string, i: number) => (
+                        <img key={i} src={img} alt="" className="h-20 w-28 shrink-0 rounded-lg object-cover border border-border" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-16 text-sm text-muted">Failed to load property details</div>
+            )}
+
+            <div className="border-t border-border px-6 py-4">
+              <button onClick={() => { setSelectedProperty(null); setPropertyDetail(null) }} className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

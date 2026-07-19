@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search, X, ChevronLeft, ChevronRight, AlertCircle,
-  Wrench, Download, Check, XCircle, Clock,
+  Wrench, Download, Check, XCircle, Clock, Eye, Loader2,
+  MapPin, User, Mail, Phone, Calendar, DollarSign,
 } from "@/components/ui/icons"
 
 interface ServiceCategory {
@@ -79,6 +80,9 @@ export default function ServicesPage() {
   const [error, setError] = useState("")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [modLoading, setModLoading] = useState<string | null>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [serviceDetail, setServiceDetail] = useState<Record<string, any> | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
   const limit = 20
 
   const fetchServices = useCallback(async () => {
@@ -106,6 +110,17 @@ export default function ServicesPage() {
   useEffect(() => { fetchServices() }, [fetchServices])
 
   function handleSearch(e: React.FormEvent) { e.preventDefault(); setSearch(searchInput); setPage(1) }
+
+  async function openServiceDetail(svc: Service) {
+    setSelectedService(svc)
+    setServiceDetail(null)
+    setDetailLoading(true)
+    try {
+      const { data } = await api.get<Record<string, any>>(`/api/admin/services/${svc.id}`)
+      if (data?.service) setServiceDetail(data.service)
+    } catch { }
+    setDetailLoading(false)
+  }
 
   async function handleModerate(id: string, moderationStatus: string) {
     setModLoading(id)
@@ -231,8 +246,9 @@ export default function ServicesPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {services.map((s) => (
-                  <tr key={s.id} className={cn("transition-colors hover:bg-gray-50/60", selectedIds.includes(s.id) && "bg-primary/5")}>
-                    <td className="w-10 px-2 py-3 text-center">
+                  <tr key={s.id} onClick={() => openServiceDetail(s)}
+                    className={cn("cursor-pointer transition-colors hover:bg-gray-50/60", selectedIds.includes(s.id) && "bg-primary/5")}>
+                    <td className="w-10 px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox"
                         checked={selectedIds.includes(s.id)}
                         onChange={() => setSelectedIds(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
@@ -260,8 +276,13 @@ export default function ServicesPage() {
                         {s.moderationStatus === "PENDING_REVIEW" ? "Pending" : s.moderationStatus}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
+                        <button onClick={() => openServiceDetail(s)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
+                          <Eye size={13} />
+                          View
+                        </button>
                         {s.moderationStatus === "PENDING_REVIEW" && (
                           <>
                             <button onClick={() => handleModerate(s.id, "APPROVED")} disabled={modLoading === s.id}
@@ -332,6 +353,89 @@ export default function ServicesPage() {
           loading={loading}
         />
       </div>
+
+      {selectedService && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => { setSelectedService(null); setServiceDetail(null) }}>
+          <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <Wrench size={20} className="shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <h3 className="text-base font-semibold text-foreground truncate">{selectedService.title}</h3>
+                  <p className="text-xs text-muted">{selectedService.category?.name || ""}{selectedService.city ? ` — ${selectedService.city}` : ""}</p>
+                </div>
+              </div>
+              <button onClick={() => { setSelectedService(null); setServiceDetail(null) }} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors shrink-0">
+                <X size={18} />
+              </button>
+            </div>
+
+            {detailLoading ? (
+              <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-muted" /></div>
+            ) : serviceDetail ? (
+              <div className="p-6 space-y-6">
+                {serviceDetail.description && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Description</p>
+                    <p className="text-sm text-foreground">{serviceDetail.description}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {[
+                    { icon: <DollarSign size={14} />, label: "Price", value: serviceDetail.price ? formatPrice(serviceDetail.price, serviceDetail.currency, serviceDetail.pricePeriod) : "—" },
+                    { icon: <MapPin size={14} />, label: "Location", value: [serviceDetail.city, serviceDetail.region, serviceDetail.location].filter(Boolean).join(", ") || "—" },
+                    { icon: <Wrench size={14} />, label: "Category", value: serviceDetail.category?.name || "—" },
+                    { icon: <Check size={14} />, label: "Status", value: serviceDetail.moderationStatus === "PENDING_REVIEW" ? "Pending" : serviceDetail.moderationStatus },
+                    { icon: <Calendar size={14} />, label: "Created", value: new Date(serviceDetail.createdAt).toLocaleDateString() },
+                    { icon: <Eye size={14} />, label: "Views", value: String(serviceDetail.viewCount ?? 0) },
+                  ].map((f) => (
+                    <div key={f.label} className="rounded-lg bg-gray-50/50 p-3">
+                      <div className="flex items-center gap-1.5 text-xs text-muted mb-1">{f.icon} {f.label}</div>
+                      <p className="text-sm font-medium text-foreground">{f.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-lg border border-border p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Provider</p>
+                  {serviceDetail.user ? (
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
+                        {serviceDetail.user.firstName?.[0]}{serviceDetail.user.lastName?.[0]}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{serviceDetail.user.firstName} {serviceDetail.user.lastName}</p>
+                        <p className="text-xs text-muted">{serviceDetail.user.email}{serviceDetail.user.phone ? ` | ${serviceDetail.user.phone}` : ""}</p>
+                        {serviceDetail.user.companyName && <p className="text-xs text-primary">{serviceDetail.user.companyName}</p>}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted">No provider info</p>
+                  )}
+                </div>
+
+                {serviceDetail.images?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Images ({serviceDetail.images.length})</p>
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {(typeof serviceDetail.images === "string" ? JSON.parse(serviceDetail.images) : serviceDetail.images).map((img: string, i: number) => (
+                        <img key={i} src={img} alt="" className="h-20 w-28 shrink-0 rounded-lg object-cover border border-border" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-16 text-sm text-muted">Failed to load service details</div>
+            )}
+
+            <div className="border-t border-border px-6 py-4">
+              <button onClick={() => { setSelectedService(null); setServiceDetail(null) }} className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
