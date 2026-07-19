@@ -161,8 +161,8 @@ export default function AdminDisputesPage() {
                   <td className="px-4 py-3 text-muted">{new Date(d.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     <button type="button" onClick={() => openDetail(d)}
-                      className="touch-target inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
-                    ><Eye size={14} /> View</button>
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors"
+                    ><Eye size={13} /> View</button>
                   </td>
                 </tr>
               ))}

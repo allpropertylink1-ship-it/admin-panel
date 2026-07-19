@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Search, ChevronLeft, ChevronRight, Shield, ShieldOff, Trash2,
-  X, AlertCircle, Eye, ChevronDown, UserPlus, Filter, Loader2, Download, Check,
+  X, AlertCircle, Eye, UserPlus, Filter, Loader2, Download,
 } from "@/components/ui/icons"
 
 interface User {
@@ -22,7 +22,7 @@ interface UsersResponse {
 }
 
 const FILTERS = ["All", "Active", "Pending", "Suspended"]
-const ROLES = ["APPLICANT", "AGENT", "ADMIN"]
+
 const USER_TYPE_TABS = ["", "PROPERTY_OWNER", "AGENT", "FUNDI", "SERVICE_PROVIDER"]
 const USER_TYPE_LABELS: Record<string, string> = { "": "All Types", PROPERTY_OWNER: "Property Owners", AGENT: "Agents", FUNDI: "Fundis", SERVICE_PROVIDER: "Service Providers" }
 
@@ -69,12 +69,10 @@ export default function UsersPage() {
   const [userTypeFilter, setUserTypeFilter] = useState("")
   const [page, setPage] = useState(1)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [roleDropdown, setRoleDropdown] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [bulkRole, setBulkRole] = useState<string | null>(null)
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -102,20 +100,6 @@ export default function UsersPage() {
     setSearchValue(v)
     if (searchTimeout) clearTimeout(searchTimeout)
     setSearchTimeout(setTimeout(() => { setSearch(v); setPage(1) }, 350))
-  }
-
-  async function handleRoleChange(userId: string, newRole: string) {
-    setActionLoading(userId)
-    setRoleDropdown(null)
-    try {
-      const { error } = await api.patch(`/api/admin/users/${userId}`, { role: newRole })
-      if (error) throw new Error(error)
-      await fetchUsers()
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to update role")
-    } finally {
-      setActionLoading(null)
-    }
   }
 
   async function handleToggleStatus(userId: string, currentStatus: string) {
@@ -228,7 +212,6 @@ export default function UsersPage() {
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Email</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Role</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">KYC</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Joined</th>
@@ -259,29 +242,6 @@ export default function UsersPage() {
                       <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/5 text-primary">
                         {user.userTypes?.join(", ") || user.primaryUserType || "—"}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="relative">
-                        <button onClick={() => setRoleDropdown(roleDropdown === user.id ? null : user.id)}
-                          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors hover:opacity-80">
-                          <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", badge[user.role] || "")}>{user.role}</span>
-                          <ChevronDown size={10} className="text-muted" />
-                        </button>
-                        {roleDropdown === user.id && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setRoleDropdown(null)} />
-                            <div className="absolute left-0 z-20 mt-1 w-36 rounded-xl border border-border bg-card py-1 shadow-lg">
-                              {ROLES.map((r) => (
-                                <button key={r} onClick={() => handleRoleChange(user.id, r)} disabled={actionLoading === user.id}
-                                  className={cn("flex w-full items-center px-3 py-2 text-xs font-medium transition-colors hover:bg-gray-50",
-                                    user.role === r ? "text-primary" : "text-foreground", actionLoading === user.id && "opacity-50")}>
-                                  {r}
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        )}
-                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium", badge[user.accountStatus] || "")}>
@@ -383,10 +343,8 @@ export default function UsersPage() {
           { label: "Delete", action: "delete", variant: "destructive", requiresConfirmation: true },
           { label: "Suspend", action: "suspend", requiresConfirmation: true },
           { label: "Activate", action: "activate", requiresConfirmation: true },
-          { label: "Change Role", action: "changeRole" },
         ]}
         onAction={async (action) => {
-          if (action === "changeRole") { setBulkRole("APPLICANT"); return }
           setActionLoading("bulk")
           try {
             const { error } = await api.post("/api/admin/users/bulk", { ids: selectedIds, action })
@@ -401,49 +359,6 @@ export default function UsersPage() {
         }}
         loading={actionLoading === "bulk"}
       />
-
-      {bulkRole !== null && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-foreground">Change role for {selectedIds.length} user{selectedIds.length !== 1 ? "s" : ""}</h3>
-            <div className="mt-3 flex flex-col gap-2">
-              {ROLES.map((r) => (
-                <button key={r} onClick={() => setBulkRole(r)}
-                  className={cn("flex items-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
-                    bulkRole === r ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:bg-gray-50"
-                  )}>
-                  <div className={cn("flex h-5 w-5 items-center justify-center rounded-full border",
-                    bulkRole === r ? "border-primary bg-primary text-white" : "border-muted")}>
-                    {bulkRole === r && <Check size={12} />}
-                  </div>
-                  {r}
-                </button>
-              ))}
-            </div>
-            <div className="mt-5 flex justify-end gap-3">
-              <button onClick={() => setBulkRole(null)}
-                className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-colors">Cancel</button>
-              <button onClick={async () => {
-                setActionLoading("bulk")
-                try {
-                  const { error } = await api.post("/api/admin/users/bulk", { ids: selectedIds, action: "changeRole", role: bulkRole })
-                  if (error) throw new Error(error)
-                  setSelectedIds([])
-                  setBulkRole(null)
-                  await fetchUsers()
-                } catch (err: unknown) {
-                  setError(err instanceof Error ? err.message : "Bulk action failed")
-                } finally {
-                  setActionLoading(null)
-                }
-              }} disabled={actionLoading === "bulk"}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
-                {actionLoading === "bulk" ? "Processing..." : "Change Role"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>

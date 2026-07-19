@@ -261,23 +261,26 @@ export default function ServicesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1.5">
                         {s.moderationStatus === "PENDING_REVIEW" && (
                           <>
                             <button onClick={() => handleModerate(s.id, "APPROVED")} disabled={modLoading === s.id}
-                              className="rounded-lg p-1.5 text-emerald-600 transition-colors hover:bg-emerald-50 disabled:opacity-50" title="Approve">
-                              <Check size={16} />
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 transition-colors disabled:opacity-50">
+                              <Check size={13} />
+                              Approve
                             </button>
                             <button onClick={() => handleModerate(s.id, "REJECTED")} disabled={modLoading === s.id}
-                              className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50" title="Reject">
-                              <XCircle size={16} />
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors disabled:opacity-50">
+                              <XCircle size={13} />
+                              Reject
                             </button>
                           </>
                         )}
                         {s.moderationStatus === "APPROVED" && (
                           <button onClick={() => handleModerate(s.id, "PENDING_REVIEW")} disabled={modLoading === s.id}
-                            className="rounded-lg p-1.5 text-amber-600 transition-colors hover:bg-amber-50 disabled:opacity-50" title="Send back to review">
-                            <Clock size={16} />
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/10 transition-colors disabled:opacity-50">
+                            <Clock size={13} />
+                            Unapprove
                           </button>
                         )}
                       </div>

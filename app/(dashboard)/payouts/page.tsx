@@ -387,44 +387,32 @@ export default function PayoutsPage() {
                         {p.paidAt ? new Date(p.paidAt).toLocaleDateString() : new Date(p.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1.5">
                           {p.status === "PENDING" && (
                             <>
-                              <button
-                                onClick={() => setEditPayout(p)}
-                                className="touch-target rounded p-1.5 text-muted hover:text-foreground"
-                                title="Edit payout"
-                              >
-                                <Pencil size={14} />
+                              <button onClick={() => setEditPayout(p)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
+                                <Pencil size={13} />
+                                Edit
                               </button>
-                              <button
-                                onClick={() => setConfirmPaid(p)}
-                                disabled={actionLoading === p.id}
-                                className="touch-target rounded p-1.5 text-success hover:bg-success/10 disabled:opacity-50"
-                                title="Mark as paid"
-                              >
-                                {actionLoading === p.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                              <button onClick={() => setConfirmPaid(p)} disabled={actionLoading === p.id}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 transition-colors disabled:opacity-50">
+                                {actionLoading === p.id ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
+                                {actionLoading === p.id ? "..." : "Mark Paid"}
                               </button>
-                              <button
-                                onClick={() => setConfirmCancel(p)}
-                                className="touch-target rounded p-1.5 text-warning hover:bg-warning/10"
-                                title="Cancel payout"
-                              >
-                                <XCircle size={14} />
+                              <button onClick={() => setConfirmCancel(p)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/10 transition-colors">
+                                <XCircle size={13} />
+                                Cancel
                               </button>
-                              <button
-                                onClick={() => setConfirmDelete(p)}
-                                className="touch-target rounded p-1.5 text-error hover:bg-error/10"
-                                title="Delete payout"
-                              >
-                                <Trash2 size={14} />
+                              <button onClick={() => setConfirmDelete(p)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors">
+                                <Trash2 size={13} />
+                                Delete
                               </button>
                             </>
                           )}
-                          {p.status === "PAID" && (
-                            <span className="text-xs text-muted">&mdash;</span>
-                          )}
-                          {p.status === "CANCELLED" && (
+                          {(p.status === "PAID" || p.status === "CANCELLED") && (
                             <span className="text-xs text-muted">&mdash;</span>
                           )}
                         </div>

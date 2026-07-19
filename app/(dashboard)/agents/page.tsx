@@ -388,21 +388,29 @@ export default function AgentsPage() {
                       <td className="px-4 py-3 text-center font-medium">{agent._count.users}</td>
                       <td className="px-4 py-3 text-muted text-xs">{new Date(agent.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={(e) => { e.stopPropagation(); openEditModal(agent) }} className="rounded-xl p-2 text-muted hover:bg-gray-50 hover:text-foreground transition-all" title="Edit">
-                            <Pencil size={15} />
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button onClick={(e) => { e.stopPropagation(); openEditModal(agent) }}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
+                            <Pencil size={13} />
+                            Edit
                           </button>
                           {agent.status === "ACTIVE" ? (
-                            <button onClick={(e) => { e.stopPropagation(); setSuspendTarget(agent) }} className="rounded-xl p-2 text-warning/70 hover:bg-warning/10 hover:text-warning transition-all" title="Suspend">
-                              <Ban size={15} />
+                            <button onClick={(e) => { e.stopPropagation(); setSuspendTarget(agent) }}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/10 transition-colors">
+                              <Ban size={13} />
+                              Suspend
                             </button>
                           ) : (
-                            <button onClick={(e) => { e.stopPropagation(); handleReactivate(agent) }} className="rounded-xl p-2 text-success/70 hover:bg-success/10 hover:text-success transition-all" title="Reactivate">
-                              <CheckCircle size={15} />
+                            <button onClick={(e) => { e.stopPropagation(); handleReactivate(agent) }}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 transition-colors">
+                              <CheckCircle size={13} />
+                              Reactivate
                             </button>
                           )}
-                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(agent) }} className="rounded-xl p-2 text-error/70 hover:bg-error-50 hover:text-error transition-all" title="Delete">
-                            <Trash2 size={15} />
+                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(agent) }}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors">
+                            <Trash2 size={13} />
+                            Delete
                           </button>
                         </div>
                       </td>

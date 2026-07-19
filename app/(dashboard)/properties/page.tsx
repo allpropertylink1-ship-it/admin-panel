@@ -316,15 +316,15 @@ export default function PropertiesPage() {
                       )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1.5">
                           <Link
                             href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink.co.ke"}/properties/${p.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded-lg p-1.5 text-muted transition-colors hover:bg-gray-100"
-                            title="View on site"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors"
                           >
-                            <Eye size={16} />
+                            <Eye size={13} />
+                            View
                           </Link>
                         </div>
                       </td>
