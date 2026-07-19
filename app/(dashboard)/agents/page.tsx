@@ -6,7 +6,7 @@ import { api } from "@/lib/api-client"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { cn } from "@/lib/utils"
 import {
-  Search, X, UserPlus, Pencil, Trash2, Users, UserCheck, Hash, Loader2, AlertCircle, Ban, CheckCircle
+  Search, X, UserPlus, Pencil, Trash2, Users, UserCheck, Hash, Loader2, AlertCircle, Ban, CheckCircle, Mail
 } from "@/components/ui/icons"
 
 interface AplAgent {
@@ -16,6 +16,7 @@ interface AplAgent {
   phone: string
   agentCode: string
   status: string
+  hasActivated: boolean
   suspendedAt: string | null
   suspendedReason: string | null
   createdAt: string
@@ -75,6 +76,10 @@ export default function AgentsPage() {
   const [emailChangeNew, setEmailChangeNew] = useState("")
   const [emailChangeLoading, setEmailChangeLoading] = useState(false)
   const [emailChangeSent, setEmailChangeSent] = useState(false)
+
+  const [resendInviteTarget, setResendInviteTarget] = useState<AplAgent | null>(null)
+  const [resendInviteLoading, setResendInviteLoading] = useState(false)
+  const [resendInviteDone, setResendInviteDone] = useState(false)
 
   useEffect(() => {
     const t = window.setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
@@ -222,6 +227,21 @@ export default function AgentsPage() {
     }
     if (data?.agent) {
       setAgents((prev) => prev.map((a) => a.id === agent.id ? data.agent : a))
+    }
+  }
+
+  async function handleResendInvite() {
+    if (!resendInviteTarget) return
+    setResendInviteLoading(true)
+    try {
+      const { error: resendError } = await api.post(`/api/admin/agents/${resendInviteTarget.id}/resend-invite`)
+      if (resendError) throw new Error(resendError)
+      setResendInviteDone(true)
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Failed to resend invitation")
+      setResendInviteTarget(null)
+    } finally {
+      setResendInviteLoading(false)
     }
   }
 
@@ -388,6 +408,13 @@ export default function AgentsPage() {
                             <Pencil size={13} />
                             Edit
                           </button>
+                          {!agent.hasActivated && (
+                            <button onClick={(e) => { e.stopPropagation(); setResendInviteTarget(agent) }}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 transition-colors">
+                              <Mail size={13} />
+                              Resend Invite
+                            </button>
+                          )}
                           {agent.status === "ACTIVE" ? (
                             <button onClick={(e) => { e.stopPropagation(); setSuspendTarget(agent) }}
                               className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/10 transition-colors">
@@ -633,6 +660,51 @@ export default function AgentsPage() {
               A notification was also sent to the current email <strong>{emailChangeTarget.email}</strong>.
             </p>
             <button onClick={() => { setEmailChangeTarget(null); setEmailChangeNew(""); setEmailChangeSent(false) }}
+              className="mt-6 rounded-xl bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all">
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      {resendInviteTarget && !resendInviteDone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold">Resend Invitation</h2>
+            <p className="mt-2 text-sm text-muted">
+              Send a new activation email to <strong>{resendInviteTarget.fullName}</strong> ({resendInviteTarget.email})?
+            </p>
+            <div className="rounded-xl bg-accent/10 border border-accent/20 p-4 mt-4 text-sm">
+              <p className="font-medium text-accent">This will:</p>
+              <ul className="mt-1.5 list-inside list-disc space-y-1 text-muted">
+                <li>Generate a new activation link (previous ones will still work)</li>
+                <li>Send an email with their APL Representative Code</li>
+                <li>The link expires in 7 days</li>
+              </ul>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setResendInviteTarget(null)} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">Cancel</button>
+              <button onClick={handleResendInvite} disabled={resendInviteLoading}
+                className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 transition-all disabled:opacity-50 inline-flex items-center gap-2">
+                {resendInviteLoading && <Loader2 size={14} className="animate-spin" />}
+                {resendInviteLoading ? "Sending..." : "Send Invitation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resendInviteDone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+              <CheckCircle size={24} className="text-success" />
+            </div>
+            <h2 className="text-lg font-semibold">Invitation Sent</h2>
+            <p className="mt-2 text-sm text-muted">
+              An activation email has been sent to <strong>{resendInviteTarget?.email}</strong>.
+            </p>
+            <button onClick={() => { setResendInviteTarget(null); setResendInviteDone(false) }}
               className="mt-6 rounded-xl bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all">
               Done
             </button>

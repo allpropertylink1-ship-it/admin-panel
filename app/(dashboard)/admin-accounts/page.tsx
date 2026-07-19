@@ -5,12 +5,12 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import {
-  AlertCircle, Loader2, Plus, Trash2, ShieldCheck, UserPlus, ChevronDown, ChevronUp,
+  AlertCircle, Loader2, Plus, Trash2, ShieldCheck, UserPlus, ChevronDown, ChevronUp, Mail, CheckCircle
 } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 
 interface Admin {
-  id: string; email: string; fullName: string; role: string; createdAt: string
+  id: string; email: string; fullName: string; role: string; createdAt: string; hasActivated: boolean
   permissions?: Record<string, { read: boolean; write: boolean }>
 }
 
@@ -26,6 +26,9 @@ export default function AdminAccountsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [expandedPerms, setExpandedPerms] = useState<string | null>(null)
+  const [resendInviteTarget, setResendInviteTarget] = useState<Admin | null>(null)
+  const [resendInviteLoading, setResendInviteLoading] = useState(false)
+  const [resendInviteDone, setResendInviteDone] = useState(false)
 
   const fetchAdmins = useCallback(async () => {
     setLoading(true)
@@ -77,6 +80,21 @@ export default function AdminAccountsPage() {
       setError(err instanceof Error ? err.message : "Failed to delete admin")
     } finally {
       setActionLoading(null)
+    }
+  }
+
+  async function handleResendInvite() {
+    if (!resendInviteTarget) return
+    setResendInviteLoading(true)
+    try {
+      const { error } = await api.post(`/api/admin/admins/${resendInviteTarget.id}/resend-invite`)
+      if (error) throw new Error(error)
+      setResendInviteDone(true)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to resend invitation")
+      setResendInviteTarget(null)
+    } finally {
+      setResendInviteLoading(false)
     }
   }
 
@@ -200,7 +218,14 @@ export default function AdminAccountsPage() {
                       {new Date(admin.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-0.5">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {!admin.hasActivated && (
+                          <button onClick={() => setResendInviteTarget(admin)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 transition-colors">
+                            <Mail size={13} />
+                            Resend Invite
+                          </button>
+                        )}
                         <button onClick={() => setDeleteConfirm(admin.id)} disabled={actionLoading === admin.id}
                           className="rounded-lg p-1.5 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50" title="Delete">
                           {actionLoading === admin.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
@@ -289,6 +314,51 @@ export default function AdminAccountsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {resendInviteTarget && !resendInviteDone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-foreground">Resend Invitation</h2>
+            <p className="mt-2 text-sm text-muted">
+              Send a new invitation email to <strong>{resendInviteTarget.fullName}</strong> ({resendInviteTarget.email})?
+            </p>
+            <div className="rounded-xl bg-accent/10 border border-accent/20 p-4 mt-4 text-sm">
+              <p className="font-medium text-accent">This will:</p>
+              <ul className="mt-1.5 list-inside list-disc space-y-1 text-muted">
+                <li>Generate a new temporary password</li>
+                <li>Send an email with sign-in instructions</li>
+                <li>Reset their login status (requires first-login password change)</li>
+              </ul>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setResendInviteTarget(null)} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-gray-50">Cancel</button>
+              <button onClick={handleResendInvite} disabled={resendInviteLoading}
+                className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 transition-all disabled:opacity-50 inline-flex items-center gap-2">
+                {resendInviteLoading && <Loader2 size={14} className="animate-spin" />}
+                {resendInviteLoading ? "Sending..." : "Send Invitation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resendInviteDone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+              <CheckCircle size={24} className="text-success" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">Invitation Sent</h2>
+            <p className="mt-2 text-sm text-muted">
+              A new invitation email has been sent to <strong>{resendInviteTarget?.email}</strong>.
+            </p>
+            <button onClick={() => { setResendInviteTarget(null); setResendInviteDone(false) }}
+              className="mt-6 rounded-xl bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all">
+              Done
+            </button>
           </div>
         </div>
       )}
