@@ -69,6 +69,9 @@ export default function UsersPage() {
   const [userTypeFilter, setUserTypeFilter] = useState("")
   const [page, setPage] = useState(1)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedUserDetail, setSelectedUserDetail] = useState<Record<string, any> | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [activeDetailTab, setActiveDetailTab] = useState<"details" | "properties" | "services">("details")
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
@@ -116,13 +119,25 @@ export default function UsersPage() {
     }
   }
 
+  async function openUserDetail(user: User) {
+    setSelectedUser(user)
+    setSelectedUserDetail(null)
+    setActiveDetailTab("details")
+    setDetailLoading(true)
+    try {
+      const { data } = await api.get<Record<string, any>>(`/api/admin/users/${user.id}`)
+      if (data?.user) setSelectedUserDetail(data.user)
+    } catch { }
+    setDetailLoading(false)
+  }
+
   async function handleDelete(userId: string) {
     setActionLoading(userId)
     setDeleteConfirm(null)
     try {
       const { error } = await api.delete(`/api/admin/users/${userId}`)
       if (error) throw new Error(error)
-      if (selectedUser?.id === userId) setSelectedUser(null)
+      if (selectedUser?.id === userId) { setSelectedUser(null); setSelectedUserDetail(null) }
       await fetchUsers()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to delete user")
@@ -221,8 +236,9 @@ export default function UsersPage() {
             <tbody className="divide-y divide-border">
               {loading ? <SkeletonRows /> : data && data.users.length > 0 ? (
                 data.users.map((user) => (
-                  <tr key={user.id} className={cn("transition-colors hover:bg-gray-50/40", selectedIds.includes(user.id) && "bg-primary/5")}>
-                    <td className="w-10 px-2 py-3 text-center">
+                  <tr key={user.id} onClick={() => openUserDetail(user)}
+                    className={cn("cursor-pointer transition-colors hover:bg-gray-50/40", selectedIds.includes(user.id) && "bg-primary/5")}>
+                    <td className="w-10 px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox"
                         checked={selectedIds.includes(user.id)}
                         onChange={() => setSelectedIds(prev => prev.includes(user.id) ? prev.filter(id => id !== user.id) : [...prev, user.id])}
@@ -256,21 +272,24 @@ export default function UsersPage() {
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted tabular-nums">
                       {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-0.5">
-                        <button onClick={() => setSelectedUser(user)}
-                          className="rounded-lg p-1.5 text-muted transition-colors hover:bg-gray-100 hover:text-foreground" title="View details">
-                          <Eye size={15} />
+                        <button onClick={() => openUserDetail(user)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
+                          <Eye size={13} />
+                          View
                         </button>
                         <button onClick={() => handleToggleStatus(user.id, user.accountStatus)} disabled={actionLoading === user.id}
-                          className={cn("rounded-lg p-1.5 transition-colors", actionLoading === user.id && "opacity-50",
-                            user.accountStatus === "SUSPENDED" ? "text-emerald-600 hover:bg-emerald-50" : "text-amber-600 hover:bg-amber-50")}
+                          className={cn("inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors", actionLoading === user.id && "opacity-50",
+                            user.accountStatus === "SUSPENDED" ? "text-success hover:bg-success/10" : "text-warning hover:bg-warning/10")}
                           title={user.accountStatus === "SUSPENDED" ? "Activate" : "Suspend"}>
-                          {actionLoading === user.id ? <Loader2 size={15} className="animate-spin" /> : user.accountStatus === "SUSPENDED" ? <Shield size={15} /> : <ShieldOff size={15} />}
+                          {actionLoading === user.id ? <Loader2 size={13} className="animate-spin" /> : user.accountStatus === "SUSPENDED" ? <Shield size={13} /> : <ShieldOff size={13} />}
+                          {user.accountStatus === "SUSPENDED" ? "Activate" : "Suspend"}
                         </button>
                         <button onClick={() => setDeleteConfirm(user.id)}
-                          className="rounded-lg p-1.5 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600" title="Delete">
-                          <Trash2 size={15} />
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors">
+                          <Trash2 size={13} />
+                          Delete
                         </button>
                       </div>
                       {deleteConfirm === user.id && (
@@ -293,7 +312,7 @@ export default function UsersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center">
+                  <td colSpan={8} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center text-muted">
                       <UserPlus className="mb-2 opacity-30" size={32} />
                       <p className="text-sm">No users found</p>
@@ -361,42 +380,140 @@ export default function UsersPage() {
       />
 
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
-          <div className="w-full max-w-lg rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => { setSelectedUser(null); setSelectedUserDetail(null) }}>
+          <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <h3 className="text-base font-semibold text-foreground">User Details</h3>
-              <button onClick={() => setSelectedUser(null)} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="space-y-4 px-6 py-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-base font-bold text-primary">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-sm font-bold text-primary">
                   {selectedUser.firstName[0]}{selectedUser.lastName[0]}
                 </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-foreground">{selectedUser.firstName} {selectedUser.lastName}</p>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">{selectedUser.firstName} {selectedUser.lastName}</h3>
                   <p className="text-xs text-muted">{selectedUser.email}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "Role", value: <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium", badge[selectedUser.role] || "")}>{selectedUser.role}</span> },
-                  { label: "Status", value: <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium", badge[selectedUser.accountStatus] || "")}>{selectedUser.accountStatus === "PENDING_APPROVAL" ? "Pending" : selectedUser.accountStatus}</span> },
-                  { label: "KYC", value: <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium", badge[selectedUser.kycStatus] || "")}>{selectedUser.kycStatus}</span> },
-                  { label: "Phone", value: <span className="text-sm text-foreground">{selectedUser.phone || "—"}</span> },
-                  { label: "Category", value: <span className="text-sm text-foreground">{selectedUser.category || "—"}</span> },
-                  { label: "Joined", value: <span className="text-sm text-foreground">{new Date(selectedUser.createdAt).toLocaleDateString()}</span> },
-                ].map((f) => (
-                  <div key={f.label}>
-                    <p className="text-xs text-muted">{f.label}</p>
-                    <div className="mt-0.5">{f.value}</div>
+              <button onClick={() => { setSelectedUser(null); setSelectedUserDetail(null) }} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            {detailLoading ? (
+              <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-muted" /></div>
+            ) : (
+              <>
+                <div className="flex border-b border-border">
+                  {(["details", "properties", "services"] as const).map((tab) => (
+                    <button key={tab} onClick={() => setActiveDetailTab(tab)}
+                      className={cn("flex-1 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors",
+                        activeDetailTab === tab ? "text-primary border-b-2 border-primary" : "text-muted hover:text-foreground"
+                      )}>
+                      {tab === "details" ? "Details" : tab === "properties" ? `Properties (${selectedUserDetail?._count?.properties || 0})` : `Services (${selectedUserDetail?._count?.serviceListings || 0})`}
+                    </button>
+                  ))}
+                </div>
+
+                {activeDetailTab === "details" && selectedUserDetail && (
+                  <div className="space-y-5 p-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { label: "Full Name", value: `${selectedUser.firstName} ${selectedUser.lastName}` },
+                        { label: "Email", value: selectedUser.email },
+                        { label: "Phone", value: selectedUser.phone || "—" },
+                        { label: "Status", value: selectedUser.accountStatus === "PENDING_APPROVAL" ? "Pending" : selectedUser.accountStatus },
+                        { label: "KYC Status", value: selectedUser.kycStatus },
+                        { label: "User Type", value: selectedUser.userTypes?.join(", ") || selectedUser.primaryUserType || "—" },
+                        { label: "Category", value: selectedUserDetail.category || selectedUser.category || "—" },
+                        { label: "Company", value: selectedUserDetail.companyName || "—" },
+                        { label: "Location", value: selectedUserDetail.location || selectedUserDetail.city || "—" },
+                        { label: "Joined", value: new Date(selectedUser.createdAt).toLocaleDateString() },
+                        { label: "Last Login", value: selectedUserDetail.lastLogin ? new Date(selectedUserDetail.lastLogin).toLocaleDateString() : "—" },
+                        { label: "Properties", value: String(selectedUserDetail._count?.properties || 0) },
+                        { label: "Service Listings", value: String(selectedUserDetail._count?.serviceListings || 0) },
+                      ].map((f) => (
+                        <div key={f.label}>
+                          <p className="text-xs text-muted">{f.label}</p>
+                          <p className="mt-0.5 text-sm font-medium text-foreground">{f.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {selectedUserDetail.aplAgent && (
+                      <div className="rounded-lg border border-border bg-primary/5 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">APL Representative</p>
+                        <p className="text-sm font-medium text-foreground">{selectedUserDetail.aplAgent.fullName}</p>
+                        <p className="text-xs text-muted">Code: {selectedUserDetail.aplAgent.agentCode} | {selectedUserDetail.aplAgent.phone}</p>
+                      </div>
+                    )}
+
+                    {selectedUserDetail.kycDocuments?.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">KYC Documents</p>
+                        <div className="space-y-2">
+                          {selectedUserDetail.kycDocuments.map((doc: any) => (
+                            <div key={doc.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{doc.documentType}</p>
+                                {doc.documentNumber && <p className="text-xs text-muted">{doc.documentNumber}</p>}
+                              </div>
+                              <span className={cn("inline-block rounded-full px-2 py-0.5 text-xs font-medium", badge[doc.status] || "")}>{doc.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button onClick={() => setSelectedUser(null)} className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">Close</button>
-              </div>
+                )}
+
+                {activeDetailTab === "properties" && selectedUserDetail && (
+                  <div className="p-6">
+                    {selectedUserDetail.properties?.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedUserDetail.properties.map((prop: any) => (
+                          <div key={prop.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{prop.title}</p>
+                              <p className="text-xs text-muted">{prop.propertyType} | {prop.listingPurpose?.replace(/_/g, " ")} | {prop.city || "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0 ml-3">
+                              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", badge[prop.moderationStatus] || "")}>{prop.moderationStatus}</span>
+                              <span className="text-xs text-muted tabular-nums">{prop.price?.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted text-center py-8">No properties listed</p>
+                    )}
+                  </div>
+                )}
+
+                {activeDetailTab === "services" && selectedUserDetail && (
+                  <div className="p-6">
+                    {selectedUserDetail.serviceListings?.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedUserDetail.serviceListings.map((s: any) => (
+                          <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{s.title}</p>
+                              <p className="text-xs text-muted">{s.city || "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0 ml-3">
+                              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", badge[s.moderationStatus] || "")}>{s.moderationStatus}</span>
+                              <span className="text-xs text-muted tabular-nums">{s.price?.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted text-center py-8">No services listed</p>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className="border-t border-border px-6 py-4">
+              <button onClick={() => { setSelectedUser(null); setSelectedUserDetail(null) }} className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">Close</button>
             </div>
           </div>
         </div>
