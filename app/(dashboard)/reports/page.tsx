@@ -7,16 +7,11 @@ import {
   Users,
   Building2,
   UserCheck,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Download,
   MapPin,
-  Loader2,
-  Clock,
 } from "@/components/ui/icons";
 
-interface RecentUser {
+type RecentUser = {
   id: string;
   firstName: string;
   lastName: string;
@@ -33,35 +28,6 @@ interface DashboardData {
   registrationsByDay: { date: string; count: number }[];
   topCities: { city: string; count: number }[];
   recentRegistrations: RecentUser[];
-}
-
-function GrowthIndicator({ value }: { value: number }) {
-  if (value > 0)
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
-        <TrendingUp size={14} />
-        +{value}%
-      </span>
-    );
-  if (value < 0)
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600">
-        <TrendingDown size={14} />
-        {value}%
-      </span>
-    );
-  return (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-muted">
-      <Minus size={14} />
-      0%
-    </span>
-  );
-}
-
-function randGrowth() {
-  const min = -5;
-  const max = 15;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function Avatar({ name }: { name: string }) {
@@ -208,19 +174,10 @@ export default function ReportsPage() {
     recentRegistrations,
   } = data;
 
-  const [growthUsers] = useState(randGrowth);
-  const [growthProperties] = useState(randGrowth);
-  const [growthAgents] = useState(randGrowth);
-
   const stats = [
-    { label: "Users", value: totalUsers, icon: Users, growth: growthUsers },
-    {
-      label: "Properties",
-      value: activeProperties,
-      icon: Building2,
-      growth: growthProperties,
-    },
-    { label: "Agents", value: totalAgents, icon: UserCheck, growth: growthAgents },
+    { label: "Users", value: totalUsers, icon: Users },
+    { label: "Properties", value: activeProperties, icon: Building2 },
+    { label: "Agents", value: totalAgents, icon: UserCheck },
   ];
 
   const last7Days = registrationsByDay.slice(-7);
@@ -253,7 +210,6 @@ export default function ReportsPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                 <s.icon size={20} className="text-primary" />
               </div>
-              <GrowthIndicator value={s.growth} />
             </div>
             <p className="mt-4 text-2xl font-bold text-foreground">
               {s.value.toLocaleString()}

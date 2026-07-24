@@ -91,14 +91,18 @@ export default function ClaimsPage() {
 
   async function handleReview(claimId: string, status: string, adminModifiedAmount?: number) {
     setSubmitting(true)
+    setError("")
     try {
       const body: Record<string, unknown> = { status, adminNotes: reviewNotes || null }
       if (adminModifiedAmount !== undefined) body.adminModifiedAmount = adminModifiedAmount
-      await api.patch(`/api/admin/claims/${claimId}`, body)
+      const { error: apiError } = await api.patch(`/api/admin/claims/${claimId}`, body)
+      if (apiError) throw new Error(apiError)
       setReviewModal(null)
       setReviewNotes("")
       setModifiedAmount("")
       await Promise.all([fetchClaims(), fetchStats()])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to review claim")
     } finally { setSubmitting(false) }
   }
 
