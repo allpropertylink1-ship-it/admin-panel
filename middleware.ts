@@ -24,10 +24,6 @@ export default function middleware(request: NextRequest) {
       loginUrl.searchParams.set("redirect", request.nextUrl.pathname)
       return NextResponse.redirect(loginUrl)
     }
-    if (token && token.split(".").length !== 3) {
-      const loginUrl = new URL("/login", request.url)
-      return NextResponse.redirect(loginUrl)
-    }
   }
 
   const response = NextResponse.next()

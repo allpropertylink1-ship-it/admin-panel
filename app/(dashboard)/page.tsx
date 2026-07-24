@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { api } from "@/lib/api-client"
@@ -69,13 +69,21 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  useEffect(() => {
-    api.get<DashboardData>("/api/admin/dashboard").then(({ data, error }) => {
+  const fetchDashboard = useCallback(async () => {
+    setError("")
+    setLoading(true)
+    try {
+      const { data, error } = await api.get<DashboardData>("/api/admin/dashboard")
       if (data) setData(data)
       else setError(error || "Failed to load dashboard")
+    } catch {
+      setError("Failed to load dashboard")
+    } finally {
       setLoading(false)
-    })
+    }
   }, [])
+
+  useEffect(() => { fetchDashboard() }, [fetchDashboard])
 
   if (loading) {
     return (
@@ -112,7 +120,7 @@ export default function DashboardPage() {
         <h3 className="text-lg font-semibold text-foreground">Failed to load dashboard</h3>
         <p className="mt-1.5 text-sm text-muted max-w-sm">{error}</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={fetchDashboard}
           className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
           Retry

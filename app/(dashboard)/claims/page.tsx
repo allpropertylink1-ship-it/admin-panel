@@ -6,21 +6,8 @@ import { cn } from "@/lib/utils"
 import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle, Download } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { TablePagination } from "@/components/shared/TablePagination"
-
-interface Claim {
-  id: string
-  amount: number
-  currency: string
-  adminModifiedAmount: number | null
-  status: string
-  adminNotes: string | null
-  agentNotes: string | null
-  reviewedAt: string | null
-  paidAt: string | null
-  createdAt: string
-  aplAgent: { id: string; fullName: string; email: string; agentCode: string }
-  property: { id: string; title: string; slug: string; city: string } | null
-}
+import { TableSkeleton } from "@/components/shared/TableSkeleton"
+import type { Claim } from "./types"
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n)
 
@@ -107,8 +94,6 @@ export default function ClaimsPage() {
     } finally { setSubmitting(false) }
   }
 
-  const skeleton = (width: string, height = "h-5") => <div className={cn("animate-pulse rounded bg-gray-200", height)} style={{ width }} />
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -129,9 +114,9 @@ export default function ClaimsPage() {
         {statsLoading ? (
           <>
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-2">
-                {skeleton("60%", "h-3")}
-                {skeleton("40%", "h-7")}
+              <div key={i} className="rounded-xl border border-border bg-card p-5 animate-pulse space-y-2">
+                <div className="h-3 w-3/5 rounded bg-gray-200" />
+                <div className="h-7 w-2/5 rounded bg-gray-200" />
               </div>
             ))}
           </>
@@ -215,13 +200,13 @@ export default function ClaimsPage() {
 
           <div className="overflow-x-auto">
             {loading ? (
-              <div className="p-4 space-y-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    {skeleton("24px")} {skeleton("120px")} {skeleton("80px")} {skeleton("70px")} {skeleton("60px")} {skeleton("80px")}
-                  </div>
-                ))}
-              </div>
+              <table className="w-full">
+                <tbody>
+                  <TableSkeleton columns={[
+                    { width: "w-16" }, { width: "w-32" }, { width: "w-20" }, { width: "w-16" }, { width: "w-20" }
+                  ]} rows={6} />
+                </tbody>
+              </table>
             ) : claims.length === 0 ? (
               <div className="flex flex-col items-center py-16">
                 <Banknote size={40} className="opacity-30 text-muted" />

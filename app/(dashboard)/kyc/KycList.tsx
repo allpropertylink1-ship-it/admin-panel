@@ -1,9 +1,10 @@
 "use client"
 
-import { FileText, Search, X, Shield, Download } from "@/components/ui/icons"
+import { Search, X, Shield, Download, FileText } from "@/components/ui/icons"
+import { KycDocThumbnail } from "./KycDocThumbnail"
 import { TablePagination } from "@/components/shared/TablePagination"
 import { cn, isValidUrl } from "@/lib/utils"
-import { FILTERS, statusCfg, docLabels, timeAgo, initials, ImgWithFallback, Skeleton, EmptyState, DocStatusBadge } from "./utils"
+import { FILTERS, statusCfg, docLabels, timeAgo, initials, Skeleton, EmptyState, DocStatusBadge } from "./utils"
 import type { KycDocument } from "./types"
 
 interface KycListProps {
@@ -187,36 +188,10 @@ export default function KycList({
               {(doc.frontImage || doc.backImage || doc.businessPermit) && (
                 <div className="mt-2 flex gap-1.5">
                   {doc.frontImage && (
-                    isValidUrl(doc.frontImage) ? (
-                      doc.frontImage.match(/\.pdf/i) ? (
-                        <a href={doc.frontImage} target="_blank" rel="noopener noreferrer"
-                          className="flex h-9 w-14 items-center justify-center rounded-lg bg-error-50 text-error/60 hover:bg-error-50/80 transition-colors"
-                          title="View PDF"
-                        >
-                          <FileText size={16} />
-                        </a>
-                      ) : (
-                        <ImgWithFallback src={doc.frontImage} alt="" className="h-9 w-14 rounded-lg object-cover ring-1 ring-black/5" />
-                      )
-                    ) : (
-                      <div className="flex h-9 w-14 items-center justify-center rounded-lg bg-gray-100 text-[10px] text-muted">Invalid URL</div>
-                    )
+                    <KycDocThumbnail url={doc.frontImage} label="Front" />
                   )}
                   {doc.backImage && (
-                    isValidUrl(doc.backImage) ? (
-                      doc.backImage.match(/\.pdf/i) ? (
-                        <a href={doc.backImage} target="_blank" rel="noopener noreferrer"
-                          className="flex h-9 w-14 items-center justify-center rounded-lg bg-error-50 text-error/60 hover:bg-error-50/80 transition-colors"
-                          title="View PDF"
-                        >
-                          <FileText size={16} />
-                        </a>
-                      ) : (
-                        <ImgWithFallback src={doc.backImage} alt="" className="h-9 w-14 rounded-lg object-cover ring-1 ring-black/5" />
-                      )
-                    ) : (
-                      <div className="flex h-9 w-14 items-center justify-center rounded-lg bg-gray-100 text-[10px] text-muted">Invalid URL</div>
-                    )
+                    <KycDocThumbnail url={doc.backImage} label="Back" />
                   )}
                   {doc.businessPermit && (
                     isValidUrl(doc.businessPermit) ? (

@@ -6,21 +6,8 @@ import { cn } from "@/lib/utils"
 import { Search, X, Loader2, AlertCircle, CheckCircle, Clock, Eye } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { TablePagination } from "@/components/shared/TablePagination"
-
-interface Dispute {
-  id: string
-  title: string
-  description: string
-  amount: number
-  currency: string
-  status: string
-  resolution: string | null
-  resolvedBy: string | null
-  resolvedAt: string | null
-  createdAt: string
-  aplAgent: { id: string; fullName: string; email: string; agentCode: string }
-  claim: { id: string; amount: number; status: string; property: { title: string } } | null
-}
+import { TableSkeleton } from "@/components/shared/TableSkeleton"
+import type { Dispute } from "./types"
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n)
 
@@ -110,19 +97,14 @@ export default function AdminDisputesPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-xl border border-border">
-          <div className="p-4 space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="h-5 w-5 animate-pulse rounded bg-gray-200" />
-                <div className="h-5 w-[120px] animate-pulse rounded bg-gray-200" />
-                <div className="h-5 w-[200px] animate-pulse rounded bg-gray-200" />
-                <div className="h-5 w-[80px] animate-pulse rounded bg-gray-200" />
-                <div className="h-5 w-[70px] animate-pulse rounded bg-gray-200" />
-                <div className="h-5 w-[60px] animate-pulse rounded bg-gray-200" />
-              </div>
-            ))}
-          </div>
+        <div className="rounded-xl border border-border overflow-x-auto">
+          <table className="w-full">
+            <tbody>
+              <TableSkeleton columns={[
+                { width: "w-32" }, { width: "w-48" }, { width: "w-20" }, { width: "w-20" }, { width: "w-24" }
+              ]} rows={6} />
+            </tbody>
+          </table>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-4 py-20">

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api-client";
-import { cn, isValidUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { KycDocThumbnail } from "../../kyc/KycDocThumbnail";
 import {
   ArrowLeft,
   Mail,
@@ -337,46 +338,10 @@ setUser(data.user);
                       {(doc.frontImage || doc.backImage) && (
                         <div className="flex gap-1.5">
                           {doc.frontImage && (
-                            isValidUrl(doc.frontImage) ? (
-                              doc.frontImage.match(/\.pdf/i) ? (
-                                <a href={doc.frontImage} target="_blank" rel="noopener noreferrer"
-                                  className="flex h-8 w-12 items-center justify-center rounded border border-border bg-red-50 text-red-400 transition-colors hover:bg-red-100"
-                                  title="View PDF"
-                                >
-                                  <FileText size={14} />
-                                </a>
-                              ) : (
-                                <a href={doc.frontImage} target="_blank" rel="noopener noreferrer">
-                                  <img src={doc.frontImage} alt="Front"
-                                    className="h-8 w-12 rounded border border-border object-cover hover:ring-2 hover:ring-primary/50 transition-all"
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-                                  />
-                                </a>
-                              )
-                            ) : (
-                              <span className="flex h-8 w-12 items-center justify-center rounded border border-border bg-gray-50 text-[9px] text-muted">Invalid</span>
-                            )
+                            <KycDocThumbnail url={doc.frontImage} label="Front" className="h-8 w-12" />
                           )}
                           {doc.backImage && (
-                            isValidUrl(doc.backImage) ? (
-                              doc.backImage.match(/\.pdf/i) ? (
-                                <a href={doc.backImage} target="_blank" rel="noopener noreferrer"
-                                  className="flex h-8 w-12 items-center justify-center rounded border border-border bg-red-50 text-red-400 transition-colors hover:bg-red-100"
-                                  title="View PDF"
-                                >
-                                  <FileText size={14} />
-                                </a>
-                              ) : (
-                                <a href={doc.backImage} target="_blank" rel="noopener noreferrer">
-                                  <img src={doc.backImage} alt="Back"
-                                    className="h-8 w-12 rounded border border-border object-cover hover:ring-2 hover:ring-primary/50 transition-all"
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-                                  />
-                                </a>
-                              )
-                            ) : (
-                              <span className="flex h-8 w-12 items-center justify-center rounded border border-border bg-gray-50 text-[9px] text-muted">Invalid</span>
-                            )
+                            <KycDocThumbnail url={doc.backImage} label="Back" className="h-8 w-12" />
                           )}
                         </div>
                       )}

@@ -87,7 +87,8 @@ export default function DeletedUsersPage() {
       {error && (
         <div className="flex items-center gap-2.5 rounded-xl bg-error-50 px-4 py-3 text-sm text-red-700 border border-red-100">
           <AlertCircle size={16} className="shrink-0" />
-          {error}
+          <span className="flex-1">{error}</span>
+          <button onClick={fetchUsers} className="underline text-red-700 hover:text-red-800 font-medium text-sm">Retry</button>
         </div>
       )}
 
