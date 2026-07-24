@@ -5,37 +5,13 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
-  Search, X, AlertCircle,
-  Wrench, Download, Check, XCircle, Clock, Eye, Loader2,
-  MapPin, User, Mail, Phone, Calendar, DollarSign,
+  AlertCircle, Download, Check, XCircle, Clock, Eye, Loader2, Wrench,
 } from "@/components/ui/icons"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
 import { TablePagination } from "@/components/shared/TablePagination"
-
-interface ServiceCategory {
-  id: string; name: string; slug: string
-}
-
-interface ServiceUser {
-  firstName: string; lastName: string; email: string; companyName?: string; userTypes?: string[]
-}
-
-interface Service {
-  id: string; title: string; description: string
-  price: number | null; currency: string; pricePeriod: string
-  location: string | null; city: string | null
-  status: string; moderationStatus: string
-  viewCount: number; rejectionReason: string | null
-  reviewedAt: string | null; reviewedBy: string | null
-  createdAt: string
-  user: ServiceUser | null
-  category: ServiceCategory | null
-}
-
-interface ServicesResponse {
-  services: Service[]
-  pagination: { total: number; page: number; limit: number; totalPages: number }
-}
+import { ServiceFilters } from "./ServiceFilters"
+import { ServiceModal } from "./ServiceModal"
+import type { ServiceListing, ServicesResponse } from "./types"
 
 const MODERATION_BADGES: Record<string, string> = {
   APPROVED: "bg-emerald-50 text-emerald-700",
@@ -52,29 +28,12 @@ function formatPrice(price: number | null, currency: string, period: string) {
   return new Intl.NumberFormat("en-KE", { style: "currency", currency, minimumFractionDigits: 0 }).format(price)
 }
 
-function SkeletonRows() {
-  return (
-    <>
-        {Array.from({ length: 6 }).map((_, i) => (
-        <tr key={i} className="animate-pulse border-b border-border">
-          <td className="w-10 px-2 py-3"><div className="h-4 w-4 rounded bg-gray-200" /></td>
-          {Array.from({ length: 6 }).map((_, j) => (
-            <td key={j} className="px-4 py-3">
-              <div className={cn("h-4 rounded bg-gray-200", j === 0 ? "w-48" : j === 1 ? "w-24" : j === 5 ? "w-20 ml-auto" : "w-20")} />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </>
-  )
-}
-
 const serviceColumns = [
   { width: "w-48" }, { width: "w-24" }, { width: "w-28" }, { width: "w-20" }, { width: "w-20" }, { width: "w-20" }, { width: "w-24" },
 ]
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>([])
+  const [services, setServices] = useState<ServiceListing[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [page, setPage] = useState(1)
@@ -86,7 +45,7 @@ export default function ServicesPage() {
   const [error, setError] = useState("")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [modLoading, setModLoading] = useState<string | null>(null)
-  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [selectedService, setSelectedService] = useState<ServiceListing | null>(null)
   const [serviceDetail, setServiceDetail] = useState<Record<string, any> | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const limit = 20
@@ -117,7 +76,7 @@ export default function ServicesPage() {
 
   function handleSearch(e: React.FormEvent) { e.preventDefault(); setSearch(searchInput); setPage(1) }
 
-  async function openServiceDetail(svc: Service) {
+  async function openServiceDetail(svc: ServiceListing) {
     setSelectedService(svc)
     setServiceDetail(null)
     setDetailLoading(true)
@@ -156,42 +115,18 @@ export default function ServicesPage() {
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {USER_TYPE_TABS.map((ut) => (
-          <button key={ut} onClick={() => { setUserTypeFilter(ut); setPage(1) }}
-            className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all border border-border",
-              userTypeFilter === ut ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
-            )}>
-            {USER_TYPE_LABELS[ut]}
-          </button>
-        ))}
-        <span className="w-px h-5 bg-border mx-1" />
-        {["", "PENDING_REVIEW", "APPROVED", "REJECTED"].map((s) => (
-          <button key={s} onClick={() => { setStatusFilter(s); setPage(1) }}
-            className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-all border border-border",
-              statusFilter === s ? "bg-primary text-white border-primary shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
-            )}>
-            {s ? { PENDING_REVIEW: "Pending", APPROVED: "Approved", REJECTED: "Rejected" }[s] : "All Status"}
-          </button>
-        ))}
-      </div>
+      <ServiceFilters
+        userTypeFilter={userTypeFilter}
+        statusFilter={statusFilter}
+        searchInput={searchInput}
+        onUserTypeChange={(ut) => { setUserTypeFilter(ut); setPage(1) }}
+        onStatusChange={(s) => { setStatusFilter(s); setPage(1) }}
+        onSearchInputChange={setSearchInput}
+        onSearch={handleSearch}
+        onClearSearch={() => { setSearchInput(""); setSearch(""); setPage(1) }}
+      />
 
       <div className="rounded-xl border border-border bg-card shadow-sm">
-        <div className="flex items-center gap-3 border-b border-border p-4">
-          <div className="ml-auto">
-            <form onSubmit={handleSearch} className="relative">
-              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search services..." className="w-64 rounded-xl border border-border bg-card/80 px-4 py-2.5 pl-9 pr-8 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15" />
-              {searchInput && (
-                <button type="button" onClick={() => { setSearchInput(""); setSearch(""); setPage(1) }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted hover:text-foreground">
-                  <X size={14} />
-                </button>
-              )}
-            </form>
-          </div>
-        </div>
 
         {error && (
           <div className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm text-red-700 bg-error-50">
@@ -350,88 +285,11 @@ export default function ServicesPage() {
         />
       </div>
 
-      {selectedService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => { setSelectedService(null); setServiceDetail(null) }}>
-          <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <Wrench size={20} className="shrink-0 text-primary" />
-                <div className="min-w-0">
-                  <h3 className="text-base font-semibold text-foreground truncate">{selectedService.title}</h3>
-                  <p className="text-xs text-muted">{selectedService.category?.name || ""}{selectedService.city ? ` — ${selectedService.city}` : ""}</p>
-                </div>
-              </div>
-              <button onClick={() => { setSelectedService(null); setServiceDetail(null) }} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors shrink-0">
-                <X size={18} />
-              </button>
-            </div>
-
-            {detailLoading ? (
-              <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-muted" /></div>
-            ) : serviceDetail ? (
-              <div className="p-6 space-y-6">
-                {serviceDetail.description && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Description</p>
-                    <p className="text-sm text-foreground">{serviceDetail.description}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {[
-                    { icon: <DollarSign size={14} />, label: "Price", value: serviceDetail.price ? formatPrice(serviceDetail.price, serviceDetail.currency, serviceDetail.pricePeriod) : "—" },
-                    { icon: <MapPin size={14} />, label: "Location", value: [serviceDetail.city, serviceDetail.region, serviceDetail.location].filter(Boolean).join(", ") || "—" },
-                    { icon: <Wrench size={14} />, label: "Category", value: serviceDetail.category?.name || "—" },
-                    { icon: <Check size={14} />, label: "Status", value: serviceDetail.moderationStatus === "PENDING_REVIEW" ? "Pending" : serviceDetail.moderationStatus },
-                    { icon: <Calendar size={14} />, label: "Created", value: new Date(serviceDetail.createdAt).toLocaleDateString() },
-                    { icon: <Eye size={14} />, label: "Views", value: String(serviceDetail.viewCount ?? 0) },
-                  ].map((f) => (
-                    <div key={f.label} className="rounded-lg bg-gray-50/50 p-3">
-                      <div className="flex items-center gap-1.5 text-xs text-muted mb-1">{f.icon} {f.label}</div>
-                      <p className="text-sm font-medium text-foreground">{f.value}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="rounded-lg border border-border p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Provider</p>
-                  {serviceDetail.user ? (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
-                        {serviceDetail.user.firstName?.[0]}{serviceDetail.user.lastName?.[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{serviceDetail.user.firstName} {serviceDetail.user.lastName}</p>
-                        <p className="text-xs text-muted">{serviceDetail.user.email}{serviceDetail.user.phone ? ` | ${serviceDetail.user.phone}` : ""}</p>
-                        {serviceDetail.user.companyName && <p className="text-xs text-primary">{serviceDetail.user.companyName}</p>}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted">No provider info</p>
-                  )}
-                </div>
-
-                {serviceDetail.images?.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Images ({serviceDetail.images.length})</p>
-                    <div className="flex gap-2 overflow-x-auto pb-2">
-                      {(typeof serviceDetail.images === "string" ? JSON.parse(serviceDetail.images) : serviceDetail.images).map((img: string, i: number) => (
-                        <img key={i} src={img} alt="" className="h-20 w-28 shrink-0 rounded-lg object-cover border border-border" />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center py-16 text-sm text-muted">Failed to load service details</div>
-            )}
-
-            <div className="border-t border-border px-6 py-4">
-              <button onClick={() => { setSelectedService(null); setServiceDetail(null) }} className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ServiceModal
+        service={selectedService}
+        open={selectedService !== null}
+        onClose={() => { setSelectedService(null); setServiceDetail(null) }}
+      />
     </div>
   )
 }

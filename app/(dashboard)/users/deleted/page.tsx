@@ -16,22 +16,6 @@ interface UsersResponse {
   users: User[]; total: number; page: number; pageSize: number; totalPages: number
 }
 
-function SkeletonRows() {
-  return (
-    <>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <tr key={i} className="animate-pulse">
-          {Array.from({ length: 4 }).map((_, j) => (
-            <td key={j} className="px-4 py-4">
-              <div className={cn("h-4 rounded bg-gray-200", j === 0 ? "w-32" : j === 1 ? "w-40" : j === 2 ? "w-28" : "w-24")} />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </>
-  )
-}
-
 const deletedUserColumns = [
   { width: "w-32" }, { width: "w-40" }, { width: "w-28" }, { width: "w-24" },
 ]

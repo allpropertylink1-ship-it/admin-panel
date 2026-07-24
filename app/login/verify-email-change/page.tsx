@@ -15,7 +15,6 @@ function VerifyEmailForm() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState("")
-  const [status, setStatus] = useState<"verifying" | "done">("verifying")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

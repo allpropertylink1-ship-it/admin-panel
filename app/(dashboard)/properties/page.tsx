@@ -6,41 +6,14 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
-  Search, X, Eye, Globe, GlobeOff,
-  AlertCircle, Building2, Download, Check, Loader2, MapPin, Home,
-  Bed, Bath, User, Mail, Phone, Calendar, DollarSign, Expand,
+  Eye, Globe, GlobeOff,
+  AlertCircle, Building2, Download,
 } from "@/components/ui/icons"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
 import { TablePagination } from "@/components/shared/TablePagination"
-
-interface Agent {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-}
-
-interface Property {
-  id: string
-  slug: string
-  title: string
-  price: number
-  currency: string
-  propertyType: string
-  listingPurpose: string | null
-  city: string
-  moderationStatus: string
-  isPublished: boolean
-  isFeatured: boolean
-  rejectionReason: string | null
-  createdAt: string
-  agent: Agent | null
-}
-
-interface PropertiesResponse {
-  properties: Property[]
-  pagination: { total: number; page: number; totalPages: number; limit: number }
-}
+import { PropertyFilters } from "./PropertyFilters"
+import { PropertyModal } from "./PropertyModal"
+import type { Property, PropertiesResponse } from "./types"
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
   APPROVED: { bg: "bg-green-100", text: "text-green-800", label: "Approved" },
@@ -48,29 +21,6 @@ const statusConfig: Record<string, { bg: string; text: string; label: string }> 
   DRAFT: { bg: "bg-gray-100", text: "text-gray-700", label: "Draft" },
   EXPIRED: { bg: "bg-purple-100", text: "text-purple-800", label: "Expired" },
   ARCHIVED: { bg: "bg-gray-200", text: "text-gray-600", label: "Archived" },
-}
-
-function SkeletonRows() {
-  return (
-    <>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <tr key={i} className="border-b border-border">
-          <td className="w-10 px-2 py-3"><div className="h-4 w-4 rounded bg-gray-200" /></td>
-          {Array.from({ length: 8 }).map((_, j) => (
-            <td key={j} className="px-4 py-3">
-              {j === 6 ? (
-                <div className="mx-auto h-4 w-4 animate-pulse rounded bg-gray-200" />
-              ) : j === 7 ? (
-                <div className="ml-auto h-8 w-24 animate-pulse rounded-lg bg-gray-200" />
-              ) : (
-                <div className="h-4 w-full max-w-[120px] animate-pulse rounded bg-gray-200" />
-              )}
-            </td>
-          ))}
-        </tr>
-      ))}
-    </>
-  )
 }
 
 const propertyColumns = [
@@ -170,53 +120,16 @@ export default function PropertiesPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-medium text-muted mr-1">Type:</span>
-            {["", "HOUSE", "APARTMENT", "LAND", "COMMERCIAL"].map((t) => (
-              <button key={t} onClick={() => { setTypeFilter(t); setPage(1) }}
-                className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-all border border-border",
-                  typeFilter === t ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
-                )}>
-                {t || "All"}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-medium text-muted mr-1">Purpose:</span>
-            {["", "FOR_SALE", "FOR_RENT_LONG_TERM", "FOR_RENT_SHORT_TERM"].map((p) => (
-              <button key={p} onClick={() => { setPurposeFilter(p); setPage(1) }}
-                className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-all border border-border",
-                  purposeFilter === p ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
-                )}>
-                {p ? { FOR_SALE: "For Sale", FOR_RENT_LONG_TERM: "Long-term", FOR_RENT_SHORT_TERM: "Short-term / Airbnb" }[p] : "All"}
-              </button>
-            ))}
-          </div>
-          <div className="ml-auto">
-                <form onSubmit={handleSearch} className="relative">
-                  <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-                  <label htmlFor="search-properties" className="sr-only">Search properties</label>
-                  <input
-                    id="search-properties"
-                    type="text"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Search by title..."
-                    className="w-64 rounded-xl border border-border bg-card/80 px-4 py-2.5 pl-9 pr-8 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
-                  />
-                  {searchInput && (
-                    <button
-                      type="button"
-                      onClick={() => { setSearchInput(""); setSearch(""); setPage(1) }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted transition-colors hover:text-foreground"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </form>
-          </div>
-        </div>
+        <PropertyFilters
+          typeFilter={typeFilter}
+          purposeFilter={purposeFilter}
+          searchInput={searchInput}
+          onTypeChange={(t) => { setTypeFilter(t); setPage(1) }}
+          onPurposeChange={(p) => { setPurposeFilter(p); setPage(1) }}
+          onSearchInputChange={setSearchInput}
+          onSearch={handleSearch}
+          onClearSearch={() => { setSearchInput(""); setSearch(""); setPage(1) }}
+        />
 
         {error && (
           <div className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm text-red-700 border-b-red-100 bg-error-50">
@@ -383,83 +296,11 @@ export default function PropertiesPage() {
         />
       </div>
 
-      {selectedProperty && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => { setSelectedProperty(null); setPropertyDetail(null) }}>
-          <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <Building2 size={20} className="shrink-0 text-primary" />
-                <div className="min-w-0">
-                  <h3 className="text-base font-semibold text-foreground truncate">{selectedProperty.title}</h3>
-                  <p className="text-xs text-muted">{selectedProperty.city}{selectedProperty.agent ? ` — ${selectedProperty.agent.firstName} ${selectedProperty.agent.lastName}` : ""}</p>
-                </div>
-              </div>
-              <button onClick={() => { setSelectedProperty(null); setPropertyDetail(null) }} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors shrink-0">
-                <X size={18} />
-              </button>
-            </div>
-
-            {detailLoading ? (
-              <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-muted" /></div>
-            ) : propertyDetail ? (
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {[
-                    { icon: <DollarSign size={14} />, label: "Price", value: formatPrice(propertyDetail.price, propertyDetail.currency, propertyDetail.listingPurpose) },
-                    { icon: <Home size={14} />, label: "Type", value: typeLabel(propertyDetail.propertyType) },
-                    { icon: <MapPin size={14} />, label: "Location", value: [propertyDetail.city, propertyDetail.region].filter(Boolean).join(", ") || "—" },
-                    { icon: <Bed size={14} />, label: "Bedrooms", value: propertyDetail.bedrooms != null ? String(propertyDetail.bedrooms) : "—" },
-                    { icon: <Bath size={14} />, label: "Bathrooms", value: propertyDetail.bathrooms != null ? String(propertyDetail.bathrooms) : "—" },
-                    { icon: <Expand size={14} />, label: "Area", value: propertyDetail.area ? `${propertyDetail.area} sqft` : "—" },
-                    { icon: <Globe size={14} />, label: "Published", value: propertyDetail.isPublished ? "Yes" : "No" },
-                    { icon: <Calendar size={14} />, label: "Created", value: new Date(propertyDetail.createdAt).toLocaleDateString() },
-                    { icon: <Calendar size={14} />, label: "Updated", value: propertyDetail.updatedAt ? new Date(propertyDetail.updatedAt).toLocaleDateString() : "—" },
-                  ].map((f) => (
-                    <div key={f.label} className="rounded-lg bg-gray-50/50 p-3">
-                      <div className="flex items-center gap-1.5 text-xs text-muted mb-1">{f.icon} {f.label}</div>
-                      <p className="text-sm font-medium text-foreground">{f.value}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="rounded-lg border border-border p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Agent / Owner</p>
-                  {propertyDetail.agent ? (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
-                        {propertyDetail.agent.firstName?.[0]}{propertyDetail.agent.lastName?.[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{propertyDetail.agent.firstName} {propertyDetail.agent.lastName}</p>
-                        <p className="text-xs text-muted">{propertyDetail.agent.email}{propertyDetail.agent.phone ? ` | ${propertyDetail.agent.phone}` : ""}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted">No agent assigned</p>
-                  )}
-                </div>
-
-                {propertyDetail.images?.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Images ({propertyDetail.images.length})</p>
-                    <div className="flex gap-2 overflow-x-auto pb-2">
-                      {(typeof propertyDetail.images === "string" ? JSON.parse(propertyDetail.images) : propertyDetail.images).map((img: string, i: number) => (
-                        <img key={i} src={img} alt="" className="h-20 w-28 shrink-0 rounded-lg object-cover border border-border" />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center py-16 text-sm text-muted">Failed to load property details</div>
-            )}
-
-            <div className="border-t border-border px-6 py-4">
-              <button onClick={() => { setSelectedProperty(null); setPropertyDetail(null) }} className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PropertyModal
+        property={selectedProperty}
+        open={selectedProperty !== null}
+        onClose={() => { setSelectedProperty(null); setPropertyDetail(null) }}
+      />
     </div>
   )
 }

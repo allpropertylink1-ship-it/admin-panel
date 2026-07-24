@@ -1,13 +1,7 @@
 "use client"
 
 import { FileText, ExternalLink, Download, X } from "@/components/ui/icons"
-
-function isValidUrl(str: string) {
-  try {
-    const url = new URL(str)
-    return url.protocol === "http:" || url.protocol === "https:"
-  } catch { return false }
-}
+import { isValidUrl } from "@/lib/utils"
 
 interface PdfViewerProps {
   url: string

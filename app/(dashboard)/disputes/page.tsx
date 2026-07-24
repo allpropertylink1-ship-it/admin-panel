@@ -5,6 +5,7 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { Search, X, Loader2, AlertCircle, CheckCircle, Clock, Eye } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
+import { TablePagination } from "@/components/shared/TablePagination"
 
 interface Dispute {
   id: string
@@ -48,6 +49,7 @@ export default function AdminDisputesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const fetchDisputes = useCallback(async () => {
+    setError("")
     setLoading(true)
     const params = new URLSearchParams({ page: String(page), limit: "20" })
     if (statusFilter) params.set("status", statusFilter)
@@ -179,11 +181,7 @@ export default function AdminDisputesPage() {
       )}
 
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <button type="button" disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="touch-target rounded-lg border border-border px-4 py-2 text-sm text-foreground disabled:opacity-40">Previous</button>
-          <span className="text-sm text-muted">Page {page} of {totalPages}</span>
-          <button type="button" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="touch-target rounded-lg border border-border px-4 py-2 text-sm text-foreground disabled:opacity-40">Next</button>
-        </div>
+        <TablePagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       )}
 
       <BulkActionsBar

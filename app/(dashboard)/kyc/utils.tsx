@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { cn } from "@/lib/utils"
+import { cn, isValidUrl } from "@/lib/utils"
 import { ImageIcon, Shield } from "@/components/ui/icons"
 
 export const FILTERS = [
@@ -38,13 +38,6 @@ export function timeAgo(d: string) {
   if (s < 3600) return `${Math.floor(s / 60)}m ago`
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`
   return `${Math.floor(s / 86400)}d ago`
-}
-
-export function isValidUrl(str: string) {
-  try {
-    const url = new URL(str)
-    return url.protocol === "http:" || url.protocol === "https:"
-  } catch { return false }
 }
 
 export function ImgWithFallback({ src, alt, className, style }: { src: string; alt: string; className?: string; style?: React.CSSProperties }) {

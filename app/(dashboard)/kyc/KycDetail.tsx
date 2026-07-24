@@ -3,8 +3,8 @@
 import { useRef } from "react"
 import { Shield, AlertCircle, Loader2, CheckCircle, XCircle, RefreshCcw, Clock, User, FileText, ArrowUp, ArrowDown } from "@/components/ui/icons"
 import PdfViewer from "@/components/PdfViewer"
-import { cn } from "@/lib/utils"
-import { docLabels, timeAgo, fmtDate, initials, ImgWithFallback, Skeleton, EmptyState, StatusBadge, DocStatusBadge, isValidUrl } from "./utils"
+import { cn, isValidUrl } from "@/lib/utils"
+import { docLabels, timeAgo, fmtDate, initials, ImgWithFallback, Skeleton, EmptyState, StatusBadge, DocStatusBadge } from "./utils"
 import type { KycDocument } from "./types"
 
 interface KycDetailProps {
@@ -19,11 +19,12 @@ interface KycDetailProps {
   onRejectReasonChange: (reason: string) => void
   onRejectForDocChange: (docId: string | null) => void
   onOpenLightbox: (images: { src: string; label: string }[], index: number) => void
+  onRetry?: () => void
 }
 
 export default function KycDetail({
   selectedDoc, userDocs, userDocsLoading, actionLoading, error,
-  rejectReason, rejectForDoc, onUpdateDoc, onRejectReasonChange, onRejectForDocChange, onOpenLightbox,
+  rejectReason, rejectForDoc, onUpdateDoc, onRejectReasonChange, onRejectForDocChange, onOpenLightbox, onRetry,
 }: KycDetailProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -79,7 +80,10 @@ export default function KycDetail({
         {error && (
           <div className="flex items-center gap-2 rounded-xl border border-error/20 bg-error-50 px-4 py-3 text-sm text-error">
             <AlertCircle size={14} className="flex-shrink-0" />
-            <span>{error}</span>
+            <span className="flex-1">{error}</span>
+            {onRetry && (
+              <button onClick={onRetry} className="text-sm font-medium text-error underline hover:text-error/80">Retry</button>
+            )}
           </div>
         )}
 

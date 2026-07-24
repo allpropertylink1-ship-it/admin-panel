@@ -175,6 +175,7 @@ export default function KycPage() {
         onRejectReasonChange={setRejectReason}
         onRejectForDocChange={setRejectForDoc}
         onOpenLightbox={openLightbox}
+        onRetry={fetchDocs}
       />
 
       <BulkActionsBar

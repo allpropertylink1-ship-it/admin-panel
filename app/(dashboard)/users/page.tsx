@@ -6,22 +6,15 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
-  Search, Shield, ShieldOff, Trash2,
-  X, AlertCircle, Eye, UserPlus, Loader2, Download,
+  Shield, ShieldOff, Trash2,
+  AlertCircle, Eye, UserPlus, Loader2, Download,
 } from "@/components/ui/icons"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
 import { TablePagination } from "@/components/shared/TablePagination"
+import { UserFilters } from "./UserFilters"
+import { UserModal } from "./UserModal"
 
-interface User {
-  id: string; firstName: string; lastName: string; email: string
-  role: string; accountStatus: string; kycStatus: string; createdAt: string
-  phone?: string; category?: string; userTypes?: string[]; primaryUserType?: string
-  _count?: { properties: number; serviceListings: number }
-}
-
-interface UsersResponse {
-  users: User[]; total: number; page: number; pageSize: number; totalPages: number
-}
+import type { User, UsersResponse } from "./types"
 
 const FILTERS = ["All", "Active", "Pending", "Suspended"]
 
@@ -154,45 +147,16 @@ export default function UsersPage() {
         </a>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search by name or email..."
-            value={searchValue}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
-          />
-          {searchValue && (
-            <button onClick={() => { setSearchValue(""); setSearch(""); setPage(1) }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors">
-              <X size={14} />
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 rounded-xl border border-border bg-card p-1">
-          {FILTERS.map((f) => (
-            <button key={f} onClick={() => { setActiveFilter(f); setPage(1) }}
-              className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                activeFilter === f ? "bg-primary text-white shadow-sm" : "text-muted hover:text-foreground"
-              )}>
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1.5">
-        {USER_TYPE_TABS.map((ut) => (
-          <button key={ut} onClick={() => { setUserTypeFilter(ut); setPage(1) }}
-            className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all border border-border",
-              userTypeFilter === ut ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
-            )}>
-            {USER_TYPE_LABELS[ut] || ut}
-          </button>
-        ))}
-      </div>
+      <UserFilters
+        search={search}
+        searchValue={searchValue}
+        activeFilter={activeFilter}
+        userTypeFilter={userTypeFilter}
+        onSearchChange={handleSearch}
+        onClearSearch={() => { setSearchValue(""); setSearch(""); setPage(1) }}
+        onFilterChange={(f) => { setActiveFilter(f); setPage(1) }}
+        onUserTypeChange={(ut) => { setUserTypeFilter(ut); setPage(1) }}
+      />
 
       {error && (
         <div className="flex items-center gap-2.5 rounded-xl bg-error-50 px-4 py-3 text-sm text-red-700 border border-red-100">
@@ -345,145 +309,13 @@ export default function UsersPage() {
         loading={actionLoading === "bulk"}
       />
 
-      {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => { setSelectedUser(null); setSelectedUserDetail(null) }}>
-          <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-sm font-bold text-primary">
-                  {selectedUser.firstName[0]}{selectedUser.lastName[0]}
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">{selectedUser.firstName} {selectedUser.lastName}</h3>
-                  <p className="text-xs text-muted">{selectedUser.email}</p>
-                </div>
-              </div>
-              <button onClick={() => { setSelectedUser(null); setSelectedUserDetail(null) }} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-
-            {detailLoading ? (
-              <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-muted" /></div>
-            ) : (
-              <>
-                <div className="flex border-b border-border">
-                  {(["details", "properties", "services"] as const).map((tab) => (
-                    <button key={tab} onClick={() => setActiveDetailTab(tab)}
-                      className={cn("flex-1 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors",
-                        activeDetailTab === tab ? "text-primary border-b-2 border-primary" : "text-muted hover:text-foreground"
-                      )}>
-                      {tab === "details" ? "Details" : tab === "properties" ? `Properties (${selectedUserDetail?._count?.properties || 0})` : `Services (${selectedUserDetail?._count?.serviceListings || 0})`}
-                    </button>
-                  ))}
-                </div>
-
-                {activeDetailTab === "details" && selectedUserDetail && (
-                  <div className="space-y-5 p-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      {[
-                        { label: "Full Name", value: `${selectedUser.firstName} ${selectedUser.lastName}` },
-                        { label: "Email", value: selectedUser.email },
-                        { label: "Phone", value: selectedUser.phone || "—" },
-                        { label: "Status", value: selectedUser.accountStatus === "PENDING_APPROVAL" ? "Pending" : selectedUser.accountStatus },
-                        { label: "KYC Status", value: selectedUser.kycStatus },
-                        { label: "User Type", value: selectedUser.userTypes?.join(", ") || selectedUser.primaryUserType || "—" },
-                        { label: "Category", value: selectedUserDetail.category || selectedUser.category || "—" },
-                        { label: "Company", value: selectedUserDetail.companyName || "—" },
-                        { label: "Location", value: selectedUserDetail.location || selectedUserDetail.city || "—" },
-                        { label: "Joined", value: new Date(selectedUser.createdAt).toLocaleDateString() },
-                        { label: "Last Login", value: selectedUserDetail.lastLogin ? new Date(selectedUserDetail.lastLogin).toLocaleDateString() : "—" },
-                        { label: "Properties", value: String(selectedUserDetail._count?.properties || 0) },
-                        { label: "Service Listings", value: String(selectedUserDetail._count?.serviceListings || 0) },
-                      ].map((f) => (
-                        <div key={f.label}>
-                          <p className="text-xs text-muted">{f.label}</p>
-                          <p className="mt-0.5 text-sm font-medium text-foreground">{f.value}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {selectedUserDetail.aplAgent && (
-                      <div className="rounded-lg border border-border bg-primary/5 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">APL Representative</p>
-                        <p className="text-sm font-medium text-foreground">{selectedUserDetail.aplAgent.fullName}</p>
-                        <p className="text-xs text-muted">Code: {selectedUserDetail.aplAgent.agentCode} | {selectedUserDetail.aplAgent.phone}</p>
-                      </div>
-                    )}
-
-                    {selectedUserDetail.kycDocuments?.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">KYC Documents</p>
-                        <div className="space-y-2">
-                          {selectedUserDetail.kycDocuments.map((doc: any) => (
-                            <div key={doc.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                              <div>
-                                <p className="text-sm font-medium text-foreground">{doc.documentType}</p>
-                                {doc.documentNumber && <p className="text-xs text-muted">{doc.documentNumber}</p>}
-                              </div>
-                              <span className={cn("inline-block rounded-full px-2 py-0.5 text-xs font-medium", badge[doc.status] || "")}>{doc.status}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeDetailTab === "properties" && selectedUserDetail && (
-                  <div className="p-6">
-                    {selectedUserDetail.properties?.length > 0 ? (
-                      <div className="space-y-2">
-                        {selectedUserDetail.properties.map((prop: any) => (
-                          <div key={prop.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{prop.title}</p>
-                              <p className="text-xs text-muted">{prop.propertyType} | {prop.listingPurpose?.replace(/_/g, " ")} | {prop.city || "—"}</p>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0 ml-3">
-                              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", badge[prop.moderationStatus] || "")}>{prop.moderationStatus}</span>
-                              <span className="text-xs text-muted tabular-nums">{prop.price?.toLocaleString()}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted text-center py-8">No properties listed</p>
-                    )}
-                  </div>
-                )}
-
-                {activeDetailTab === "services" && selectedUserDetail && (
-                  <div className="p-6">
-                    {selectedUserDetail.serviceListings?.length > 0 ? (
-                      <div className="space-y-2">
-                        {selectedUserDetail.serviceListings.map((s: any) => (
-                          <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{s.title}</p>
-                              <p className="text-xs text-muted">{s.city || "—"}</p>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0 ml-3">
-                              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", badge[s.moderationStatus] || "")}>{s.moderationStatus}</span>
-                              <span className="text-xs text-muted tabular-nums">{s.price?.toLocaleString()}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted text-center py-8">No services listed</p>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            <div className="border-t border-border px-6 py-4">
-              <button onClick={() => { setSelectedUser(null); setSelectedUserDetail(null) }} className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <UserModal
+        user={selectedUser}
+        open={selectedUser !== null}
+        onClose={() => { setSelectedUser(null); setSelectedUserDetail(null) }}
+        onStatusChange={(userId, newStatus) => handleToggleStatus(userId, newStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE")}
+        loading={actionLoading}
+      />
     </div>
   )
 }

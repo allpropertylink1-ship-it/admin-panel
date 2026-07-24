@@ -2,8 +2,8 @@
 
 import { FileText, Search, X, Shield, Download } from "@/components/ui/icons"
 import { TablePagination } from "@/components/shared/TablePagination"
-import { cn } from "@/lib/utils"
-import { FILTERS, statusCfg, docLabels, timeAgo, initials, ImgWithFallback, Skeleton, EmptyState, DocStatusBadge, isValidUrl } from "./utils"
+import { cn, isValidUrl } from "@/lib/utils"
+import { FILTERS, statusCfg, docLabels, timeAgo, initials, ImgWithFallback, Skeleton, EmptyState, DocStatusBadge } from "./utils"
 import type { KycDocument } from "./types"
 
 interface KycListProps {
