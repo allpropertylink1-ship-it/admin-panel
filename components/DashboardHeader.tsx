@@ -1,23 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { cn } from "@/lib/utils"
 import { Bell } from "@/components/ui/icons"
-
-function DashboardDate() {
-  const [dateStr, setDateStr] = useState("")
-  useEffect(() => {
-    const now = new Date()
-    const opts: Intl.DateTimeFormatOptions = { weekday: "long", month: "long", day: "numeric", year: "numeric" }
-    setDateStr(now.toLocaleDateString("en-US", opts))
-  }, [])
-  return (
-    <time className="text-sm text-muted hidden sm:block">
-      {dateStr || "\u00A0"}
-    </time>
-  )
-}
+import { DashboardDate } from "@/components/DashboardDate"
 
 export function DashboardHeader() {
   const { user } = useAuth()

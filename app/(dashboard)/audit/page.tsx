@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
-  Search, ChevronLeft, ChevronRight, Loader2, Filter, RefreshCw,
+  Search, Loader2, Filter, RefreshCw,
   AlertCircle, ClipboardList, Download,
 } from "@/components/ui/icons"
+import { TableSkeleton } from "@/components/shared/TableSkeleton"
+import { TablePagination } from "@/components/shared/TablePagination"
 
 interface AuditEntry {
   id: string
@@ -56,21 +58,9 @@ const actionColor: Record<string, string> = {
   REJECT: "bg-red-50 text-red-700",
 }
 
-function SkeletonRows() {
-  return (
-    <>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <tr key={i} className="animate-pulse">
-          {Array.from({ length: 5 }).map((_, j) => (
-            <td key={j} className="px-4 py-3.5">
-              <div className={cn("h-4 rounded bg-gray-200", j === 0 ? "w-24" : j === 1 ? "w-20" : j === 2 ? "w-28" : j === 3 ? "w-16" : "w-28")} />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </>
-  )
-}
+const auditColumns = [
+  { width: "w-24" }, { width: "w-20" }, { width: "w-28" }, { width: "w-16" }, { width: "w-28" },
+]
 
 export default function AuditPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([])
@@ -178,7 +168,7 @@ export default function AuditPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                <SkeletonRows />
+                <TableSkeleton columns={auditColumns} checkbox={false} />
               </tbody>
             </table>
           </div>
@@ -236,43 +226,7 @@ export default function AuditPage() {
         )}
 
         {meta.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-gray-50/30">
-            <p className="text-xs text-muted tabular-nums">
-              {meta.total === 0 ? "0" : `${(meta.page - 1) * meta.limit + 1}\u2013${Math.min(meta.page * meta.limit, meta.total)}`} of {meta.total}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => goToPage(page - 1)}
-                disabled={page <= 1}
-                className="rounded-lg border border-border p-1.5 text-muted transition-colors hover:bg-gray-100 disabled:opacity-30"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              {Array.from({ length: meta.totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === meta.totalPages || Math.abs(p - page) <= 2)
-                .map((p, idx, arr) => (
-                  <span key={p} className="flex items-center">
-                    {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-xs text-muted">...</span>}
-                    <button
-                      onClick={() => goToPage(p)}
-                      className={cn(
-                        "min-w-[32px] rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
-                        page === p ? "bg-primary text-white shadow-sm" : "text-muted hover:bg-gray-100"
-                      )}
-                    >
-                      {p}
-                    </button>
-                  </span>
-                ))}
-              <button
-                onClick={() => goToPage(page + 1)}
-                disabled={page >= meta.totalPages}
-                className="rounded-lg border border-border p-1.5 text-muted transition-colors hover:bg-gray-100 disabled:opacity-30"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+          <TablePagination page={page} totalPages={meta.totalPages} total={meta.total} pageSize={meta.limit} onPageChange={goToPage} />
         )}
       </div>
     </div>

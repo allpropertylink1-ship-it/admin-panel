@@ -5,10 +5,12 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
-  Search, X, ChevronLeft, ChevronRight, AlertCircle,
+  Search, X, AlertCircle,
   Wrench, Download, Check, XCircle, Clock, Eye, Loader2,
   MapPin, User, Mail, Phone, Calendar, DollarSign,
 } from "@/components/ui/icons"
+import { TableSkeleton } from "@/components/shared/TableSkeleton"
+import { TablePagination } from "@/components/shared/TablePagination"
 
 interface ServiceCategory {
   id: string; name: string; slug: string
@@ -66,6 +68,10 @@ function SkeletonRows() {
     </>
   )
 }
+
+const serviceColumns = [
+  { width: "w-48" }, { width: "w-24" }, { width: "w-28" }, { width: "w-20" }, { width: "w-20" }, { width: "w-20" }, { width: "w-24" },
+]
 
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([])
@@ -214,7 +220,7 @@ export default function ServicesPage() {
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
                 </tr>
               </thead>
-              <tbody><SkeletonRows /></tbody>
+              <tbody><TableSkeleton columns={serviceColumns} /></tbody>
             </table>
           </div>
         ) : services.length === 0 ? (
@@ -316,19 +322,7 @@ export default function ServicesPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-gray-50/30">
-            <p className="text-sm text-muted">Page {page} of {totalPages} ({total} total)</p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-muted hover:bg-gray-50 disabled:opacity-50">
-                <ChevronLeft size={14} /> Previous
-              </button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-muted hover:bg-gray-50 disabled:opacity-50">
-                Next <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={limit} onPageChange={setPage} />
         )}
 
         <BulkActionsBar

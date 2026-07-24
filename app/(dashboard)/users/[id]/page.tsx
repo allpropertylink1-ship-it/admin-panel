@@ -129,7 +129,7 @@ export default function UserDetailPage() {
       try {
         const { data, error } = await api.get<{ user: UserDetail }>(`/api/admin/users/${params.id}`);
         if (error || !data) throw new Error(error || "No data");
-        setUser(data.user || data);
+setUser(data.user);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to fetch user");
       } finally {

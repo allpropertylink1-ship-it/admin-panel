@@ -91,10 +91,6 @@ export default function ApprovalsPage() {
         accountStatus: "SUSPENDED",
       })
       if (error) throw new Error("Failed to reject user")
-      await api.post(`/api/admin/users/${userId}/approve`, {
-        reject: true,
-        reason: rejectReason.trim(),
-      })
       setUsers((prev) => prev.filter((u) => u.id !== userId))
       setRejectInput(null)
       setRejectReason("")

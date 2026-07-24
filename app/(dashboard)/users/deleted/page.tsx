@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
-import { Search, X, AlertCircle, Archive, ChevronLeft, ChevronRight, Loader2 } from "@/components/ui/icons"
+import { Search, X, AlertCircle, Archive, Loader2 } from "@/components/ui/icons"
+import { TableSkeleton } from "@/components/shared/TableSkeleton"
+import { TablePagination } from "@/components/shared/TablePagination"
 
 interface User {
   id: string; firstName: string; lastName: string; email: string; phone?: string
@@ -29,6 +31,10 @@ function SkeletonRows() {
     </>
   )
 }
+
+const deletedUserColumns = [
+  { width: "w-32" }, { width: "w-40" }, { width: "w-28" }, { width: "w-24" },
+]
 
 export default function DeletedUsersPage() {
   const [data, setData] = useState<UsersResponse | null>(null)
@@ -113,7 +119,7 @@ export default function DeletedUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {loading ? <SkeletonRows /> : data && data.users.length > 0 ? (
+              {loading ? <TableSkeleton columns={deletedUserColumns} rows={8} /> : data && data.users.length > 0 ? (
                 data.users.map((user) => (
                   <tr key={user.id} className="transition-colors hover:bg-gray-50/40 opacity-60">
                     <td className="px-4 py-3">
@@ -146,33 +152,7 @@ export default function DeletedUsersPage() {
         </div>
 
         {data && data.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-gray-50/30">
-            <p className="text-xs text-muted tabular-nums">
-              {((data.page - 1) * data.pageSize) + 1}–{Math.min(data.page * data.pageSize, data.total)} of {data.total}
-            </p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-                className="rounded-lg border border-border p-1.5 text-muted transition-colors hover:bg-gray-100 disabled:opacity-30">
-                <ChevronLeft size={16} />
-              </button>
-              {Array.from({ length: data.totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === data.totalPages || Math.abs(p - page) <= 2)
-                .map((p, idx, arr) => (
-                  <span key={p} className="flex items-center">
-                    {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-xs text-muted">...</span>}
-                    <button onClick={() => setPage(p)}
-                      className={cn("min-w-[32px] rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
-                        page === p ? "bg-primary text-white shadow-sm" : "text-muted hover:bg-gray-100")}>
-                      {p}
-                    </button>
-                  </span>
-                ))}
-              <button onClick={() => setPage(p => Math.min(data.totalPages, p + 1))} disabled={page >= data.totalPages}
-                className="rounded-lg border border-border p-1.5 text-muted transition-colors hover:bg-gray-100 disabled:opacity-30">
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+          <TablePagination page={page} totalPages={data.totalPages} total={data.total} pageSize={data.pageSize || 20} onPageChange={setPage} />
         )}
       </div>
     </div>

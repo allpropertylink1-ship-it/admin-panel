@@ -6,30 +6,13 @@ import { api } from "@/lib/api-client"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { cn } from "@/lib/utils"
 import {
-  Search, X, UserPlus, Pencil, Trash2, Users, UserCheck, Hash, Loader2, AlertCircle, Ban, CheckCircle, Mail
+  UserPlus, Users, UserCheck, Hash, Loader2, AlertCircle, CheckCircle, Mail, X
 } from "@/components/ui/icons"
-
-interface AplAgent {
-  id: string
-  fullName: string
-  email: string
-  phone: string
-  agentCode: string
-  status: string
-  hasActivated: boolean
-  suspendedAt: string | null
-  suspendedReason: string | null
-  createdAt: string
-  _count: { users: number }
-}
-
-type FormData = { fullName: string; email: string; phone: string }
-
-const emptyForm: FormData = { fullName: "", email: "", phone: "" }
-
-const statusFilters = ["", "ACTIVE", "SUSPENDED", "INACTIVE"]
-
-const statusLabels: Record<string, string> = { "": "All", ACTIVE: "Active", SUSPENDED: "Suspended", INACTIVE: "Inactive" }
+import { TablePagination } from "@/components/shared/TablePagination"
+import type { Agent } from "./types"
+import AgentFilters from "./AgentFilters"
+import AgentModal from "./AgentModal"
+import AgentActions from "./AgentActions"
 
 const statusBadge = (status: string) => {
   const colors: Record<string, string> = {
@@ -45,7 +28,7 @@ const statusBadge = (status: string) => {
 
 export default function AgentsPage() {
   const router = useRouter()
-  const [agents, setAgents] = useState<AplAgent[]>([])
+  const [agents, setAgents] = useState<Agent[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -56,28 +39,27 @@ export default function AgentsPage() {
   const [totalPages, setTotalPages] = useState(1)
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [editAgent, setEditAgent] = useState<AplAgent | null>(null)
-  const [form, setForm] = useState<FormData>(emptyForm)
+  const [editAgent, setEditAgent] = useState<Agent | null>(null)
   const [formError, setFormError] = useState("")
   const [formLoading, setFormLoading] = useState(false)
 
   const [newAgentCredentials, setNewAgentCredentials] = useState<{ email: string; agentCode: string; name: string } | null>(null)
 
-  const [deleteTarget, setDeleteTarget] = useState<AplAgent | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
-  const [suspendTarget, setSuspendTarget] = useState<AplAgent | null>(null)
+  const [suspendTarget, setSuspendTarget] = useState<Agent | null>(null)
   const [suspendReason, setSuspendReason] = useState("")
   const [suspendLoading, setSuspendLoading] = useState(false)
 
-  const [emailChangeTarget, setEmailChangeTarget] = useState<AplAgent | null>(null)
+  const [emailChangeTarget, setEmailChangeTarget] = useState<Agent | null>(null)
   const [emailChangeNew, setEmailChangeNew] = useState("")
   const [emailChangeLoading, setEmailChangeLoading] = useState(false)
   const [emailChangeSent, setEmailChangeSent] = useState(false)
 
-  const [resendInviteTarget, setResendInviteTarget] = useState<AplAgent | null>(null)
+  const [resendInviteTarget, setResendInviteTarget] = useState<Agent | null>(null)
   const [resendInviteLoading, setResendInviteLoading] = useState(false)
   const [resendInviteDone, setResendInviteDone] = useState(false)
 
@@ -94,7 +76,7 @@ export default function AgentsPage() {
       if (debouncedSearch) params.set("search", debouncedSearch)
       if (statusFilter) params.set("status", statusFilter)
       params.set("page", String(page))
-      const { data, error: fetchError } = await api.get<{ agents: AplAgent[]; total: number; totalPages: number }>(`/api/admin/agents?${params.toString()}`)
+      const { data, error: fetchError } = await api.get<{ agents: Agent[]; total: number; totalPages: number }>(`/api/admin/agents?${params.toString()}`)
       if (fetchError || !data) throw new Error(fetchError || "Failed to load representatives")
       setAgents(data.agents ?? [])
       setTotal(data.total ?? 0)
@@ -109,63 +91,60 @@ export default function AgentsPage() {
 
   useEffect(() => { fetchAgents() }, [fetchAgents])
 
-  function resetForm() {
-    setForm(emptyForm)
-    setFormError("")
-  }
-
   function openAddModal() {
     setEditAgent(null)
-    resetForm()
+    setFormError("")
     setModalOpen(true)
   }
 
-  function openEditModal(agent: AplAgent) {
+  function openEditModal(agent: Agent) {
     setEditAgent(agent)
-    setForm({ fullName: agent.fullName, email: agent.email, phone: agent.phone })
     setFormError("")
     setModalOpen(true)
   }
 
-  async function handleSave() {
+  function handleModalClose() {
+    setModalOpen(false)
+    setEditAgent(null)
     setFormError("")
-    if (!form.fullName.trim() || !form.email.trim() || !form.phone.trim()) {
+  }
+
+  async function handleModalSubmit(data: { fullName: string; email: string; phone: string }) {
+    setFormError("")
+    if (!data.fullName.trim() || !data.email.trim() || !data.phone.trim()) {
       setFormError("All fields are required")
       return
     }
     setFormLoading(true)
     try {
-      const payload = { ...form }
+      const payload = { fullName: data.fullName, email: data.email, phone: data.phone }
       if (editAgent) {
-        const emailChanged = form.email.trim().toLowerCase() !== editAgent.email.toLowerCase()
+        const emailChanged = data.email.trim().toLowerCase() !== editAgent.email.toLowerCase()
         if (emailChanged) {
-          const { data, error: editError } = await api.patch<{ agent: AplAgent }>(`/api/admin/agents/${editAgent.id}`, { ...payload, email: undefined })
-          if (editError || !data) { setFormError(editError || "Failed to update agent"); return }
-          setAgents((prev) => prev.map((a) => a.id === editAgent.id ? data.agent : a))
+          const { data: result, error: editError } = await api.patch<{ agent: Agent }>(`/api/admin/agents/${editAgent.id}`, { ...payload, email: undefined })
+          if (editError || !result) { setFormError(editError || "Failed to update agent"); return }
+          setAgents((prev) => prev.map((a) => a.id === editAgent.id ? result.agent : a))
           setModalOpen(false)
-          resetForm()
           setEmailChangeTarget(editAgent)
-          setEmailChangeNew(form.email.trim())
+          setEmailChangeNew(data.email.trim())
           setEmailChangeSent(false)
           return
         }
-        const { data, error: editError } = await api.patch<{ agent: AplAgent }>(`/api/admin/agents/${editAgent.id}`, payload)
-        if (editError || !data) { setFormError(editError || "Failed to update agent"); return }
-        setAgents((prev) => prev.map((a) => a.id === editAgent.id ? data.agent : a))
+        const { data: result, error: editError } = await api.patch<{ agent: Agent }>(`/api/admin/agents/${editAgent.id}`, payload)
+        if (editError || !result) { setFormError(editError || "Failed to update agent"); return }
+        setAgents((prev) => prev.map((a) => a.id === editAgent.id ? result.agent : a))
       } else {
-        const { data, error: addError } = await api.post<{ agent: AplAgent; credentials?: { email: string; agentCode: string } }>("/api/admin/agents", payload)
-        if (addError || !data) { setFormError(addError || "Failed to create agent"); return }
-        setAgents((prev) => [data.agent, ...prev])
+        const { data: result, error: addError } = await api.post<{ agent: Agent; credentials?: { email: string; agentCode: string } }>("/api/admin/agents", payload)
+        if (addError || !result) { setFormError(addError || "Failed to create agent"); return }
+        setAgents((prev) => [result.agent, ...prev])
         setTotal((prev) => prev + 1)
-        if (data.credentials) {
-          setNewAgentCredentials({ email: data.credentials.email, agentCode: data.credentials.agentCode, name: form.fullName })
+        if (result.credentials) {
+          setNewAgentCredentials({ email: result.credentials.email, agentCode: result.credentials.agentCode, name: data.fullName })
           setModalOpen(false)
-          resetForm()
           return
         }
       }
       setModalOpen(false)
-      resetForm()
     } finally {
       setFormLoading(false)
     }
@@ -176,8 +155,8 @@ export default function AgentsPage() {
     setEmailChangeLoading(true)
     setFormError("")
     try {
-      const { error } = await api.post(`/api/admin/agents/${emailChangeTarget.id}/change-email`, { newEmail: emailChangeNew })
-      if (error) { setFormError(error); return }
+      const { error: apiError } = await api.post(`/api/admin/agents/${emailChangeTarget.id}/change-email`, { newEmail: emailChangeNew })
+      if (apiError) { setFormError(apiError); return }
       setEmailChangeSent(true)
     } catch {
       setFormError("Failed to send verification email")
@@ -205,7 +184,7 @@ export default function AgentsPage() {
     if (!suspendTarget) return
     setSuspendLoading(true)
     try {
-      const { data, error: suspendError } = await api.post<{ agent: AplAgent }>(`/api/admin/agents/${suspendTarget.id}/suspend`, { suspendedReason: suspendReason || undefined })
+      const { data, error: suspendError } = await api.post<{ agent: Agent }>(`/api/admin/agents/${suspendTarget.id}/suspend`, { suspendedReason: suspendReason || undefined })
       if (suspendError) throw new Error(suspendError)
       if (data?.agent) {
         setAgents((prev) => prev.map((a) => a.id === suspendTarget.id ? data.agent : a))
@@ -219,14 +198,14 @@ export default function AgentsPage() {
     }
   }
 
-  async function handleReactivate(agent: AplAgent) {
-    const { data, error: reactivateError } = await api.post<{ agent: AplAgent }>(`/api/admin/agents/${agent.id}/reactivate`)
+  async function handleReactivate(agentId: string) {
+    const { data, error: reactivateError } = await api.post<{ agent: Agent }>(`/api/admin/agents/${agentId}/reactivate`)
     if (reactivateError) {
       setFormError(reactivateError)
       return
     }
     if (data?.agent) {
-      setAgents((prev) => prev.map((a) => a.id === agent.id ? data.agent : a))
+      setAgents((prev) => prev.map((a) => a.id === agentId ? data.agent : a))
     }
   }
 
@@ -301,32 +280,12 @@ export default function AgentsPage() {
       ) : (
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="border-b border-border px-4 py-3 space-y-3">
-            <div className="flex items-center gap-2">
-              {statusFilters.map((sf) => (
-                <button key={sf} onClick={() => setStatusFilter(sf)}
-                  className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                    statusFilter === sf
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-muted hover:bg-background hover:text-foreground"
-                  )}>
-                  {statusLabels[sf]}
-                </button>
-              ))}
-            </div>
-            <div className="relative max-w-md">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="text" placeholder="Search by name, email, or code..."
-                value={search} onChange={(e) => setSearch(e.target.value)}
-                className="rounded-xl border border-border bg-card/80 pl-10 pr-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
-                  <X size={14} />
-                </button>
-              )}
-            </div>
+            <AgentFilters
+              search={search}
+              statusFilter={statusFilter}
+              onSearchChange={setSearch}
+              onStatusFilterChange={setStatusFilter}
+            />
           </div>
 
           <div className="overflow-x-auto">
@@ -402,38 +361,24 @@ export default function AgentsPage() {
                       <td className="px-4 py-3 text-center font-medium">{agent._count.users}</td>
                       <td className="px-4 py-3 text-muted text-xs">{new Date(agent.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button onClick={(e) => { e.stopPropagation(); openEditModal(agent) }}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
-                            <Pencil size={13} />
-                            Edit
-                          </button>
-                          {!agent.hasActivated && (
-                            <button onClick={(e) => { e.stopPropagation(); setResendInviteTarget(agent) }}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 transition-colors">
-                              <Mail size={13} />
-                              Resend Invite
-                            </button>
-                          )}
-                          {agent.status === "ACTIVE" ? (
-                            <button onClick={(e) => { e.stopPropagation(); setSuspendTarget(agent) }}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/10 transition-colors">
-                              <Ban size={13} />
-                              Suspend
-                            </button>
-                          ) : (
-                            <button onClick={(e) => { e.stopPropagation(); handleReactivate(agent) }}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 transition-colors">
-                              <CheckCircle size={13} />
-                              Reactivate
-                            </button>
-                          )}
-                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(agent) }}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors">
-                            <Trash2 size={13} />
-                            Delete
-                          </button>
-                        </div>
+                        <AgentActions
+                          agent={agent}
+                          suspendTarget={suspendTarget}
+                          deleteTarget={deleteTarget}
+                          suspendReason={suspendReason}
+                          suspendLoading={suspendLoading}
+                          deleteLoading={deleteLoading}
+                          onEdit={() => openEditModal(agent)}
+                          onSuspend={() => setSuspendTarget(agent)}
+                          onReactivate={() => handleReactivate(agent.id)}
+                          onResendInvite={() => setResendInviteTarget(agent)}
+                          onDeleteConfirm={() => setDeleteTarget(agent)}
+                          onSuspendReasonChange={setSuspendReason}
+                          onSuspendConfirm={handleSuspend}
+                          onSuspendCancel={() => { setSuspendTarget(null); setSuspendReason("") }}
+                          onDeleteCancel={() => setDeleteTarget(null)}
+                          onDeleteConfirmAction={handleDelete}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -442,25 +387,7 @@ export default function AgentsPage() {
             )}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-border px-4 py-3">
-              <p className="text-xs text-muted">Page {page} of {totalPages} ({total} total)</p>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={cn(
-                      "touch-target rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                      p === page ? "bg-primary text-white shadow-sm" : "text-muted hover:bg-background hover:text-foreground"
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <TablePagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
 
           <BulkActionsBar
             selectedIds={selectedIds}
@@ -473,8 +400,8 @@ export default function AgentsPage() {
             onAction={async (action) => {
               setLoading(true)
               try {
-                const { error } = await api.post("/api/admin/agents/bulk", { ids: selectedIds, action })
-                if (error) throw new Error(error)
+                const { error: bulkError } = await api.post("/api/admin/agents/bulk", { ids: selectedIds, action })
+                if (bulkError) throw new Error(bulkError)
                 setSelectedIds([])
                 await fetchAgents()
               } catch (err: unknown) {
@@ -488,66 +415,14 @@ export default function AgentsPage() {
         </div>
       )}
 
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">{editAgent ? "Edit Representative" : "Add Representative"}</h2>
-              <button onClick={() => { setModalOpen(false); resetForm() }} className="rounded-xl p-1.5 text-muted hover:bg-gray-50 hover:text-foreground transition-all">
-                <X size={18} />
-              </button>
-            </div>
-            {formError && <div className="rounded-xl bg-error-50 px-4 py-2.5 text-sm text-red-700 border border-red-100 mb-4">{formError}</div>}
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium" htmlFor="fullName">Full Name</label>
-                <input id="fullName" type="text" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
-                  placeholder="e.g. Joe Davis" />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium" htmlFor="email">Email Address</label>
-                <input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
-                  placeholder="agent@allpropertylink.co.ke" />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium" htmlFor="phone">Phone Number</label>
-                <input id="phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
-                  placeholder="+254 7XX XXX XXX" />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => { setModalOpen(false); resetForm() }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">Cancel</button>
-              <button onClick={handleSave} disabled={formLoading}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all disabled:opacity-50 inline-flex items-center gap-2">
-                {formLoading && <Loader2 size={14} className="animate-spin" />}
-                {formLoading ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold">Delete Agent</h2>
-            <p className="mt-2 text-sm text-muted">
-              Are you sure you want to delete <strong>{deleteTarget.fullName}</strong> ({deleteTarget.agentCode})? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setDeleteTarget(null)} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">Cancel</button>
-              <button onClick={handleDelete} disabled={deleteLoading}
-                className="rounded-xl bg-error px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-all disabled:opacity-50 inline-flex items-center gap-2">
-                {deleteLoading && <Loader2 size={14} className="animate-spin" />}
-                {deleteLoading ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AgentModal
+        open={modalOpen}
+        editingAgent={editAgent}
+        formLoading={formLoading}
+        formError={formError}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
+      />
 
       {newAgentCredentials && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -579,31 +454,6 @@ export default function AgentsPage() {
               </button>
               <button onClick={() => setNewAgentCredentials(null)} className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-all">
                 Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {suspendTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold">Suspend Agent</h2>
-            <p className="mt-2 text-sm text-muted">
-              Are you sure you want to suspend <strong>{suspendTarget.fullName}</strong> ({suspendTarget.agentCode})?
-            </p>
-            <div className="mt-4">
-              <label className="mb-1.5 block text-sm font-medium" htmlFor="suspendReason">Reason for suspension</label>
-              <textarea id="suspendReason" value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)}
-                className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm w-full placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 min-h-[80px]"
-                placeholder="Explain why this agent is being suspended..." />
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => { setSuspendTarget(null); setSuspendReason("") }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all">Cancel</button>
-              <button onClick={handleSuspend} disabled={suspendLoading || !suspendReason.trim()}
-                className="rounded-xl bg-warning px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 transition-all disabled:opacity-50 inline-flex items-center gap-2">
-                {suspendLoading && <Loader2 size={14} className="animate-spin" />}
-                {suspendLoading ? "Suspending..." : "Suspend"}
               </button>
             </div>
           </div>

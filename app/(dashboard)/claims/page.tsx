@@ -5,6 +5,7 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle, Download } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
+import { TablePagination } from "@/components/shared/TablePagination"
 
 interface Claim {
   id: string
@@ -284,16 +285,7 @@ export default function ClaimsPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-border px-4 py-3">
-              <p className="text-xs text-muted">Page {page} of {totalPages} ({total} total)</p>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button key={p} onClick={() => setPage(p)}
-                    className={cn("touch-target rounded-lg px-3 py-1.5 text-xs font-medium transition-all", p === page ? "bg-primary text-white shadow-sm" : "text-muted hover:bg-background hover:text-foreground")}
-                  >{p}</button>
-                ))}
-              </div>
-            </div>
+            <TablePagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
           )}
 
           <BulkActionsBar
@@ -360,7 +352,7 @@ export default function ClaimsPage() {
                   <button onClick={() => handleReview(reviewModal.id, "PAID")} disabled={submitting}
                     className="flex-1 rounded-xl bg-success px-5 py-2.5 text-sm font-medium text-white hover:bg-success/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
                   >{submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={16} />}Accept & Pay</button>
-                  <button onClick={() => handleReview(reviewModal.id, "MODIFIED", Number(modifiedAmount))} disabled={submitting || !modifiedAmount || Number(modifiedAmount) <= 0}
+                  <button onClick={() => handleReview(reviewModal.id, "AWAITING_AGENT_ACCEPTANCE", Number(modifiedAmount))} disabled={submitting || !modifiedAmount || Number(modifiedAmount) <= 0}
                     className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
                   >{submitting ? <Loader2 size={14} className="animate-spin" /> : <Banknote size={16} />}Modify Amount</button>
                   <button onClick={() => handleReview(reviewModal.id, "REJECTED")} disabled={submitting}

@@ -6,10 +6,12 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
-  Search, X, ChevronLeft, ChevronRight, Eye, Globe, GlobeOff,
+  Search, X, Eye, Globe, GlobeOff,
   AlertCircle, Building2, Download, Check, Loader2, MapPin, Home,
   Bed, Bath, User, Mail, Phone, Calendar, DollarSign, Expand,
 } from "@/components/ui/icons"
+import { TableSkeleton } from "@/components/shared/TableSkeleton"
+import { TablePagination } from "@/components/shared/TablePagination"
 
 interface Agent {
   id: string
@@ -70,6 +72,10 @@ function SkeletonRows() {
     </>
   )
 }
+
+const propertyColumns = [
+  { width: "w-48" }, { width: "w-24" }, { width: "w-20" }, { width: "w-24" }, { width: "w-28" }, { width: "w-20" }, { width: "w-12" }, { width: "w-24" },
+]
 
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([])
@@ -246,7 +252,7 @@ export default function PropertiesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                <SkeletonRows />
+                <TableSkeleton columns={propertyColumns} />
               </tbody>
             </table>
           </div>
@@ -347,47 +353,7 @@ export default function PropertiesPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-gray-50/30">
-            <p className="text-sm text-muted">
-              Page {page} of {totalPages}
-              <span className="ml-2 text-xs text-muted/50">({total} total)</span>
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronLeft size={14} /> Previous
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                const startPage = Math.max(1, Math.min(page - 2, totalPages - 4))
-                const pageNum = startPage + i
-                if (pageNum > totalPages) return null
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setPage(pageNum)}
-                    className={cn(
-                      "min-w-[32px] rounded-lg px-2 py-1.5 text-sm transition-all",
-                      page === pageNum
-                        ? "bg-primary text-white shadow-sm"
-                        : "text-muted hover:bg-gray-100"
-                    )}
-                  >
-                    {pageNum}
-                  </button>
-                )
-              })}
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Next <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={limit} onPageChange={setPage} />
         )}
 
         <BulkActionsBar

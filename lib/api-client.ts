@@ -7,9 +7,34 @@ interface ApiResponse<T = unknown> {
 
 class ApiClient {
   private baseUrl: string
+  private refreshPromise: Promise<boolean> | null = null
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
+  }
+
+  private async refresh(): Promise<boolean> {
+    if (this.refreshPromise) return this.refreshPromise
+    this.refreshPromise = this._refresh()
+    const result = await this.refreshPromise
+    this.refreshPromise = null
+    return result
+  }
+
+  private async _refresh(): Promise<boolean> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      const res = await fetch(`${this.baseUrl}/api/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+      return res.ok
+    } catch {
+      return false
+    }
   }
 
   private async request<T>(
@@ -66,22 +91,6 @@ class ApiClient {
         return { error: "Request timed out" }
       }
       return { error: err instanceof Error ? err.message : "Network error" }
-    }
-  }
-
-  private async refresh(): Promise<boolean> {
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000)
-      const res = await fetch(`${this.baseUrl}/api/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-        signal: controller.signal,
-      })
-      clearTimeout(timeoutId)
-      return res.ok
-    } catch {
-      return false
     }
   }
 

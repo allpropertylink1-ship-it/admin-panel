@@ -16,7 +16,7 @@ export function PermissionGuard({ permission, action = "read", children }: Props
 
   useEffect(() => {
     if (user && user.role !== "SUPER_ADMIN") {
-      const perm = (user as any).permissions?.[permission]
+      const perm = user.permissions?.[permission as keyof typeof user.permissions]
       if (!perm || !perm[action]) {
         router.replace("/dashboard")
       }
@@ -26,7 +26,7 @@ export function PermissionGuard({ permission, action = "read", children }: Props
   if (!user) return null
   if (user.role === "SUPER_ADMIN") return <>{children}</>
 
-  const perm = (user as any).permissions?.[permission]
+  const perm = user.permissions?.[permission as keyof typeof user.permissions]
   if (!perm || !perm[action]) return null
 
   return <>{children}</>

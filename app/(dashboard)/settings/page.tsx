@@ -105,6 +105,7 @@ export default function SettingsPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
@@ -128,6 +129,26 @@ export default function SettingsPage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    setFieldErrors({});
+    const errors: Record<string, string> = {};
+    const urlFields: (keyof Settings)[] = ["platformUrl"];
+    for (const key of urlFields) {
+      const val = form[key];
+      if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
+        errors[key] = "Must start with http:// or https://";
+      }
+    }
+    const numberFields: (keyof Settings)[] = [];
+    for (const key of numberFields) {
+      const val = form[key];
+      if (val && isNaN(Number(val))) {
+        errors[key] = "Must be a valid number";
+      }
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
     setSaving(true);
     setMessage(null);
     try {
@@ -208,6 +229,7 @@ export default function SettingsPage() {
               onChange={(e) => updateField("platformUrl", e.target.value)}
               className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
             />
+            {fieldErrors.platformUrl && <p className="mt-1 text-xs text-red-600">{fieldErrors.platformUrl}</p>}
           </div>
         </SectionCard>
 
