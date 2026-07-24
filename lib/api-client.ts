@@ -86,12 +86,16 @@ class ApiClient {
   }
 
   async get<T>(path: string): Promise<ApiResponse<T>> {
-    return this.request<T>(path, { method: "GET" })
+    return this.request<T>(path, {
+      method: "GET",
+      headers: { "Cache-Control": "max-age=15, stale-while-revalidate=60" },
+    })
   }
 
   async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(path, {
       method: "POST",
+      headers: { "Cache-Control": "no-store" },
       body: body ? JSON.stringify(body) : undefined,
     })
   }
@@ -99,6 +103,7 @@ class ApiClient {
   async patch<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(path, {
       method: "PATCH",
+      headers: { "Cache-Control": "no-store" },
       body: body ? JSON.stringify(body) : undefined,
     })
   }
@@ -106,12 +111,16 @@ class ApiClient {
   async put<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(path, {
       method: "PUT",
+      headers: { "Cache-Control": "no-store" },
       body: body ? JSON.stringify(body) : undefined,
     })
   }
 
   async delete<T>(path: string): Promise<ApiResponse<T>> {
-    return this.request<T>(path, { method: "DELETE" })
+    return this.request<T>(path, {
+      method: "DELETE",
+      headers: { "Cache-Control": "no-store" },
+    })
   }
 }
 
