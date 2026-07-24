@@ -76,17 +76,23 @@ export default function AgentDashboardPage() {
 
   async function handleSuspend() {
     if (!agent) return
+    const prev = agent
+    setAgent({ ...agent, status: "SUSPENDED" })
     setActionLoading(true)
     const { data } = await api.post<{ agent: AgentDetail }>(`/api/admin/agents/${agent.id}/suspend`, { suspendedReason: agent.suspendedReason || undefined })
     if (data?.agent) setAgent(data.agent)
+    else setAgent(prev)
     setActionLoading(false)
   }
 
   async function handleReactivate() {
     if (!agent) return
+    const prev = agent
+    setAgent({ ...agent, status: "ACTIVE", suspendedAt: null })
     setActionLoading(true)
     const { data } = await api.post<{ agent: AgentDetail }>(`/api/admin/agents/${agent.id}/reactivate`)
     if (data?.agent) setAgent(data.agent)
+    else setAgent(prev)
     setActionLoading(false)
   }
 

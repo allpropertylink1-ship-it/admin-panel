@@ -106,13 +106,16 @@ export default function UsersPage() {
   }
 
   async function handleToggleStatus(userId: string, currentStatus: string) {
-    setActionLoading(userId)
     const newStatus = currentStatus === "SUSPENDED" ? "ACTIVE" : "SUSPENDED"
+    const prevData = data ? { ...data, users: data.users.map(u => ({ ...u })) } : data
+    setData(cur => cur ? { ...cur, users: cur.users.map(u => u.id === userId ? { ...u, accountStatus: newStatus } : u) } : cur)
+    setActionLoading(userId)
     try {
       const { error } = await api.patch(`/api/admin/users/${userId}`, { accountStatus: newStatus })
       if (error) throw new Error(error)
       await fetchUsers()
     } catch (err: unknown) {
+      if (prevData) setData(prevData)
       setError(err instanceof Error ? err.message : "Failed to update status")
     } finally {
       setActionLoading(null)

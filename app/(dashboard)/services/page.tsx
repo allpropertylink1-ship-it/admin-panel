@@ -123,12 +123,14 @@ export default function ServicesPage() {
   }
 
   async function handleModerate(id: string, moderationStatus: string) {
+    const prev = services.map(s => ({ ...s }))
+    setServices(cur => cur.map(s => s.id === id ? { ...s, moderationStatus } : s))
     setModLoading(id)
     try {
       const { error } = await api.patch(`/api/admin/services/${id}/moderate`, { moderationStatus })
       if (error) throw new Error(error)
-      await fetchServices()
     } catch {
+      setServices(prev)
       setError("Failed to update moderation status")
     } finally {
       setModLoading(null)

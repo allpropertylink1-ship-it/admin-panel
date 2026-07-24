@@ -173,6 +173,10 @@ export default function KycPage() {
   }, [selectedDoc?.id])
 
   const updateDoc = useCallback(async (id: string, data: Record<string, unknown>) => {
+    const newStatus = data.status as string
+    const prevDocs = docs.map(d => ({ ...d }))
+    setDocs(cur => cur.map(d => d.id === id ? { ...d, status: newStatus, rejectionReason: newStatus === "REJECTED" ? (data.rejectionReason as string) || d.rejectionReason : d.rejectionReason } : d))
+    setSelectedDoc(prev => prev?.id === id ? { ...prev, status: newStatus } : prev)
     setActionLoading(id)
     try {
       const { error } = await api.patch(`/api/admin/kyc/${id}`, data)
@@ -185,9 +189,12 @@ export default function KycPage() {
         const r = await api.get<UserDocsResponse>(`/api/admin/kyc/user/${selectedDoc.user.id}`)
         if (r.data) setUserDocs(r.data.documents)
       }
-    } catch (e) { setError(e instanceof Error ? e.message : "Failed to update KYC document.") }
-    finally { setActionLoading(null) }
-  }, [fetchDocs, selectedDoc])
+    } catch (e) {
+      setDocs(prevDocs)
+      setSelectedDoc(prev => prev?.id === id ? { ...prev, status: prevDocs.find(d => d.id === id)?.status || prev.status } : prev)
+      setError(e instanceof Error ? e.message : "Failed to update KYC document.")
+    } finally { setActionLoading(null) }
+  }, [fetchDocs, selectedDoc, docs])
 
   const filtered = docs.filter((d) =>
     !search || `${d.user.firstName} ${d.user.lastName} ${d.user.email}`.toLowerCase().includes(search.toLowerCase())

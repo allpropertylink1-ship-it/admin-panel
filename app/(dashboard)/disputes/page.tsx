@@ -70,14 +70,22 @@ export default function AdminDisputesPage() {
   }
 
   async function handleUpdateStatus(disputeId: string, newStatus: string) {
+    const prevDisputes = disputes.map(d => ({ ...d }))
+    const prevSelected = selectedDispute
+    const prevResolution = resolutionText
+    setDisputes(cur => cur.map(d => d.id === disputeId ? { ...d, status: newStatus, resolution: newStatus === "RESOLVED" || newStatus === "REJECTED" ? resolutionText : d.resolution } : d))
+    setSelectedDispute(null)
     setUpdateLoading(true)
     const { error } = await api.patch(`/api/admin/disputes/${disputeId}`, {
       status: newStatus,
       resolution: newStatus === "RESOLVED" || newStatus === "REJECTED" ? resolutionText : undefined,
     })
     if (!error) {
-      setSelectedDispute(null)
       fetchDisputes()
+    } else {
+      setDisputes(prevDisputes)
+      setSelectedDispute(prevSelected)
+      setResolutionText(prevResolution)
     }
     setUpdateLoading(false)
   }
