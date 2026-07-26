@@ -30,7 +30,7 @@ export default function middleware(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/_next")
   ) {
-    const token = request.cookies.get("token")?.value
+    const token = request.cookies.get("access_token")?.value
     if (!token) {
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", request.nextUrl.pathname)
