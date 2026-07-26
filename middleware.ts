@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
+const API_BACKEND = process.env.API_BACKEND_URL || "https://delightful-encouragement-production-878d.up.railway.app"
+
 export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (pathname.startsWith("/api/")) {
+    const url = new URL(request.url)
+    url.host = new URL(API_BACKEND).host
+    url.protocol = "https"
+    url.port = ""
+    return NextResponse.rewrite(url.toString())
+  }
+
   const devAuth = process.env.DEV_AUTH
   if (devAuth) {
     const auth = request.headers.get("authorization")
