@@ -39,6 +39,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/agents", label: "All Representatives", icon: Handshake, permission: "agents" },
       { href: "/claims", label: "Claims", icon: Receipt, permission: "claims" },
+      { href: "/payouts", label: "Payouts", icon: Receipt, permission: "claims" },
     ],
   },
   {
