@@ -17,7 +17,8 @@ interface PropertyModalProps {
   onClose: () => void
 }
 
-function formatPrice(price: number, currency: string, listingPurpose?: string | null) {
+function formatPrice(price: number | null, currency: string, listingPurpose?: string | null) {
+  if (price == null) return "Price on request"
   const formatted = new Intl.NumberFormat("en-KE", { style: "currency", currency, minimumFractionDigits: 0 }).format(price)
   if (listingPurpose === "FOR_RENT_SHORT_TERM") return `${formatted}/night`
   if (listingPurpose === "FOR_RENT_LONG_TERM") return `${formatted}/month`

@@ -88,7 +88,8 @@ export default function PropertiesPage() {
     setDetailLoading(false)
   }
 
-  function formatPrice(price: number, currency: string, listingPurpose?: string | null) {
+  function formatPrice(price: number | null, currency: string, listingPurpose?: string | null) {
+    if (price == null) return "Price on request"
     const formatted = new Intl.NumberFormat("en-KE", {
       style: "currency",
       currency,
