@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const API_BACKEND = process.env.API_BACKEND_URL || "https://delightful-encouragement-production-878d.up.railway.app"
+const API_BACKEND = process.env.API_BACKEND_URL || "https://api.allpropertylink.co.ke"
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
