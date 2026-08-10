@@ -120,11 +120,17 @@ export function FeatureFlagCard({
   error,
 }: FeatureFlagCardProps) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleSave = () => {
     const errors = validateDraft(draft, []);
     setFieldErrors(errors);
     if (Object.keys(errors).length === 0) onSave();
+  };
+
+  const handleDelete = () => {
+    setConfirmDelete(false);
+    onDelete();
   };
 
   return (
@@ -155,7 +161,7 @@ export function FeatureFlagCard({
         </div>
         <button
           type="button"
-          onClick={onDelete}
+          onClick={() => setConfirmDelete(true)}
           disabled={deleting}
           className="rounded-xl border border-border px-3 py-1.5 text-sm font-medium text-red-600 transition-all hover:bg-error-50 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center gap-1.5"
         >
@@ -207,6 +213,36 @@ export function FeatureFlagCard({
           </button>
         </div>
       </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-foreground">Delete this flag?</h3>
+            <p className="mt-2 text-sm text-muted">
+              &quot;{flag.key}&quot; will be removed immediately. Features gated on
+              it will fail closed (stay hidden) for all users.
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                className="touch-target rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="touch-target rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
