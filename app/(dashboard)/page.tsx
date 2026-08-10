@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils"
 import { api } from "@/lib/api-client"
 import {
   Users, UserCheck, Building2, ShieldOff,
-  Handshake, Banknote, Clock, AlertCircle, ArrowUpRight,
-  UserPlus, ChevronRight, Activity,
+  Handshake, Clock, AlertCircle, ArrowUpRight,
+  UserPlus, ChevronRight,
 } from "@/components/ui/icons"
 
 interface RecentUser {
@@ -83,7 +83,7 @@ export default function DashboardPage() {
     }
   }, [])
 
-  useEffect(() => { fetchDashboard() }, [fetchDashboard])
+  useEffect(() => { void (async () => { await fetchDashboard() })() }, [fetchDashboard])
 
   if (loading) {
     return (

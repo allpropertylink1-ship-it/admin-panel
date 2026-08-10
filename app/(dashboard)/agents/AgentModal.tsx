@@ -19,11 +19,13 @@ export default function AgentModal({ open, editingAgent, formLoading, formError,
   const [phone, setPhone] = useState("")
 
   useEffect(() => {
-    if (open) {
-      setFullName(editingAgent?.fullName ?? "")
-      setEmail(editingAgent?.email ?? "")
-      setPhone(editingAgent?.phone ?? "")
-    }
+    void (async () => {
+      if (open) {
+        setFullName(editingAgent?.fullName ?? "")
+        setEmail(editingAgent?.email ?? "")
+        setPhone(editingAgent?.phone ?? "")
+      }
+    })()
   }, [open, editingAgent])
 
   if (!open) return null

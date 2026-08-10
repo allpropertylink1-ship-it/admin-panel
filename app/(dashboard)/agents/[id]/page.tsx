@@ -1,3 +1,4 @@
+﻿/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -5,10 +6,10 @@ import { useParams, useRouter } from "next/navigation"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
-  Loader2, ArrowLeft, Hash, Users, Building2, Banknote,
-  CheckCircle, XCircle, DollarSign, Ban, Wallet, TrendingUp,
+  ArrowLeft, Hash, Users, Building2,
+  CheckCircle, XCircle, Ban, TrendingUp,
   Calendar, Phone, Mail, UserPlus, Home, Clock, AlertCircle,
-  Search, Plus, Lock, Receipt,
+  Search, Lock, Receipt,
 } from "@/components/ui/icons"
 
 interface ReferredUser {
@@ -72,7 +73,7 @@ export default function AgentDashboardPage() {
     }
   }, [agentId])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { void (async () => { await fetchData() })() }, [fetchData])
 
   async function handleSuspend() {
     if (!agent) return
@@ -278,7 +279,7 @@ export default function AgentDashboardPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground">{user.firstName} {user.lastName}</p>
-                          <p className="text-xs text-muted">{user.email}{user.phone && ` · ${user.phone}`}</p>
+                          <p className="text-xs text-muted">{user.email}{user.phone && ` Â· ${user.phone}`}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -308,7 +309,7 @@ export default function AgentDashboardPage() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
-                              <p className="text-xs text-muted">{p.city} · {p.propertyType}</p>
+                              <p className="text-xs text-muted">{p.city} Â· {p.propertyType}</p>
                             </div>
                             <p className="text-sm font-medium text-foreground tabular-nums shrink-0">
                               {p.currency} {fmt(p.price)}
@@ -354,10 +355,10 @@ export default function AgentDashboardPage() {
                 <tbody className="divide-y divide-border">
                   {claims.map((c) => (
                     <tr key={c.id} className="hover:bg-primary-50/20 transition-colors">
-                      <td className="px-4 py-3 text-muted max-w-[200px] truncate">{c.property?.title || "—"}</td>
+                      <td className="px-4 py-3 text-muted max-w-[200px] truncate">{c.property?.title || "â€”"}</td>
                       <td className="px-4 py-3 text-right font-medium text-foreground tabular-nums">{fmtCurr(Number(c.amount))}</td>
                       <td className="px-4 py-3 text-right text-muted text-xs tabular-nums">
-                        {c.adminModifiedAmount ? fmtCurr(Number(c.adminModifiedAmount)) : "—"}
+                        {c.adminModifiedAmount ? fmtCurr(Number(c.adminModifiedAmount)) : "â€”"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={cn(
@@ -376,7 +377,7 @@ export default function AgentDashboardPage() {
                         {c.paidAt ? new Date(c.paidAt).toLocaleDateString() : new Date(c.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-muted text-xs max-w-[150px] truncate">
-                        {c.adminNotes || c.agentNotes || "—"}
+                        {c.adminNotes || c.agentNotes || "â€”"}
                       </td>
                     </tr>
                   ))}

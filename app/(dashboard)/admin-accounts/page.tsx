@@ -44,7 +44,7 @@ export default function AdminAccountsPage() {
     }
   }, [])
 
-  useEffect(() => { fetchAdmins() }, [fetchAdmins])
+  useEffect(() => { void (async () => { await fetchAdmins() })() }, [fetchAdmins])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()

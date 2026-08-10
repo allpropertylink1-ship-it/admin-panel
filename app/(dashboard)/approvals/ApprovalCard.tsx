@@ -3,11 +3,11 @@
 import Link from "next/link"
 import { cn, isValidUrl } from "@/lib/utils"
 import {
-  ChevronDown, ChevronUp, CheckCircle, XCircle, AlertCircle,
+  ChevronDown, ChevronUp, CheckCircle, XCircle,
   FileText, Building2, MapPin, User, Phone, Mail, Globe,
-  ExternalLink, Loader2, BadgeCheck, Search,
+  ExternalLink, Loader2,
 } from "@/components/ui/icons"
-import type { PendingUser, KycDocument } from "./types"
+import type { PendingUser } from "./types"
 
 interface ApprovalCardProps {
   user: PendingUser

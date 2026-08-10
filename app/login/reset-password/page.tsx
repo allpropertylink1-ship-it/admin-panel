@@ -1,12 +1,11 @@
 "use client"
 
 import { useState, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { Shield, Eye, EyeOff, CheckCircle } from "@/components/ui/icons"
 import { api } from "@/lib/api-client"
 
 function ResetPasswordForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token") || ""
 

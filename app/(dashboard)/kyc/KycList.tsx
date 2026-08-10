@@ -1,10 +1,11 @@
+﻿/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import { Search, X, Shield, Download, FileText } from "@/components/ui/icons"
 import { KycDocThumbnail } from "./KycDocThumbnail"
 import { TablePagination } from "@/components/shared/TablePagination"
 import { cn, isValidUrl } from "@/lib/utils"
-import { FILTERS, statusCfg, docLabels, timeAgo, initials, Skeleton, EmptyState, DocStatusBadge } from "./utils"
+import { FILTERS, docLabels, timeAgo, initials, Skeleton, EmptyState, DocStatusBadge } from "./utils"
 import type { KycDocument } from "./types"
 
 interface KycListProps {
@@ -43,7 +44,7 @@ export default function KycList({
               <span className="font-medium text-foreground">{total}</span> total
               {pendingCount > 0 && (
                 <span className="ml-1.5">
-                  · <span className="font-medium text-warning">{pendingCount}</span> pending
+                  Â· <span className="font-medium text-warning">{pendingCount}</span> pending
                 </span>
               )}
             </p>
@@ -140,7 +141,6 @@ export default function KycList({
             description={search ? "Try a different search term" : "No KYC submissions match this filter"}
           />
         ) : docs.map((doc) => {
-          const sc = statusCfg[doc.status] || statusCfg.PENDING
           return (
             <button
               key={doc.id}
@@ -182,7 +182,7 @@ export default function KycList({
               </div>
               <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
                 <span>{docLabels[doc.documentType] || doc.documentType}</span>
-                <span className="text-border">·</span>
+                <span className="text-border">Â·</span>
                 <span>{timeAgo(doc.createdAt)}</span>
               </div>
               {(doc.frontImage || doc.backImage || doc.businessPermit) && (

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
-import { Search, X, Loader2, AlertCircle, CheckCircle, Clock, Eye } from "@/components/ui/icons"
+import { X, AlertCircle, CheckCircle, Clock, Eye } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { TablePagination } from "@/components/shared/TablePagination"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
@@ -30,7 +30,6 @@ export default function AdminDisputesPage() {
   const [statusFilter, setStatusFilter] = useState("")
 
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
   const [resolutionText, setResolutionText] = useState("")
   const [updateLoading, setUpdateLoading] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -51,7 +50,7 @@ export default function AdminDisputesPage() {
     setLoading(false)
   }, [page, statusFilter])
 
-  useEffect(() => { fetchDisputes() }, [fetchDisputes])
+  useEffect(() => { void (async () => { await fetchDisputes() })() }, [fetchDisputes])
 
   function openDetail(dispute: Dispute) {
     setSelectedDispute(dispute)

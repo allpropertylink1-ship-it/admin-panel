@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import Link from "next/link"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
@@ -15,11 +14,6 @@ import { UserFilters } from "./UserFilters"
 import { UserModal } from "./UserModal"
 
 import type { User, UsersResponse } from "./types"
-
-const FILTERS = ["All", "Active", "Pending", "Suspended"]
-
-const USER_TYPE_TABS = ["", "PROPERTY_OWNER", "AGENT", "FUNDI", "SERVICE_PROVIDER"]
-const USER_TYPE_LABELS: Record<string, string> = { "": "All Types", PROPERTY_OWNER: "Property Owners", AGENT: "Agents", FUNDI: "Fundis", SERVICE_PROVIDER: "Service Providers" }
 
 const badge: Record<string, string> = {
   APPROVED: "bg-emerald-50 text-emerald-700",
@@ -51,9 +45,6 @@ export default function UsersPage() {
   const [userTypeFilter, setUserTypeFilter] = useState("")
   const [page, setPage] = useState(1)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [selectedUserDetail, setSelectedUserDetail] = useState<Record<string, any> | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
-  const [activeDetailTab, setActiveDetailTab] = useState<"details" | "properties" | "services">("details")
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
@@ -79,7 +70,7 @@ export default function UsersPage() {
     }
   }, [search, activeFilter, userTypeFilter, page])
 
-  useEffect(() => { fetchUsers() }, [fetchUsers])
+  useEffect(() => { void (async () => { await fetchUsers() })() }, [fetchUsers])
 
   function handleSearch(v: string) {
     setSearchValue(v)
@@ -104,16 +95,8 @@ export default function UsersPage() {
     }
   }
 
-  async function openUserDetail(user: User) {
+  function openUserDetail(user: User) {
     setSelectedUser(user)
-    setSelectedUserDetail(null)
-    setActiveDetailTab("details")
-    setDetailLoading(true)
-    try {
-      const { data } = await api.get<Record<string, any>>(`/api/admin/users/${user.id}`)
-      if (data?.user) setSelectedUserDetail(data.user)
-    } catch { }
-    setDetailLoading(false)
   }
 
   async function handleDelete(userId: string) {
@@ -122,7 +105,7 @@ export default function UsersPage() {
     try {
       const { error } = await api.delete(`/api/admin/users/${userId}`)
       if (error) throw new Error(error)
-      if (selectedUser?.id === userId) { setSelectedUser(null); setSelectedUserDetail(null) }
+      if (selectedUser?.id === userId) { setSelectedUser(null) }
       await fetchUsers()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to delete user")
@@ -148,7 +131,6 @@ export default function UsersPage() {
       </div>
 
       <UserFilters
-        search={search}
         searchValue={searchValue}
         activeFilter={activeFilter}
         userTypeFilter={userTypeFilter}
@@ -312,7 +294,7 @@ export default function UsersPage() {
       <UserModal
         user={selectedUser}
         open={selectedUser !== null}
-        onClose={() => { setSelectedUser(null); setSelectedUserDetail(null) }}
+        onClose={() => { setSelectedUser(null) }}
         onStatusChange={(userId, newStatus) => handleToggleStatus(userId, newStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE")}
         loading={actionLoading}
       />

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { KycDocThumbnail } from "../../kyc/KycDocThumbnail";
@@ -12,18 +11,13 @@ import {
   Phone,
   MapPin,
   Globe,
-  Shield,
   ShieldOff,
   Trash2,
   CheckCircle,
-  XCircle,
   AlertCircle,
   Building2,
   User,
-  BadgeCheck,
   FileText,
-  Clock,
-  ChevronRight,
 } from "@/components/ui/icons";
 
 interface KycDocument {
@@ -144,7 +138,7 @@ setUser(data.user);
     setActionLoading(action);
     try {
       if (action === "delete") {
-        const { data, error } = await api.delete(`/api/admin/users/${user.id}`);
+        const { error } = await api.delete(`/api/admin/users/${user.id}`);
         if (error) throw new Error(error);
         router.push("/users");
         return;

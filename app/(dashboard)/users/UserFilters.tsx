@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils"
 import { Search, X } from "@/components/ui/icons"
 
 interface UserFiltersProps {
-  search: string
   searchValue: string
   activeFilter: string
   userTypeFilter: string
@@ -18,7 +17,7 @@ const FILTERS = ["All", "Active", "Pending", "Suspended"]
 const USER_TYPE_TABS = ["", "PROPERTY_OWNER", "AGENT", "FUNDI", "SERVICE_PROVIDER"]
 const USER_TYPE_LABELS: Record<string, string> = { "": "All Types", PROPERTY_OWNER: "Property Owners", AGENT: "Agents", FUNDI: "Fundis", SERVICE_PROVIDER: "Service Providers" }
 
-export function UserFilters({ search, searchValue, activeFilter, userTypeFilter, onSearchChange, onClearSearch, onFilterChange, onUserTypeChange }: UserFiltersProps) {
+export function UserFilters({ searchValue, activeFilter, userTypeFilter, onSearchChange, onClearSearch, onFilterChange, onUserTypeChange }: UserFiltersProps) {
   return (
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

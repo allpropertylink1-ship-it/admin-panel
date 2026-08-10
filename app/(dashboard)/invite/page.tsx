@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { AlertCircle, CheckCircle, Loader2, UserPlus } from "@/components/ui/icons"
+import { AlertCircle, CheckCircle, Loader2 } from "@/components/ui/icons"
 
 const PERMISSION_SECTIONS = [
   { key: "dashboard", label: "Dashboard", readOnly: true },

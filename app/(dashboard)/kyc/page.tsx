@@ -48,21 +48,23 @@ export default function KycPage() {
       } else { setSelectedDoc(null); setUserDocs([]) }
     } catch { setError("Failed to load KYC documents.") }
     finally { setLoading(false) }
-  }, [filter, page, search])
+  }, [filter, page, search, selectedDoc])
 
-  useEffect(() => { fetchDocs() }, [fetchDocs])
+  useEffect(() => { void (async () => { await fetchDocs() })() }, [fetchDocs])
 
   useEffect(() => {
-    if (!selectedDoc) { setUserDocs([]); return }
-    setUserDocsLoading(true)
-    api.get<UserDocsResponse>(`/api/admin/kyc/user/${selectedDoc.user.id}`)
-      .then(({ data, error }) => {
-        if (error || !data) return
-        setUserDocs(data.documents)
-      })
-      .catch(() => {})
-      .finally(() => setUserDocsLoading(false))
-  }, [selectedDoc?.id])
+    void (async () => {
+      if (!selectedDoc) { setUserDocs([]); return }
+      setUserDocsLoading(true)
+      api.get<UserDocsResponse>(`/api/admin/kyc/user/${selectedDoc.user.id}`)
+        .then(({ data, error }) => {
+          if (error || !data) return
+          setUserDocs(data.documents)
+        })
+        .catch(() => {})
+        .finally(() => setUserDocsLoading(false))
+    })()
+  }, [selectedDoc])
 
   const updateDoc = useCallback(async (id: string, data: Record<string, unknown>) => {
     const newStatus = data.status as string

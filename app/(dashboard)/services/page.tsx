@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
-  AlertCircle, Download, Check, XCircle, Clock, Eye, Loader2, Wrench,
+  AlertCircle, Download, Check, XCircle, Clock, Eye, Wrench,
 } from "@/components/ui/icons"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
 import { TablePagination } from "@/components/shared/TablePagination"
@@ -20,11 +20,8 @@ const MODERATION_BADGES: Record<string, string> = {
   DRAFT: "bg-gray-50 text-gray-600",
 }
 
-const USER_TYPE_TABS = ["", "FUNDI", "SERVICE_PROVIDER"]
-const USER_TYPE_LABELS: Record<string, string> = { "": "All Types", FUNDI: "Fundis", SERVICE_PROVIDER: "Service Providers" }
-
-function formatPrice(price: number | null, currency: string, period: string) {
-  if (price === null) return "—"
+function formatPrice(price: number | null, currency: string) {
+  if (price === null) return "\u2014"
   return new Intl.NumberFormat("en-KE", { style: "currency", currency, minimumFractionDigits: 0 }).format(price)
 }
 
@@ -46,8 +43,6 @@ export default function ServicesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [modLoading, setModLoading] = useState<string | null>(null)
   const [selectedService, setSelectedService] = useState<ServiceListing | null>(null)
-  const [serviceDetail, setServiceDetail] = useState<Record<string, any> | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
   const limit = 20
 
   const fetchServices = useCallback(async () => {
@@ -72,19 +67,12 @@ export default function ServicesPage() {
     }
   }, [search, userTypeFilter, statusFilter, page])
 
-  useEffect(() => { fetchServices() }, [fetchServices])
+  useEffect(() => { void (async () => { await fetchServices() })() }, [fetchServices])
 
   function handleSearch(e: React.FormEvent) { e.preventDefault(); setSearch(searchInput); setPage(1) }
 
-  async function openServiceDetail(svc: ServiceListing) {
+  function openServiceDetail(svc: ServiceListing) {
     setSelectedService(svc)
-    setServiceDetail(null)
-    setDetailLoading(true)
-    try {
-      const { data } = await api.get<Record<string, any>>(`/api/admin/services/${svc.id}`)
-      if (data?.service) setServiceDetail(data.service)
-    } catch { }
-    setDetailLoading(false)
   }
 
   async function handleModerate(id: string, moderationStatus: string) {
@@ -212,7 +200,7 @@ export default function ServicesPage() {
                         <p className="text-[10px] text-primary mt-0.5">{s.user.userTypes.join(", ")}</p>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-foreground whitespace-nowrap">{formatPrice(s.price, s.currency, s.pricePeriod)}</td>
+                        <td className="px-4 py-3 text-sm text-foreground whitespace-nowrap">{formatPrice(s.price, s.currency)}</td>
                     <td className="px-4 py-3 text-sm text-muted">{s.city || "—"}</td>
                     <td className="px-4 py-3">
                       <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", MODERATION_BADGES[s.moderationStatus] || "")}>
@@ -288,7 +276,7 @@ export default function ServicesPage() {
       <ServiceModal
         service={selectedService}
         open={selectedService !== null}
-        onClose={() => { setSelectedService(null); setServiceDetail(null) }}
+        onClose={() => { setSelectedService(null) }}
       />
     </div>
   )

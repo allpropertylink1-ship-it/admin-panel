@@ -38,7 +38,7 @@ export default function AdminPayoutsPage() {
     setLoading(false)
   }, [page])
 
-  useEffect(() => { fetchPayouts() }, [fetchPayouts])
+  useEffect(() => { void (async () => { await fetchPayouts() })() }, [fetchPayouts])
 
   return (
     <div>

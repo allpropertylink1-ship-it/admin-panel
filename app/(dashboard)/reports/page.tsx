@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
 import {
   Users,
   Building2,
@@ -77,7 +76,7 @@ export default function ReportsPage() {
   }, []);
 
   useEffect(() => {
-    fetchDashboard();
+    void (async () => { await fetchDashboard(); })();
   }, [fetchDashboard]);
 
   if (loading) {
@@ -106,7 +105,7 @@ export default function ReportsPage() {
                   <div
                     key={i}
                     className="flex-1 rounded animate-pulse bg-gray-200"
-                    style={{ height: `${20 + Math.random() * 80}%` }}
+                    style={{ height: `${[45, 70, 35, 85, 55, 65, 40][i]}%` }}
                   />
                 ))}
               </div>

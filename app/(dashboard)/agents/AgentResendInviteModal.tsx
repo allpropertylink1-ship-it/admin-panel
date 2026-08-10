@@ -1,6 +1,6 @@
 "use client"
 
-import { X, Loader2, CheckCircle } from "@/components/ui/icons"
+import { Loader2, CheckCircle } from "@/components/ui/icons"
 
 interface Agent {
   id: string; fullName: string; email: string; phone: string; agentCode: string

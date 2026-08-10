@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
 import {
@@ -69,7 +69,6 @@ const navGroups: { group: string; items: NavItem[] }[] = [
 
 export function AdminSidebar() {
   const pathname = usePathname()
-  const router = useRouter()
   const { user, logout: signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
 

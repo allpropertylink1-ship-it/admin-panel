@@ -1,6 +1,6 @@
 "use client"
 import { cn } from "@/lib/utils"
-import { ChevronLeft, ChevronRight } from "@/components/ui/icons"
+import { ChevronRight } from "@/components/ui/icons"
 
 interface TablePaginationProps {
   page: number

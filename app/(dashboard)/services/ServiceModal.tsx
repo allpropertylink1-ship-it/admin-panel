@@ -1,3 +1,4 @@
+﻿/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -12,30 +13,48 @@ interface ServiceListing {
   user: { firstName: string; lastName: string; email: string; companyName?: string; phone?: string } | null
 }
 
+export interface ServiceDetail {
+  description?: string | null
+  price?: number | null
+  currency?: string
+  pricePeriod?: string
+  city?: string | null
+  region?: string | null
+  location?: string | null
+  category?: { name?: string } | null
+  moderationStatus?: string
+  createdAt?: string
+  viewCount?: number | null
+  user?: { firstName?: string; lastName?: string; email?: string; phone?: string | null; companyName?: string | null } | null
+  images?: string | string[]
+}
+
 interface ServiceModalProps {
   service: ServiceListing | null
   open: boolean
   onClose: () => void
 }
 
-function formatPrice(price: number | null, currency: string, period: string) {
+function formatPrice(price: number | null, currency: string) {
   if (price === null) return "\u2014"
   return new Intl.NumberFormat("en-KE", { style: "currency", currency, minimumFractionDigits: 0 }).format(price)
 }
 
 export function ServiceModal({ service, open, onClose }: ServiceModalProps) {
-  const [detail, setDetail] = useState<Record<string, any> | null>(null)
+  const [detail, setDetail] = useState<ServiceDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
 
   useEffect(() => {
-    if (!service || !open) return
-    setDetail(null)
-    setDetailLoading(true)
-    api.get<Record<string, any>>(`/api/admin/services/${service.id}`)
-      .then(({ data }) => { if (data?.service) setDetail(data.service) })
-      .catch(() => {})
-      .finally(() => setDetailLoading(false))
-  }, [service?.id, open])
+    void (async () => {
+      if (!service || !open) return
+      setDetail(null)
+      setDetailLoading(true)
+      api.get<{ service: ServiceDetail }>(`/api/admin/services/${service.id}`)
+        .then(({ data }) => { if (data?.service) setDetail(data.service) })
+        .catch(() => {})
+        .finally(() => setDetailLoading(false))
+    })()
+  }, [service, open])
 
   if (!open || !service) return null
 
@@ -66,11 +85,11 @@ export function ServiceModal({ service, open, onClose }: ServiceModalProps) {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[
-                { icon: <DollarSign size={14} />, label: "Price", value: detail.price ? formatPrice(detail.price, detail.currency, detail.pricePeriod) : "\u2014" },
+                { icon: <DollarSign size={14} />, label: "Price", value: detail.price ? formatPrice(detail.price, detail.currency ?? "KES") : "\u2014" },
                 { icon: <MapPin size={14} />, label: "Location", value: [detail.city, detail.region, detail.location].filter(Boolean).join(", ") || "\u2014" },
                 { icon: <Wrench size={14} />, label: "Category", value: detail.category?.name || "\u2014" },
                 { icon: <Check size={14} />, label: "Status", value: detail.moderationStatus === "PENDING_REVIEW" ? "Pending" : detail.moderationStatus },
-                { icon: <Calendar size={14} />, label: "Created", value: new Date(detail.createdAt).toLocaleDateString() },
+                { icon: <Calendar size={14} />, label: "Created", value: detail.createdAt ? new Date(detail.createdAt).toLocaleDateString() : "\u2014" },
                 { icon: <Eye size={14} />, label: "Views", value: String(detail.viewCount ?? 0) },
               ].map((f) => (
                 <div key={f.label} className="rounded-lg bg-gray-50/50 p-3">
@@ -98,7 +117,7 @@ export function ServiceModal({ service, open, onClose }: ServiceModalProps) {
               )}
             </div>
 
-            {detail.images?.length > 0 && (
+            {detail.images && detail.images.length > 0 && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Images ({detail.images.length})</p>
                 <div className="flex gap-2 overflow-x-auto pb-2">

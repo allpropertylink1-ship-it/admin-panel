@@ -15,6 +15,19 @@ interface UserModalProps {
   loading: string | null
 }
 
+export interface UserDetail {
+  category?: string | null
+  companyName?: string | null
+  location?: string | null
+  city?: string | null
+  lastLogin?: string | null
+  _count?: { properties?: number; serviceListings?: number }
+  aplAgent?: { fullName?: string; agentCode?: string; phone?: string } | null
+  kycDocuments?: { id: string; documentType?: string; documentNumber?: string | null; status: string }[]
+  properties?: { id: string; title?: string; propertyType?: string; listingPurpose?: string; city?: string | null; moderationStatus: string; price?: number | null }[]
+  serviceListings?: { id: string; title?: string; city?: string | null; moderationStatus: string; price?: number | null }[]
+}
+
 const badge: Record<string, string> = {
   APPROVED: "bg-emerald-50 text-emerald-700",
   ACTIVE: "bg-emerald-50 text-emerald-700",
@@ -27,20 +40,22 @@ const badge: Record<string, string> = {
 }
 
 export function UserModal({ user, open, onClose, onStatusChange, loading }: UserModalProps) {
-  const [detail, setDetail] = useState<Record<string, any> | null>(null)
+  const [detail, setDetail] = useState<UserDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<"details" | "properties" | "services">("details")
 
   useEffect(() => {
-    if (!user || !open) return
-    setDetail(null)
-    setActiveTab("details")
-    setDetailLoading(true)
-    api.get<Record<string, any>>(`/api/admin/users/${user.id}`)
-      .then(({ data }) => { if (data?.user) setDetail(data.user) })
-      .catch(() => {})
-      .finally(() => setDetailLoading(false))
-  }, [user?.id, open])
+    void (async () => {
+      if (!user || !open) return
+      setDetail(null)
+      setActiveTab("details")
+      setDetailLoading(true)
+      api.get<{ user: UserDetail }>(`/api/admin/users/${user.id}`)
+        .then(({ data }) => { if (data?.user) setDetail(data.user) })
+        .catch(() => {})
+        .finally(() => setDetailLoading(false))
+    })()
+  }, [user, open])
 
   if (!open || !user) return null
 
@@ -110,11 +125,11 @@ export function UserModal({ user, open, onClose, onStatusChange, loading }: User
                   </div>
                 )}
 
-                {detail.kycDocuments?.length > 0 && (
+                {detail.kycDocuments && detail.kycDocuments.length > 0 && (
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">KYC Documents</p>
                     <div className="space-y-2">
-                      {detail.kycDocuments.map((doc: any) => (
+                      {detail.kycDocuments.map((doc) => (
                         <div key={doc.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                           <div>
                             <p className="text-sm font-medium text-foreground">{doc.documentType}</p>
@@ -131,9 +146,9 @@ export function UserModal({ user, open, onClose, onStatusChange, loading }: User
 
             {activeTab === "properties" && detail && (
               <div className="p-6">
-                {detail.properties?.length > 0 ? (
+                {detail.properties && detail.properties.length > 0 ? (
                   <div className="space-y-2">
-                    {detail.properties.map((prop: any) => (
+                    {detail.properties.map((prop) => (
                       <div key={prop.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{prop.title}</p>
@@ -154,9 +169,9 @@ export function UserModal({ user, open, onClose, onStatusChange, loading }: User
 
             {activeTab === "services" && detail && (
               <div className="p-6">
-                {detail.serviceListings?.length > 0 ? (
+                {detail.serviceListings && detail.serviceListings.length > 0 ? (
                   <div className="space-y-2">
-                    {detail.serviceListings.map((s: any) => (
+                    {detail.serviceListings.map((s) => (
                       <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{s.title}</p>

@@ -1,3 +1,4 @@
+﻿/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -17,6 +18,19 @@ interface PropertyModalProps {
   onClose: () => void
 }
 
+export interface PropertyDetail {
+  city?: string | null
+  region?: string | null
+  bedrooms?: number | null
+  bathrooms?: number | null
+  area?: number | null
+  isPublished?: boolean
+  createdAt?: string
+  updatedAt?: string | null
+  agent?: { id?: string; firstName?: string; lastName?: string; email?: string; phone?: string | null } | null
+  images?: string | string[]
+}
+
 function formatPrice(price: number | null, currency: string, listingPurpose?: string | null) {
   if (price == null) return "Price on request"
   const formatted = new Intl.NumberFormat("en-KE", { style: "currency", currency, minimumFractionDigits: 0 }).format(price)
@@ -30,18 +44,20 @@ function typeLabel(type: string) {
 }
 
 export function PropertyModal({ property, open, onClose }: PropertyModalProps) {
-  const [detail, setDetail] = useState<Record<string, any> | null>(null)
+  const [detail, setDetail] = useState<PropertyDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
 
   useEffect(() => {
-    if (!property || !open) return
-    setDetail(null)
-    setDetailLoading(true)
-    api.get<Record<string, any>>(`/api/admin/properties/${property.id}`)
-      .then(({ data }) => { if (data?.property) setDetail(data.property) })
-      .catch(() => {})
-      .finally(() => setDetailLoading(false))
-  }, [property?.id, open])
+    void (async () => {
+      if (!property || !open) return
+      setDetail(null)
+      setDetailLoading(true)
+      api.get<{ property: PropertyDetail }>(`/api/admin/properties/${property.id}`)
+        .then(({ data }) => { if (data?.property) setDetail(data.property) })
+        .catch(() => {})
+        .finally(() => setDetailLoading(false))
+    })()
+  }, [property, open])
 
   if (!open || !property) return null
 
@@ -72,7 +88,7 @@ export function PropertyModal({ property, open, onClose }: PropertyModalProps) {
                 { icon: <Bath size={14} />, label: "Bathrooms", value: detail.bathrooms != null ? String(detail.bathrooms) : "\u2014" },
                 { icon: <Expand size={14} />, label: "Area", value: detail.area ? `${detail.area} sqft` : "\u2014" },
                 { icon: <Globe size={14} />, label: "Published", value: detail.isPublished ? "Yes" : "No" },
-                { icon: <Calendar size={14} />, label: "Created", value: new Date(detail.createdAt).toLocaleDateString() },
+                { icon: <Calendar size={14} />, label: "Created", value: detail.createdAt ? new Date(detail.createdAt).toLocaleDateString() : "\u2014" },
                 { icon: <Calendar size={14} />, label: "Updated", value: detail.updatedAt ? new Date(detail.updatedAt).toLocaleDateString() : "\u2014" },
               ].map((f) => (
                 <div key={f.label} className="rounded-lg bg-gray-50/50 p-3">
@@ -99,7 +115,7 @@ export function PropertyModal({ property, open, onClose }: PropertyModalProps) {
               )}
             </div>
 
-            {detail.images?.length > 0 && (
+            {detail.images && detail.images.length > 0 && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Images ({detail.images.length})</p>
                 <div className="flex gap-2 overflow-x-auto pb-2">

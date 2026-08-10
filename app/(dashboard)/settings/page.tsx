@@ -124,7 +124,7 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    fetchSettings();
+    void (async () => { await fetchSettings(); })();
   }, [fetchSettings]);
 
   async function handleSave(e: React.FormEvent) {

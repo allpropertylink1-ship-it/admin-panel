@@ -29,7 +29,7 @@ export default function Loading() {
               <div className="p-5">
                 <div className="flex items-end gap-2 h-40">
                   {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={i} className="flex-1 rounded bg-gray-200 animate-pulse" style={{ height: `${20 + Math.random() * 80}%` }} />
+                    <div key={i} className="flex-1 rounded bg-gray-200 animate-pulse" style={{ height: `${[45, 70, 35, 85, 55, 65, 40][i]}%` }} />
                   ))}
                 </div>
               </div>

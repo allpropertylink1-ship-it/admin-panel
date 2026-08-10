@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
-import { cn } from "@/lib/utils"
-import { Search, X, AlertCircle, Archive, Loader2 } from "@/components/ui/icons"
+import { Search, X, AlertCircle, Archive } from "@/components/ui/icons"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
 import { TablePagination } from "@/components/shared/TablePagination"
 
@@ -48,7 +47,7 @@ export default function DeletedUsersPage() {
     }
   }, [search, page])
 
-  useEffect(() => { fetchUsers() }, [fetchUsers])
+  useEffect(() => { void (async () => { await fetchUsers() })() }, [fetchUsers])
 
   function handleSearch(v: string) {
     setSearchValue(v)

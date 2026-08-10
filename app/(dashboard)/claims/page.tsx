@@ -74,8 +74,8 @@ export default function ClaimsPage() {
     finally { setStatsLoading(false) }
   }, [])
 
-  useEffect(() => { fetchClaims() }, [fetchClaims])
-  useEffect(() => { fetchStats() }, [fetchStats])
+  useEffect(() => { void (async () => { await fetchClaims() })() }, [fetchClaims])
+  useEffect(() => { void (async () => { await fetchStats() })() }, [fetchStats])
 
   async function handleReview(claimId: string, status: string, adminModifiedAmount?: number) {
     setSubmitting(true)

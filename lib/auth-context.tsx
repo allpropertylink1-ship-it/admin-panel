@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = useCallback(async () => {
     try {
-      const { data, error } = await api.get<{ user: User }>("/api/auth/me")
+      const { data } = await api.get<{ user: User }>("/api/auth/me")
       if (data?.user) {
         if (data.user.authMethod !== "admin") {
           setUser(null)
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    fetchUser()
+    void (async () => { await fetchUser() })()
   }, [fetchUser])
 
   const login = useCallback(async (email: string, password: string) => {

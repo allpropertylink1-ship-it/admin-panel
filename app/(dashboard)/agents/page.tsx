@@ -6,7 +6,7 @@ import { api } from "@/lib/api-client"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { cn } from "@/lib/utils"
 import {
-  UserPlus, Users, UserCheck, Hash, Loader2, AlertCircle, CheckCircle, Mail
+  UserPlus, Users, UserCheck, Hash, AlertCircle
 } from "@/components/ui/icons"
 import { AgentCredentialsModal } from "./AgentCredentialsModal"
 import { AgentEmailChangeModal } from "./AgentEmailChangeModal"
@@ -94,7 +94,7 @@ export default function AgentsPage() {
     }
   }, [debouncedSearch, statusFilter, page])
 
-  useEffect(() => { fetchAgents() }, [fetchAgents])
+  useEffect(() => { void (async () => { await fetchAgents() })() }, [fetchAgents])
 
   function openAddModal() {
     setEditAgent(null)

@@ -52,7 +52,7 @@ export default function FeatureFlagsPage() {
   }, []);
 
   useEffect(() => {
-    fetchFlags();
+    void (async () => { await fetchFlags(); })();
   }, [fetchFlags]);
 
   async function saveFlag(draft: FlagDraft) {

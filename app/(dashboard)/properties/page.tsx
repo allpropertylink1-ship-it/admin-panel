@@ -40,8 +40,6 @@ export default function PropertiesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
-  const [propertyDetail, setPropertyDetail] = useState<Record<string, any> | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
   const limit = 20
 
   const fetchProperties = useCallback(async () => {
@@ -68,7 +66,7 @@ export default function PropertiesPage() {
   }, [search, typeFilter, purposeFilter, page])
 
   useEffect(() => {
-    fetchProperties()
+    void (async () => { await fetchProperties() })()
   }, [fetchProperties])
 
   function handleSearch(e: React.FormEvent) {
@@ -77,15 +75,8 @@ export default function PropertiesPage() {
     setPage(1)
   }
 
-  async function openPropertyDetail(prop: Property) {
+  function openPropertyDetail(prop: Property) {
     setSelectedProperty(prop)
-    setPropertyDetail(null)
-    setDetailLoading(true)
-    try {
-      const { data } = await api.get<Record<string, any>>(`/api/admin/properties/${prop.id}`)
-      if (data?.property) setPropertyDetail(data.property)
-    } catch { }
-    setDetailLoading(false)
   }
 
   function formatPrice(price: number | null, currency: string, listingPurpose?: string | null) {
@@ -300,7 +291,7 @@ export default function PropertiesPage() {
       <PropertyModal
         property={selectedProperty}
         open={selectedProperty !== null}
-        onClose={() => { setSelectedProperty(null); setPropertyDetail(null) }}
+        onClose={() => { setSelectedProperty(null) }}
       />
     </div>
   )

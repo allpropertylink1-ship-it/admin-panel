@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
-  Search, Loader2, Filter, RefreshCw,
+  Filter, RefreshCw,
   AlertCircle, ClipboardList, Download,
 } from "@/components/ui/icons"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
@@ -65,7 +65,6 @@ const auditColumns = [
 export default function AuditPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([])
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 20, total: 0, totalPages: 1 })
-  const [availableActions, setAvailableActions] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [actionFilter, setActionFilter] = useState("")
@@ -84,7 +83,6 @@ export default function AuditPage() {
       if (!data) { setEntries([]); return }
       setEntries(data.logs ?? [])
       setMeta(data.pagination)
-      if (data.actions) setAvailableActions(data.actions)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load audit log")
       setEntries([])
@@ -93,7 +91,7 @@ export default function AuditPage() {
     }
   }, [actionFilter, page])
 
-  useEffect(() => { fetchAudit() }, [fetchAudit])
+  useEffect(() => { void (async () => { await fetchAudit() })() }, [fetchAudit])
 
   function goToPage(p: number) {
     if (p < 1 || p > meta.totalPages) return

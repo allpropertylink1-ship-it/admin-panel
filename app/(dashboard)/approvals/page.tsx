@@ -17,8 +17,6 @@ export default function ApprovalsPage() {
   const [rejectInput, setRejectInput] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState("")
 
-  useEffect(() => { fetchPendingUsers() }, [])
-
   async function fetchPendingUsers() {
     setLoading(true)
     setError("")
@@ -32,6 +30,8 @@ export default function ApprovalsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => { void (async () => { await fetchPendingUsers() })() }, [])
 
   async function handleApprove(userId: string) {
     setActionLoading(userId)
