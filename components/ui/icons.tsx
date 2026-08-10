@@ -224,6 +224,14 @@ export const FileText = ({ className, size = 24 }: IconProps) => (
   </svg>
 );
 
+export const Flag = ({ className, size = 24 }: IconProps) => (
+  <svg {...s(size)} className={className}>
+    <path d="M5 22V4" />
+    <path d="M5 4h14l-2.5 3.5L19 11H5" />
+    <rect x="4" y="3" width="2" height="9" fill={GOLD} stroke="none" rx="1" />
+  </svg>
+);
+
 export const Globe = ({ className, size = 24 }: IconProps) => (
   <svg {...s(size)} className={className}>
     <circle cx="12" cy="12" r="10" />

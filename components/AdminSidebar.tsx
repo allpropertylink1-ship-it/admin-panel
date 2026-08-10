@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
-  Menu, X, Receipt, Wrench, ShieldCheck, BookUser, Archive,
+  Menu, X, Receipt, Wrench, ShieldCheck, BookUser, Archive, Flag,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -61,6 +61,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     group: "Admin",
     items: [
       { href: "/admin-accounts", label: "Admin Accounts", icon: ShieldCheck, permission: "adminAccounts" },
+      { href: "/feature-flags", label: "Feature Flags", icon: Flag, permission: "settings" },
       { href: "/settings", label: "Platform Settings", icon: Settings, permission: "settings" },
     ],
   },
@@ -91,6 +92,7 @@ export function AdminSidebar() {
     if (href === "/reports") return pathname.startsWith("/reports")
     if (href === "/audit") return pathname.startsWith("/audit")
     if (href === "/settings") return pathname.startsWith("/settings")
+    if (href === "/feature-flags") return pathname.startsWith("/feature-flags")
     if (href === "/services") return pathname.startsWith("/services")
     if (href === "/admin-accounts") return pathname.startsWith("/admin-accounts")
     return pathname === href

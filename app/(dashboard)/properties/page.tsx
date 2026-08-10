@@ -250,7 +250,7 @@ export default function PropertiesPage() {
                             View
                           </button>
                           <Link
-                            href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink.co.ke"}/properties/${p.slug}`}
+                            href={`${process.env.NEXT_PUBLIC_SITE_URL || "https://allpropertylink.co.ke"}/properties/${encodeURIComponent((p.city || "kenya").toLowerCase())}/${p.slug}`}
                             target="_blank" rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5 transition-colors">
                             <Globe size={13} />
