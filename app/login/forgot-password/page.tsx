@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Shield, ArrowLeft, Mail, CheckCircle } from "@/components/ui/icons"
+import Image from "next/image"
+import { ArrowLeft, Mail, CheckCircle } from "@/components/ui/icons"
 import { api } from "@/lib/api-client"
 
 export default function ForgotPasswordPage() {
@@ -30,11 +31,16 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20">
-            <Shield size={32} className="text-accent" />
+          <div className="mx-auto mb-4 flex h-16 items-center justify-center rounded-2xl bg-white px-5 shadow-lg shadow-black/20">
+            <Image
+              src="/logos/logo.png"
+              alt="All Property Link"
+              width={756}
+              height={319}
+              className="h-9 w-auto"
+            />
           </div>
           <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
-          <p className="mt-1 text-sm text-primary-200">All Property Link</p>
         </div>
 
         <div className="rounded-2xl border border-primary-700/50 bg-primary-800/50 p-8 backdrop-blur-sm">

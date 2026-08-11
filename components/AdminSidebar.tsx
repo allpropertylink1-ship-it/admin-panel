@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
@@ -118,8 +119,14 @@ export function AdminSidebar() {
         )}
       >
         <div className="flex h-16 items-center gap-3 border-b border-primary-800/30 px-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-hover text-white text-xs font-bold shadow-sm shadow-accent/30">
-            AP
+          <div className="flex shrink-0 items-center rounded-lg bg-white p-1.5 shadow-sm">
+            <Image
+              src="/logos/logo.png"
+              alt="All Property Link"
+              width={756}
+              height={319}
+              className="h-5 w-auto"
+            />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">Admin Panel</p>
