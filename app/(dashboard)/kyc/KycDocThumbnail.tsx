@@ -3,6 +3,7 @@
 
 import { isValidUrl } from "@/lib/utils"
 import { FileText } from "@/components/ui/icons"
+import { absUpload } from "@/lib/img";
 
 interface KycDocThumbnailProps {
   url: string | null

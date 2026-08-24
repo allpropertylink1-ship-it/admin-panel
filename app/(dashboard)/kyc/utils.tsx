@@ -4,6 +4,7 @@
 import { useState } from "react"
 import { cn, isValidUrl } from "@/lib/utils"
 import { ImageIcon, Shield } from "@/components/ui/icons"
+import { absUpload } from "@/lib/img";
 
 export const FILTERS = [
   { label: "Pending", value: "PENDING" },
@@ -41,7 +42,7 @@ export function timeAgo(d: string) {
   return `${Math.floor(s / 86400)}d ago`
 }
 
-export function ImgWithFallback({ src, alt, className, style }: { src: string; alt: string; className?: string; style?: React.CSSProperties }) {
+export function ImgWithFallback({ src, alt, className, style }: { src: string | null | undefined; alt: string; className?: string; style?: React.CSSProperties }) {
   const [failed, setFailed] = useState(false)
   if (!src || failed || !isValidUrl(src)) {
     return (
@@ -50,7 +51,7 @@ export function ImgWithFallback({ src, alt, className, style }: { src: string; a
       </div>
     )
   }
-  return <img src={src} alt={alt} className={className} style={style} onError={() => setFailed(true)} />
+  return <img src={absUpload(src)} alt={alt} className={className} style={style} onError={() => setFailed(true)} />
 }
 
 export function Skeleton({ className }: { className?: string }) {

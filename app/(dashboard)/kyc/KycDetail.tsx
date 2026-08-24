@@ -5,6 +5,7 @@ import { useRef } from "react"
 import { Shield, AlertCircle, Loader2, CheckCircle, XCircle, RefreshCcw, Clock, User, FileText, ArrowUp, ArrowDown } from "@/components/ui/icons"
 import PdfViewer from "@/components/PdfViewer"
 import { cn, isValidUrl } from "@/lib/utils"
+import { absUpload } from "@/lib/img";
 import { docLabels, timeAgo, fmtDate, initials, ImgWithFallback, Skeleton, EmptyState, StatusBadge, DocStatusBadge } from "./utils"
 import type { KycDocument } from "./types"
 
@@ -48,7 +49,7 @@ export default function KycDetail({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3.5">
             {selectedDoc.user.avatar && isValidUrl(selectedDoc.user.avatar) ? (
-              <img src={selectedDoc.user.avatar} alt=""
+              <img src={absUpload(selectedDoc.user.avatar)} alt=""
                 className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/15"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
               />
@@ -142,10 +143,10 @@ export default function KycDetail({
                       doc.frontImage.match(/\.pdf/i) ? (
                         <PdfViewer url={doc.frontImage} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Front`} compact />
                       ) : (
-                        <button onClick={() => onOpenLightbox([{ src: doc.frontImage!, label: `${docLabels[doc.documentType] || doc.documentType} \u2014 ${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` }], 0)}
+                        <button onClick={() => onOpenLightbox([{ src: absUpload(doc.frontImage)!, label: `${docLabels[doc.documentType] || doc.documentType} \u2014 ${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` }], 0)}
                           className="group relative overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-md active:scale-[0.99]"
                         >
-                          <ImgWithFallback src={doc.frontImage} alt={doc.documentType}
+                          <ImgWithFallback src={absUpload(doc.frontImage)} alt={doc.documentType}
                             className="h-52 w-full object-contain p-2"
                           />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/5">
@@ -180,7 +181,7 @@ export default function KycDetail({
                         <button onClick={() => onOpenLightbox([{ src: doc.backImage!, label: `Back \u2014 ${docLabels[doc.documentType] || doc.documentType}` }], 0)}
                           className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all hover:shadow-md active:scale-[0.99]"
                         >
-                          <img src={doc.backImage} alt="Back"
+                          <img src={absUpload(doc.backImage)} alt="Back"
                             className="h-52 w-full object-contain p-2"
                             onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; t.parentElement!.querySelector(".fallback")?.classList.remove("hidden") }}
                           />

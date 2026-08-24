@@ -11,6 +11,7 @@ import {
   Calendar, Phone, Mail, UserPlus, Home, Clock, AlertCircle,
   Search, Lock, Receipt,
 } from "@/components/ui/icons"
+import { absUpload } from "@/lib/img";
 
 interface ReferredUser {
   id: string; firstName: string; lastName: string; email: string | null
@@ -302,7 +303,7 @@ export default function AgentDashboardPage() {
                           <div key={p.id} className="flex items-center gap-4 px-5 py-3 hover:bg-primary-50/20 transition-colors">
                             <div className="h-10 w-14 shrink-0 rounded-lg bg-primary-100 overflow-hidden">
                               {p.images?.[0] ? (
-                                <img src={p.images[0]} alt="" className="h-full w-full object-cover" />
+                                <img src={absUpload(p.images[0])} alt="" className="h-full w-full object-cover" />
                               ) : (
                                 <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={16} /></div>
                               )}

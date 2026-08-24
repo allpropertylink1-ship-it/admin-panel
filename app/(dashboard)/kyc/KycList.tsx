@@ -5,6 +5,7 @@ import { Search, X, Shield, Download, FileText } from "@/components/ui/icons"
 import { KycDocThumbnail } from "./KycDocThumbnail"
 import { TablePagination } from "@/components/shared/TablePagination"
 import { cn, isValidUrl } from "@/lib/utils"
+import { absUpload } from "@/lib/img";
 import { FILTERS, docLabels, timeAgo, initials, Skeleton, EmptyState, DocStatusBadge } from "./utils"
 import type { KycDocument } from "./types"
 
@@ -162,7 +163,7 @@ export default function KycList({
                 />
                 <div className="flex min-w-0 items-center gap-2.5">
                   {doc.user.avatar && isValidUrl(doc.user.avatar) ? (
-                    <img src={doc.user.avatar} alt=""
+                    <img src={absUpload(doc.user.avatar)} alt=""
                       className="h-8 w-8 flex-shrink-0 rounded-full object-cover ring-2 ring-primary/10"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
                     />
