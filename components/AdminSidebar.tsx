@@ -132,6 +132,16 @@ export function AdminSidebar() {
             <p className="text-sm font-semibold text-white truncate">Admin Panel</p>
             <p className="text-[11px] text-primary-200/70 truncate">All Property Link</p>
           </div>
+          {mobileOpen && (
+            <button
+              type="button"
+              className="touch-target ml-auto p-2"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 scrollbar-thin scrollbar-thumb-primary-800/50 scrollbar-track-transparent">

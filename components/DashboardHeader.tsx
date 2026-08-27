@@ -9,7 +9,7 @@ export function DashboardHeader() {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 lg:ml-0 sticky top-0 z-20">
       <div className="flex items-center gap-3 lg:ml-0 ml-14">
-        <div className="hidden sm:flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           <DashboardDate />
         </div>
       </div>

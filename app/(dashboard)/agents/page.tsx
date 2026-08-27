@@ -295,7 +295,7 @@ export default function AgentsPage() {
 
           <div className="overflow-x-auto">
             {loading ? (
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[800px] text-sm">
                 <tbody className="divide-y divide-border">
                   <TableSkeleton columns={[
                     { width: "w-28" }, { width: "w-40" }, { width: "w-48" }, { width: "w-32" }, { width: "w-20" }, { width: "w-12" }, { width: "w-28" }, { width: "w-20" }
@@ -303,7 +303,7 @@ export default function AgentsPage() {
                 </tbody>
               </table>
             ) : agents.length === 0 ? (
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[800px] text-sm">
                 <tbody>
                   <tr>
                     <td colSpan={9} className="py-16 text-center">
@@ -314,10 +314,10 @@ export default function AgentsPage() {
                 </tbody>
               </table>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
+              <table className="w-full min-w-[800px] text-sm">
+                <thead className="sticky top-0 z-10">
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="w-10 px-2 py-3.5 text-left">
+                    <th className="w-10 px-2 py-3.5 text-left sticky left-0 z-20 bg-gray-50/80 border-r border-border">
                       <input type="checkbox"
                         checked={agents.length > 0 && selectedIds.length === agents.length}
                         onChange={() => {
@@ -327,8 +327,8 @@ export default function AgentsPage() {
                         className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left">APL Rep Code</th>
-                    <th className="px-4 py-3 text-left">Full Name</th>
+                    <th className="px-4 py-3 text-left sticky left-[2.5rem] z-10 bg-gray-50/80 border-r border-border">APL Rep Code</th>
+                    <th className="px-4 py-3 text-left sticky left-[11.5rem] z-10 bg-gray-50/80 border-r border-border">Full Name</th>
                     <th className="px-4 py-3 text-left">Email</th>
                     <th className="px-4 py-3 text-left">Phone</th>
                     <th className="px-4 py-3 text-center">Status</th>
@@ -340,19 +340,19 @@ export default function AgentsPage() {
                 <tbody className="divide-y divide-border">
                   {agents.map((agent) => (
                     <tr key={agent.id} onClick={() => router.push(`/agents/${agent.id}`)} className={cn("hover:bg-primary-50/30 cursor-pointer transition-colors", selectedIds.includes(agent.id) && "bg-primary/5")}>
-                      <td className="w-10 px-2 py-3 text-center">
+                      <td className="w-10 px-2 py-3 text-center sticky left-0 z-20 bg-white border-r border-border">
                         <input type="checkbox"
                           checked={selectedIds.includes(agent.id)}
                           onChange={() => setSelectedIds(prev => prev.includes(agent.id) ? prev.filter(id => id !== agent.id) : [...prev, agent.id])}
                           className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 sticky left-[2.5rem] z-10 bg-white border-r border-border">
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary font-mono gap-1">
                           <Hash size={12} /> {agent.agentCode}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-medium">{agent.fullName}</td>
+                      <td className="px-4 py-3 sticky left-[11.5rem] z-10 bg-white border-r border-border font-medium">{agent.fullName}</td>
                       <td className="px-4 py-3 text-muted">{agent.email}</td>
                       <td className="px-4 py-3 text-muted">{agent.phone}</td>
                       <td className="px-4 py-3 text-center">
