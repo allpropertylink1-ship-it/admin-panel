@@ -36,12 +36,19 @@ interface AgentDetail {
   status: string; suspendedAt: string | null; suspendedReason: string | null
   createdAt: string; _count: { users: number }
   users: ReferredUser[]
+  regions: string[]
+  specificArea: string | null
 }
 
 type Tab = "referrals" | "claims"
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE").format(n)
 const fmtCurr = (n: number) => `KES ${fmt(n)}`
+
+const KENYA_REGIONS = [
+  "Nairobi", "Central", "Coast", "Eastern",
+  "North-Eastern", "Nyanza", "Rift Valley", "Western",
+] as const
 
 export default function AgentDashboardPage() {
   const params = useParams()
@@ -53,9 +60,12 @@ export default function AgentDashboardPage() {
   const [claims, setClaims] = useState<ClaimRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>("referrals")
-  const [actionLoading, setActionLoading] = useState(false)
+const [actionLoading, setActionLoading] = useState(false)
   const [resetPwLoading, setResetPwLoading] = useState(false)
   const [referralSearch, setReferralSearch] = useState("")
+  const [coverageRegions, setCoverageRegions] = useState<string[]>([])
+  const [coverageSpecificArea, setCoverageSpecificArea] = useState("")
+  const [savingCoverage, setSavingCoverage] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -98,7 +108,7 @@ export default function AgentDashboardPage() {
     setActionLoading(false)
   }
 
-  async function handleResetPassword() {
+async function handleResetPassword() {
     if (!agent) return
     setResetPwLoading(true)
     const { error } = await api.post(`/api/admin/agents/${agent.id}/reset-password`)
@@ -109,6 +119,28 @@ export default function AgentDashboardPage() {
     }
     setResetPwLoading(false)
   }
+
+  async function handleSaveCoverage() {
+    if (!agent) return
+    setSavingCoverage(true)
+    const { data, error } = await api.patch<{ agent: AgentDetail }>(`/api/admin/agents/${agent.id}`, {
+      regions: coverageRegions,
+      specificArea: coverageSpecificArea,
+    })
+    if (error) {
+      alert(error || "Failed to save coverage")
+    } else if (data?.agent) {
+      setAgent(data.agent)
+    }
+    setSavingCoverage(false)
+  }
+
+  useEffect(() => {
+    if (agent) {
+      setCoverageRegions(agent.regions || [])
+      setCoverageSpecificArea(agent.specificArea || "")
+    }
+  }, [agent])
 
   if (loading) return (
     <div className="space-y-6 animate-fade-in">
@@ -217,7 +249,42 @@ export default function AgentDashboardPage() {
         <MetricCard icon={Building2} label="Properties" value={String(totalProperties)} />
         <MetricCard icon={Clock} label="Pending Claims" value={String(pendingClaims)} color="text-warning" />
         <MetricCard icon={CheckCircle} label="Paid Claims" value={String(paidClaims)} color="text-success" />
-        <MetricCard icon={TrendingUp} label="Total Paid Out" value={fmtCurr(totalPaid)} color="text-accent" />
+<MetricCard icon={TrendingUp} label="Total Paid Out" value={fmtCurr(totalPaid)} color="text-accent" />
+      </div>
+
+      {/* Cities Covered */}
+      <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">Cities Covered</h2>
+            <p className="text-xs text-muted mt-0.5">Regions shown on the rep's public profile card</p>
+          </div>
+          <button onClick={handleSaveCoverage} disabled={savingCoverage}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-50 transition-colors"
+          >
+            {savingCoverage ? "Saving..." : "Save Coverage"}
+          </button>
+        </div>
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {KENYA_REGIONS.map((region) => (
+            <label key={region} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm cursor-pointer hover:bg-background transition-colors">
+              <input type="checkbox" checked={coverageRegions.includes(region)}
+                onChange={(e) => setCoverageRegions(e.target.checked
+                  ? [...coverageRegions, region]
+                  : coverageRegions.filter((r) => r !== region)
+                )}
+                className="accent-primary" />
+              {region}
+            </label>
+          ))}
+        </div>
+        <div className="mt-3">
+          <input
+            type="text" value={coverageSpecificArea} onChange={(e) => setCoverageSpecificArea(e.target.value)}
+            placeholder="Specific area (e.g. Kilimani, Nyali)"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-2 text-sm placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+          />
+        </div>
       </div>
 
       {agent.suspendedReason && agent.status === "SUSPENDED" && (
@@ -296,10 +363,10 @@ export default function AgentDashboardPage() {
                       </div>
                     </div>
                   </div>
-                  {user.properties.length > 0 && (
+{(user.properties ?? []).length > 0 && (
                     <div className="border-t border-border">
                       <div className="divide-y divide-border">
-                        {user.properties.map((p) => (
+                        {(user.properties ?? []).map((p) => (
                           <div key={p.id} className="flex items-center gap-4 px-5 py-3 hover:bg-primary-50/20 transition-colors">
                             <div className="h-10 w-14 shrink-0 rounded-lg bg-primary-100 overflow-hidden">
                               {p.images?.[0] ? (
