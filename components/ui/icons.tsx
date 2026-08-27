@@ -105,6 +105,18 @@ export const Building2 = ({ className, size = 24 }: IconProps) => (
   </svg>
 );
 
+export const CitiesCovered = ({ className, size = 24 }: IconProps) => (
+  <svg {...s(size)} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 21h18" />
+    <path d="M5 21V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12" />
+    <path d="M13 21V13a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v8" />
+    <path d="M19 21V16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v5" />
+    <rect x="7" y="11" width="2" height="4" rx="0.5" fill="currentColor" />
+    <rect x="15" y="14" width="3" height="3" rx="0.5" fill="currentColor" />
+    <rect x="20" y="18" width="2" height="2" rx="0.5" fill="currentColor" />
+  </svg>
+);
+
 export const Camera = ({ className, size = 24 }: IconProps) => (
   <svg {...s(size)} className={className}>
     <rect x="2" y="5" width="20" height="16" rx="3" />

@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation"
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import {
-  ArrowLeft, Hash, Users, Building2,
+  ArrowLeft, Hash, Users, Building2, CitiesCovered,
   CheckCircle, XCircle, Ban, TrendingUp,
   Calendar, Phone, Mail, UserPlus, Home, Clock, AlertCircle,
   Search, Lock, Receipt,
@@ -255,10 +255,11 @@ async function handleResetPassword() {
       {/* Cities Covered */}
       <div className="rounded-xl border border-border bg-surface p-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
+          <div className="flex items-center gap-2">
+            <CitiesCovered size={16} className="text-primary" />
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">Cities Covered</h2>
-            <p className="text-xs text-muted mt-0.5">Regions shown on the rep's public profile card</p>
           </div>
+          <p className="text-xs text-muted mt-0.5 ml-6">Regions shown on the rep's public profile card</p>
           <button onClick={handleSaveCoverage} disabled={savingCoverage}
             className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-50 transition-colors"
           >
