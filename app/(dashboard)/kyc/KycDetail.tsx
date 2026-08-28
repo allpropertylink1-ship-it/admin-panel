@@ -48,25 +48,25 @@ export default function KycDetail({
       <div className="border-b border-border bg-gradient-to-r from-card to-background px-6 py-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3.5">
-            {selectedDoc.user.avatar && isValidUrl(selectedDoc.user.avatar) ? (
+            {selectedDoc.user?.avatar && isValidUrl(selectedDoc.user.avatar) ? (
               <img src={absUpload(selectedDoc.user.avatar)} alt=""
                 className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/15"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
               />
             ) : (
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-accent/15 text-lg font-bold text-primary shadow-sm ring-2 ring-primary/10">
-                {initials(selectedDoc.user.firstName, selectedDoc.user.lastName)}
+                {selectedDoc.user ? initials(selectedDoc.user.firstName, selectedDoc.user.lastName) : "?"}
               </div>
             )}
             <div>
               <h2 className="text-lg font-bold text-foreground">
-                {selectedDoc.user.firstName} {selectedDoc.user.lastName}
+                {selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}
               </h2>
-              <p className="text-sm text-muted">{selectedDoc.user.email}</p>
+              <p className="text-sm text-muted">{selectedDoc.user?.email || "—"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <StatusBadge status={selectedDoc.user.kycStatus || ""} />
+            <StatusBadge status={selectedDoc.user?.kycStatus || ""} />
             {pendingUserDocs.length > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-0.5 text-xs font-medium text-warning">
                 <Clock size={10} />
@@ -143,7 +143,7 @@ export default function KycDetail({
                       doc.frontImage.match(/\.pdf/i) ? (
                         <PdfViewer url={doc.frontImage} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Front`} compact />
                       ) : (
-                        <button onClick={() => onOpenLightbox([{ src: absUpload(doc.frontImage)!, label: `${docLabels[doc.documentType] || doc.documentType} \u2014 ${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` }], 0)}
+                        <button onClick={() => onOpenLightbox([{ src: absUpload(doc.frontImage)!, label: `${docLabels[doc.documentType] || doc.documentType} \u2014 ${selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}` }], 0)}
                           className="group relative overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-md active:scale-[0.99]"
                         >
                           <ImgWithFallback src={absUpload(doc.frontImage)} alt={doc.documentType}
@@ -178,7 +178,7 @@ export default function KycDetail({
                       doc.backImage.match(/\.pdf/i) ? (
                         <PdfViewer url={doc.backImage} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Back`} compact />
                       ) : (
-                        <button onClick={() => onOpenLightbox([{ src: doc.backImage!, label: `Back \u2014 ${docLabels[doc.documentType] || doc.documentType}` }], 0)}
+                        <button onClick={() => onOpenLightbox([{ src: absUpload(doc.backImage)!, label: `Back \u2014 ${docLabels[doc.documentType] || doc.documentType}` }], 0)}
                           className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all hover:shadow-md active:scale-[0.99]"
                         >
                           <img src={absUpload(doc.backImage)} alt="Back"
@@ -226,7 +226,7 @@ export default function KycDetail({
                         <p className="text-sm font-medium text-foreground">Business Permit Document</p>
                         <p className="text-xs text-muted">Uploaded as PDF</p>
                       </div>
-                      <PdfViewer url={doc.businessPermit} filename={`Business Permit \u2014 ${selectedDoc.user.firstName} ${selectedDoc.user.lastName}`} compact />
+                      <PdfViewer url={doc.businessPermit} filename={`Business Permit \u2014 ${selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}`} compact />
                     </div>
                   ) : (
                     <div className="flex items-center gap-3 rounded-lg border border-dashed border-error/50 bg-error-5 px-4 py-3">

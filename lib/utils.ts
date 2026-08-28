@@ -6,6 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function isValidUrl(str: string) {
+  if (!str) return false
+  if (str.startsWith("/uploads/")) return true
   try { const url = new URL(str); return url.protocol === "http:" || url.protocol === "https:" }
   catch { return false }
 }

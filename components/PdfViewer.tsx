@@ -2,6 +2,7 @@
 
 import { FileText, ExternalLink, Download, X } from "@/components/ui/icons"
 import { isValidUrl } from "@/lib/utils"
+import { absUpload } from "@/lib/img"
 
 interface PdfViewerProps {
   url: string
@@ -11,7 +12,7 @@ interface PdfViewerProps {
 }
 
 export default function PdfViewer({ url, filename = "document", onClose, compact }: PdfViewerProps) {
-  const directUrl = url
+  const directUrl = absUpload(url) || url
 
   if (compact) {
     return isValidUrl(directUrl) ? (

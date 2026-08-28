@@ -162,21 +162,21 @@ export default function KycList({
                   onClick={(e) => e.stopPropagation()}
                 />
                 <div className="flex min-w-0 items-center gap-2.5">
-                  {doc.user.avatar && isValidUrl(doc.user.avatar) ? (
+                  {doc.user?.avatar && isValidUrl(doc.user.avatar) ? (
                     <img src={absUpload(doc.user.avatar)} alt=""
                       className="h-8 w-8 flex-shrink-0 rounded-full object-cover ring-2 ring-primary/10"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
                     />
                   ) : (
                     <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 text-xs font-bold text-primary">
-                      {initials(doc.user.firstName, doc.user.lastName)}
+                      {doc.user ? initials(doc.user.firstName, doc.user.lastName) : "?"}
                     </div>
                   )}
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
-                      {doc.user.firstName} {doc.user.lastName}
+                      {doc.user ? `${doc.user.firstName} ${doc.user.lastName}` : "Unknown user"}
                     </p>
-                    <p className="truncate text-xs text-muted">{doc.user.email}</p>
+                    <p className="truncate text-xs text-muted">{doc.user?.email || "—"}</p>
                   </div>
                 </div>
                 <DocStatusBadge status={doc.status} />
@@ -195,8 +195,8 @@ export default function KycList({
                     <KycDocThumbnail url={doc.backImage} label="Back" />
                   )}
                   {doc.businessPermit && (
-                    isValidUrl(doc.businessPermit) ? (
-                      <a href={doc.businessPermit} target="_blank" rel="noopener noreferrer"
+                    isValidUrl(absUpload(doc.businessPermit) || doc.businessPermit) ? (
+                      <a href={absUpload(doc.businessPermit)} target="_blank" rel="noopener noreferrer"
                         className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10 text-warning/60 hover:bg-warning/20 transition-colors"
                         title="View Business Permit"
                       >

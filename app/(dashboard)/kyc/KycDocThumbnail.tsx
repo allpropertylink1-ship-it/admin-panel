@@ -13,8 +13,8 @@ interface KycDocThumbnailProps {
 
 export function KycDocThumbnail({ url, label, className = "h-9 w-14" }: KycDocThumbnailProps) {
   if (!url) return null
-
-  if (!isValidUrl(url)) {
+  const abs = absUpload(url) || url
+  if (!isValidUrl(abs)) {
     return (
       <span className={`flex items-center justify-center rounded-lg bg-gray-100 text-[10px] text-muted ${className}`}>
         Invalid URL
@@ -22,10 +22,10 @@ export function KycDocThumbnail({ url, label, className = "h-9 w-14" }: KycDocTh
     )
   }
 
-  if (url.match(/\.pdf/i)) {
+  if (abs.match(/\.pdf/i)) {
     return (
       <a
-        href={url}
+        href={abs}
         target="_blank"
         rel="noopener noreferrer"
         className={`flex items-center justify-center rounded-lg bg-error-50 text-error/60 hover:bg-error-50/80 transition-colors ${className}`}
@@ -38,7 +38,7 @@ export function KycDocThumbnail({ url, label, className = "h-9 w-14" }: KycDocTh
 
   return (
     <img
-      src={url}
+      src={abs}
       alt={label || ""}
       className={`rounded-lg object-cover ring-1 ring-black/5 ${className}`}
       onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }}
