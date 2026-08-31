@@ -6,6 +6,7 @@ import ImageLightbox from "@/components/ImageLightbox"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import KycList from "./KycList"
 import KycDetail from "./KycDetail"
+import { cn } from "@/lib/utils"
 import type { KycDocument, KycResponse, UserDocsResponse } from "./types"
 
 export default function KycPage() {
@@ -26,6 +27,7 @@ export default function KycPage() {
   const [rejectForDoc, setRejectForDoc] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<{ images: { src: string; label: string }[]; index: number } | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list")
 
   const fetchDocs = useCallback(async () => {
     setLoading(true)
@@ -140,68 +142,90 @@ export default function KycPage() {
 
   const handleFilterChange = (f: string) => { setFilter(f); setPage(1) }
   const handleSearchChange = (s: string) => { setSearch(s); setPage(1) }
-  const handleSelectDoc = (doc: KycDocument) => { setSelectedDoc(doc); setRejectReason(""); setRejectForDoc(null) }
+  const handleSelectDoc = (doc: KycDocument) => { 
+    setSelectedDoc(doc); 
+    setRejectReason(""); 
+    setRejectForDoc(null);
+    setMobileView("detail");
+  }
+
+  const handleBackToList = () => {
+    setMobileView("list");
+  }
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] gap-0">
+    <div className="flex h-[calc(100vh-5rem)] flex-col lg:flex-row gap-0">
       {lightbox && <ImageLightbox {...lightbox} onClose={() => setLightbox(null)} />}
 
-      <KycList
-        docs={docs}
-        total={total}
-        selectedDoc={selectedDoc}
-        selectedIds={selectedIds}
-        search={search}
-        filter={filter}
-        loading={loading}
-        page={page}
-        totalPages={totalPages}
-        onSelectDoc={handleSelectDoc}
-        onSearchChange={handleSearchChange}
-        onFilterChange={handleFilterChange}
-        onToggleSelect={toggleSelect}
-        onToggleSelectAll={toggleSelectAll}
-        onPageChange={setPage}
-        listRef={listRef}
-      />
+      {/* Mobile: List view */}
+      <div className={cn(
+        "lg:flex lg:w-[420px] lg:flex-shrink-0 lg:flex-col border-r lg:border-border lg:bg-card",
+        mobileView === "detail" ? "hidden lg:flex" : "flex"
+      )}>
+        <KycList
+          docs={docs}
+          total={total}
+          selectedDoc={selectedDoc}
+          selectedIds={selectedIds}
+          search={search}
+          filter={filter}
+          loading={loading}
+          page={page}
+          totalPages={totalPages}
+          onSelectDoc={handleSelectDoc}
+          onSearchChange={handleSearchChange}
+          onFilterChange={handleFilterChange}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
+          onPageChange={setPage}
+          listRef={listRef}
+        />
 
-      <KycDetail
-        selectedDoc={selectedDoc}
-        userDocs={userDocs}
-        userDocsLoading={userDocsLoading}
-        actionLoading={actionLoading}
-        error={error}
-        rejectReason={rejectReason}
-        rejectForDoc={rejectForDoc}
-        onUpdateDoc={updateDoc}
-        onRejectReasonChange={setRejectReason}
-        onRejectForDocChange={setRejectForDoc}
-        onOpenLightbox={openLightbox}
-        onRetry={fetchDocs}
-      />
+        <BulkActionsBar
+          selectedIds={selectedIds}
+          onClear={() => setSelectedIds([])}
+          actions={[
+            { label: "Approve", action: "approve", requiresConfirmation: true },
+            { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
+          ]}
+          onAction={async (action) => {
+            setLoading(true)
+            try {
+              const { error } = await api.post("/api/admin/kyc/bulk", { ids: selectedIds, action })
+              if (error) throw new Error(error)
+              setSelectedIds([])
+              await fetchDocs()
+            } catch (err: unknown) {
+              setError(err instanceof Error ? err.message : "Bulk action failed")
+            } finally {
+              setLoading(false)
+            }
+          }}
+          loading={loading}
+        />
+      </div>
 
-      <BulkActionsBar
-        selectedIds={selectedIds}
-        onClear={() => setSelectedIds([])}
-        actions={[
-          { label: "Approve", action: "approve", requiresConfirmation: true },
-          { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
-        ]}
-        onAction={async (action) => {
-          setLoading(true)
-          try {
-            const { error } = await api.post("/api/admin/kyc/bulk", { ids: selectedIds, action })
-            if (error) throw new Error(error)
-            setSelectedIds([])
-            await fetchDocs()
-          } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Bulk action failed")
-          } finally {
-            setLoading(false)
-          }
-        }}
-        loading={loading}
-      />
+      {/* Mobile: Detail view */}
+      <div className={cn(
+        "lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto lg:bg-background",
+        mobileView === "list" ? "hidden lg:flex" : "flex"
+      )}>
+        <KycDetail
+          selectedDoc={selectedDoc}
+          userDocs={userDocs}
+          userDocsLoading={userDocsLoading}
+          actionLoading={actionLoading}
+          error={error}
+          rejectReason={rejectReason}
+          rejectForDoc={rejectForDoc}
+          onUpdateDoc={updateDoc}
+          onRejectReasonChange={setRejectReason}
+          onRejectForDocChange={setRejectForDoc}
+          onOpenLightbox={openLightbox}
+          onRetry={fetchDocs}
+          onBack={handleBackToList}
+        />
+      </div>
     </div>
   )
 }

@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
+import { useSidebar } from "@/components/DashboardHeader"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
-  Menu, X, Receipt, Wrench, ShieldCheck, BookUser, Archive, Flag,
+  X, Receipt, Wrench, ShieldCheck, BookUser, Archive, Flag,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -71,7 +71,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const { user, logout: signOut } = useAuth()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const { isOpen, close } = useSidebar()
 
   function canAccess(permission: string): boolean {
     if (!user) return false
@@ -99,98 +99,82 @@ export function AdminSidebar() {
   }
 
   return (
-    <>
-      <button
-        className="touch-target fixed left-4 top-4 z-50 flex items-center justify-center rounded-xl border border-primary-800 bg-sidebar p-2.5 text-primary-100 shadow-lg shadow-black/20 lg:hidden"
-        onClick={() => setMobileOpen(!mobileOpen)}
-        aria-label="Toggle menu"
-      >
-        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
-
-      {mobileOpen && (
-        <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar shadow-2xl shadow-black/20 transition-transform duration-300 ease-out lg:static lg:translate-x-0 lg:w-56",
+        isOpen ? "translate-x-0" : "-translate-x-full"
       )}
-
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar shadow-2xl shadow-black/20 transition-transform duration-300 ease-out lg:static lg:translate-x-0 lg:w-56",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <div className="flex h-16 items-center gap-3 border-b border-primary-800/30 px-5">
-          <div className="flex shrink-0 items-center rounded-lg bg-white p-1.5 shadow-sm">
-            <Image
-              src="/logos/logo.png"
-              alt="All Property Link"
-              width={756}
-              height={319}
-              className="h-5 w-auto"
-            />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">Admin Panel</p>
-            <p className="text-[11px] text-primary-200/70 truncate">All Property Link</p>
-          </div>
-          {mobileOpen && (
-            <button
-              type="button"
-              className="touch-target ml-auto p-2"
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-            >
-              <X size={20} />
-            </button>
-          )}
+    >
+      <div className="flex h-16 items-center gap-3 border-b border-primary-800/30 px-5">
+        <div className="flex shrink-0 items-center rounded-lg bg-white p-1.5 shadow-sm">
+          <Image
+            src="/logos/logo.png"
+            alt="All Property Link"
+            width={756}
+            height={319}
+            className="h-5 w-auto"
+          />
         </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-white truncate">Admin Panel</p>
+          <p className="text-[11px] text-primary-200/70 truncate">All Property Link</p>
+        </div>
+        <button
+          type="button"
+          className="touch-target ml-auto lg:hidden p-2"
+          onClick={close}
+          aria-label="Close menu"
+        >
+          <X size={20} />
+        </button>
+      </div>
 
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 scrollbar-thin scrollbar-thumb-primary-800/50 scrollbar-track-transparent">
-          {navGroups.map((group) => {
-            const visibleItems = group.items.filter((item) => canAccess(item.permission))
-            if (visibleItems.length === 0) return null
-            return (
-            <div key={group.group} className="mb-5 last:mb-0">
-              <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-200/50">
-                {group.group}
-              </p>
-              <div className="space-y-0.5">
-                {visibleItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href!}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "touch-target group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 lg:px-4",
-                      isActive(item.href!)
-                        ? "bg-sidebar-active text-white shadow-sm shadow-black/10"
-                        : item.label === "Deleted Accounts"
-                          ? "text-primary-300/50 hover:bg-sidebar-hover hover:text-primary-200/70"
-                          : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"
-                    )}
-                  >
-                    {isActive(item.href!) && (
-                      <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-accent" />
-                    )}
-                    <item.icon size={18} className={cn("shrink-0", isActive(item.href!) && "text-accent")} />
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
-              </div>
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 scrollbar-thin scrollbar-thumb-primary-800/50 scrollbar-track-transparent">
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter((item) => canAccess(item.permission))
+          if (visibleItems.length === 0) return null
+          return (
+          <div key={group.group} className="mb-5 last:mb-0">
+            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-200/50">
+              {group.group}
+            </p>
+            <div className="space-y-0.5">
+              {visibleItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href!}
+                  onClick={close}
+                  className={cn(
+                    "touch-target group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 lg:px-4",
+                    isActive(item.href!)
+                      ? "bg-sidebar-active text-white shadow-sm shadow-black/10"
+                      : item.label === "Deleted Accounts"
+                      ? "text-primary-300/50 hover:bg-sidebar-hover hover:text-primary-200/70"
+                      : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"
+                  )}
+                >
+                  {isActive(item.href!) && (
+                    <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-accent" />
+                  )}
+                  <item.icon size={18} className={cn("shrink-0", isActive(item.href!) && "text-accent")} />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
             </div>
-            )
-          })}
-        </nav>
+          </div>
+          )
+        })}
+      </nav>
 
-        <div className="border-t border-primary-800/30 p-3">
-          <button
-            onClick={() => signOut()}
-            className="touch-target flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary-300/70 transition-all duration-150 hover:bg-sidebar-hover hover:text-white"
-          >
-            <LogOut size={18} />
-            Sign out
-          </button>
-        </div>
-      </aside>
-    </>
+      <div className="border-t border-primary-800/30 p-3">
+        <button
+          onClick={() => signOut()}
+          className="touch-target flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary-300/70 transition-all duration-150 hover:bg-sidebar-hover hover:text-white"
+        >
+          <LogOut size={18} />
+          Sign out
+        </button>
+      </div>
+    </aside>
   )
 }

@@ -33,7 +33,7 @@ export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loadin
 
   return (
     <>
-      <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 shadow-lg">
+      <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 shadow-lg lg:bottom-24">
         <span className="whitespace-nowrap text-sm font-medium text-amber-800">
           {selectedIds.length} selected
         </span>
@@ -63,7 +63,7 @@ export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loadin
       </div>
 
       {confirmAction && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 lg:p-0">
           <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-foreground">
               Confirm {actions.find((a) => a.action === confirmAction)?.label.toLowerCase()}?

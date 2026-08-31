@@ -2,7 +2,7 @@
 "use client"
 
 import { useRef } from "react"
-import { Shield, AlertCircle, Loader2, CheckCircle, XCircle, RefreshCcw, Clock, User, FileText, ArrowUp, ArrowDown } from "@/components/ui/icons"
+import { Shield, AlertCircle, Loader2, CheckCircle, XCircle, RefreshCcw, Clock, User, FileText, ArrowUp, ArrowDown, ArrowLeft } from "@/components/ui/icons"
 import PdfViewer from "@/components/PdfViewer"
 import { cn, isValidUrl } from "@/lib/utils"
 import { absUpload } from "@/lib/img";
@@ -22,11 +22,12 @@ interface KycDetailProps {
   onRejectForDocChange: (docId: string | null) => void
   onOpenLightbox: (images: { src: string; label: string }[], index: number) => void
   onRetry?: () => void
+  onBack?: () => void
 }
 
 export default function KycDetail({
   selectedDoc, userDocs, userDocsLoading, actionLoading, error,
-  rejectReason, rejectForDoc, onUpdateDoc, onRejectReasonChange, onRejectForDocChange, onOpenLightbox, onRetry,
+  rejectReason, rejectForDoc, onUpdateDoc, onRejectReasonChange, onRejectForDocChange, onOpenLightbox, onRetry, onBack,
 }: KycDetailProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -48,6 +49,16 @@ export default function KycDetail({
       <div className="border-b border-border bg-gradient-to-r from-card to-background px-6 py-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3.5">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="touch-target lg:hidden flex items-center justify-center rounded-lg p-2 text-muted hover:text-foreground hover:bg-gray-100 transition-colors"
+                aria-label="Back to list"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            )}
             {selectedDoc.user?.avatar && isValidUrl(selectedDoc.user.avatar) ? (
               <img src={absUpload(selectedDoc.user.avatar)} alt=""
                 className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/15"
