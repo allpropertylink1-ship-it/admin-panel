@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context"
 import { DashboardDate } from "@/components/DashboardDate"
 import { Menu, User } from "@/components/ui/icons"
 import { useContext, createContext, useState } from "react"
+import { usePathname } from "next/navigation"
 
 interface SidebarContextType {
   isOpen: boolean
@@ -35,22 +36,13 @@ export function useSidebar() {
 export function DashboardHeader() {
   const { user } = useAuth()
   const { isOpen, toggle } = useSidebar()
+  const pathname = usePathname()
+  const isHome = pathname === "/"
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 sticky top-0 z-20">
       <div className="flex min-w-0 items-center gap-3">
-        <button
-          type="button"
-          onClick={toggle}
-          className="touch-target lg:hidden flex items-center justify-center rounded-lg p-2 text-muted hover:text-foreground hover:bg-gray-100 transition-colors"
-          aria-label={isOpen ? "Close menu" : "Open menu"}
-          aria-expanded={isOpen}
-        >
-          <Menu size={20} />
-        </button>
-        <div className="flex items-center gap-1.5">
-          <DashboardDate />
-        </div>
+        <DashboardDate />
       </div>
       <div className="flex min-w-0 items-center gap-3">
         {user && (
@@ -73,6 +65,17 @@ export function DashboardHeader() {
               </div>
             </div>
           </div>
+        )}
+        {isHome && (
+          <button
+            type="button"
+            onClick={toggle}
+            className="touch-target lg:hidden flex items-center justify-center rounded-lg p-2 text-muted hover:text-foreground hover:bg-gray-100 transition-colors"
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isOpen}
+          >
+            <Menu size={20} />
+          </button>
         )}
       </div>
     </header>

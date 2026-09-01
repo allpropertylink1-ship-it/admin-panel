@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -10,6 +11,7 @@ import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
   X, Receipt, Wrench, ShieldCheck, BookUser, Archive, Flag,
+  Menu,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -72,6 +74,7 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const { user, logout: signOut } = useAuth()
   const { isOpen, close } = useSidebar()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   function canAccess(permission: string): boolean {
     if (!user) return false
@@ -98,38 +101,22 @@ export function AdminSidebar() {
     return pathname === href
   }
 
-  return (
-    <aside
-      className={cn(
-        "fixed inset-y-0 left-0 z-40 flex w-64 max-w-[85vw] flex-col bg-sidebar shadow-2xl shadow-black/20 transition-transform duration-300 ease-out lg:static lg:translate-x-0 lg:w-56",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}
-    >
-      <div className="flex h-16 items-center gap-3 border-b border-primary-800/30 px-5">
-        <div className="flex shrink-0 items-center rounded-lg bg-white p-1.5 shadow-sm">
+  const renderNav = () => (
+    <>
+      <div className="mb-2">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center">
           <Image
             src="/logos/logo.png"
             alt="All Property Link"
             width={756}
             height={319}
-            className="h-5 w-auto"
+            className="h-8 w-auto"
           />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-white truncate">Admin Panel</p>
-          <p className="text-[11px] text-primary-200/70 truncate">All Property Link</p>
-        </div>
-        <button
-          type="button"
-          className="touch-target ml-auto lg:hidden p-2"
-          onClick={close}
-          aria-label="Close menu"
-        >
-          <X size={20} />
-        </button>
+        </Link>
       </div>
-
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 scrollbar-thin scrollbar-thumb-primary-800/50 scrollbar-track-transparent">
+      <nav className="space-y-2">
         {navGroups.map((group) => {
           const visibleItems = group.items.filter((item) => canAccess(item.permission))
           if (visibleItems.length === 0) return null
@@ -143,7 +130,7 @@ export function AdminSidebar() {
                 <Link
                   key={item.href}
                   href={item.href!}
-                  onClick={close}
+                  onClick={() => setMobileOpen(false)}
                   className={cn(
                     "touch-target group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 lg:px-4",
                     isActive(item.href!)
@@ -165,16 +152,90 @@ export function AdminSidebar() {
           )
         })}
       </nav>
-
-      <div className="border-t border-primary-800/30 p-3">
+      <div className="border-t border-primary-800/30 p-3 mt-4">
         <button
-          onClick={() => signOut()}
+          onClick={() => { signOut(); setMobileOpen(false); }}
           className="touch-target flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary-300/70 transition-all duration-150 hover:bg-sidebar-hover hover:text-white"
         >
           <LogOut size={18} />
           Sign out
         </button>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Desktop Sidebar - always visible on lg+ */}
+      <aside
+        className={cn(
+          "hidden lg:block fixed inset-y-0 left-0 z-40 flex w-64 max-w-[85vw] flex-col bg-sidebar shadow-2xl shadow-black/20 lg:static lg:w-56"
+        )}
+      >
+        <div className="flex h-16 items-center gap-3 border-b border-primary-800/30 px-5">
+          <div className="flex shrink-0 items-center rounded-lg bg-white p-1.5 shadow-sm">
+            <Image
+              src="/logos/logo.png"
+              alt="All Property Link"
+              width={756}
+              height={319}
+              className="h-5 w-auto"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white truncate">Admin Panel</p>
+            <p className="text-[11px] text-primary-200/70 truncate">All Property Link</p>
+          </div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 scrollbar-thin scrollbar-thumb-primary-800/50 scrollbar-track-transparent">
+          {renderNav()}
+        </nav>
+
+        <div className="border-t border-primary-800/30 p-3">
+          <button
+            onClick={() => signOut()}
+            className="touch-target flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary-300/70 transition-all duration-150 hover:bg-sidebar-hover hover:text-white"
+          >
+            <LogOut size={18} />
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile Dropdown Menu - matches Navbar design */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="touch-target lg:hidden fixed right-4 top-4 z-50 flex items-center justify-center rounded-lg border border-transparent hover:bg-surface-secondary"
+        aria-label={mobileOpen ? "Close menu" : "Open menu"}
+        aria-expanded={mobileOpen}
+        aria-controls="admin-mobile-nav"
+      >
+        {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+      </button>
+
+      {mobileOpen && (
+        <div className="fixed inset-0 z-[60] lg:hidden">
+          <button type="button" aria-label="Close menu" className="absolute inset-0 bg-black/20" onClick={() => setMobileOpen(false)} />
+          <div className="absolute right-4 top-[calc(4rem+env(safe-area-inset-top))] max-h-[calc(100dvh-5rem)] w-full max-w-[85vw] sm:w-64 overflow-y-auto rounded-2xl bg-white border border-border shadow-2xl">
+            <div className="flex h-12 items-center justify-between px-4 border-b border-border">
+              <span className="text-[15px] font-bold tracking-tight text-text-primary">Navigation</span>
+              <button
+                type="button"
+                className="flex h-11 w-11 touch-target items-center justify-center rounded-full hover:bg-surface-secondary"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close menu"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-3 space-y-1">
+              {renderNav()}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
