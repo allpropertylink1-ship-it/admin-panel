@@ -74,7 +74,7 @@ export function ResponsiveTable<T>({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div className="rounded-xl border border-border bg-card shadow-sm">
       {/* Desktop Table View */}
       <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-sm" role="table">

@@ -151,7 +151,7 @@ async function handleResetPassword() {
           <div className="h-4 w-32 bg-primary-100 animate-pulse rounded" />
         </div>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-24 bg-primary-100 animate-pulse rounded-xl" />
         ))}
@@ -244,7 +244,7 @@ async function handleResetPassword() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
         <MetricCard icon={Users} label="Total Referrals" value={String(agent._count.users)} />
         <MetricCard icon={Building2} label="Properties" value={String(totalProperties)} />
         <MetricCard icon={Clock} label="Pending Claims" value={String(pendingClaims)} color="text-warning" />
@@ -266,7 +266,7 @@ async function handleResetPassword() {
             {savingCoverage ? "Saving..." : "Save Coverage"}
           </button>
         </div>
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4">
           {KENYA_REGIONS.map((region) => (
             <label key={region} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm cursor-pointer hover:bg-background transition-colors">
               <input type="checkbox" checked={coverageRegions.includes(region)}

@@ -11,7 +11,7 @@ export default function DashboardLayout({
   return (
     <AuthGate>
       <SidebarProvider>
-        <div className="flex min-h-screen lg:pb-0 pb-16">
+        <div className="flex min-h-[100dvh] lg:pb-0 pb-16">
           <AdminSidebar />
           <div className="flex flex-1 flex-col">
             <DashboardHeader />

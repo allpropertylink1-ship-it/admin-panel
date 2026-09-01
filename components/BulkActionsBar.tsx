@@ -33,7 +33,7 @@ export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loadin
 
   return (
     <>
-      <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 shadow-lg lg:bottom-24">
+      <div className="fixed bottom-6 left-1/2 z-50 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 shadow-lg lg:bottom-24">
         <span className="whitespace-nowrap text-sm font-medium text-amber-800">
           {selectedIds.length} selected
         </span>

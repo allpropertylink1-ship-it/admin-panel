@@ -65,7 +65,7 @@ export default function AgentActions({
 
       {deleteTarget?.id === agent.id && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto">
             <h2 className="text-lg font-semibold">Delete Agent</h2>
             <p className="mt-2 text-sm text-muted">
               Are you sure you want to delete <strong>{deleteTarget.fullName}</strong> ({deleteTarget.agentCode})? This action cannot be undone.
@@ -84,7 +84,7 @@ export default function AgentActions({
 
       {suspendTarget?.id === agent.id && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto">
             <h2 className="text-lg font-semibold">Suspend Agent</h2>
             <p className="mt-2 text-sm text-muted">
               Are you sure you want to suspend <strong>{suspendTarget.fullName}</strong> ({suspendTarget.agentCode})?

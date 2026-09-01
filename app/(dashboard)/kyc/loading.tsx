@@ -2,10 +2,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#faf9f6]">
+    <div className="min-h-[100dvh] bg-[#faf9f6]">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex h-[calc(100vh-5rem)] gap-0">
-          <div className="flex w-[420px] flex-shrink-0 flex-col border-r border-border bg-card">
+          <div className="flex h-[calc(100dvh-5rem)] gap-0">
+          <div className="flex w-full max-w-[420px] flex-shrink-0 flex-col border-r border-border bg-card lg:w-[420px]">
             <div className="border-b border-border px-4 py-4">
               <div className="mb-3 flex items-center justify-between">
                 <div>

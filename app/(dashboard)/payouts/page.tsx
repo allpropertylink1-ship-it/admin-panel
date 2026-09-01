@@ -59,7 +59,7 @@ export default function AdminPayoutsPage() {
         <div className="py-20 text-center text-sm text-text-secondary">No payouts yet. Approved claims will appear here.</div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-surface-secondary text-text-secondary">
               <tr>
                 <th className="px-4 py-3 font-medium">APL Rep</th>

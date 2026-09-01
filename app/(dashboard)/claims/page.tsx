@@ -96,7 +96,7 @@ export default function ClaimsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold font-heading">Payment Claims</h1>
           <p className="mt-1 text-sm text-muted">Review and manage payment claims raised by APL Representatives.</p>
@@ -177,7 +177,7 @@ export default function ClaimsPage() {
           <button onClick={fetchClaims} className="underline text-red-700 hover:text-red-800 font-medium">Retry</button>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-border bg-card shadow-sm">
           <div className="flex flex-col gap-4 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-md">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -213,7 +213,7 @@ export default function ClaimsPage() {
                 <p className="mt-3 text-sm text-muted">{debouncedSearch || statusFilter ? "No claims match your filters." : "No claims yet."}</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[700px] text-sm">
                 <thead>
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
                     <th className="px-4 py-3 w-10">
@@ -300,7 +300,7 @@ export default function ClaimsPage() {
 
       {reviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setReviewModal(null)}>
-          <div className="w-full max-w-lg rounded-2xl bg-card border border-border shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-2xl bg-card border border-border shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold font-heading">Review Claim</h2>
               <button onClick={() => setReviewModal(null)} className="touch-target rounded-lg p-1.5 text-muted hover:text-foreground"><X size={18} /></button>
@@ -333,7 +333,7 @@ export default function ClaimsPage() {
                     className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                     placeholder="KES amount" />
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button onClick={() => handleReview(reviewModal.id, "PAID")} disabled={submitting}
                     className="flex-1 rounded-xl bg-success px-5 py-2.5 text-sm font-medium text-white hover:bg-success/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
                   >{submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={16} />}Accept & Pay</button>
@@ -348,7 +348,7 @@ export default function ClaimsPage() {
             )}
 
             {reviewModal.status === "AWAITING_AGENT_ACCEPTANCE" && (
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <button onClick={() => handleReview(reviewModal.id, "PAID")} disabled={submitting}
                   className="flex-1 rounded-xl bg-success px-5 py-2.5 text-sm font-medium text-white hover:bg-success/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
                 >{submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={16} />}Override & Pay</button>

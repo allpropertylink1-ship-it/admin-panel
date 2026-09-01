@@ -233,7 +233,7 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold font-heading">APL Representatives</h1>
           <p className="mt-1 text-sm text-muted">Employees who onboard users onto the platform.</p>
@@ -283,7 +283,7 @@ export default function AgentsPage() {
           <button onClick={fetchAgents} className="underline text-red-700 hover:text-red-800 font-medium">Retry</button>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-4 py-3 space-y-3">
             <AgentFilters
               search={search}
@@ -327,8 +327,8 @@ export default function AgentsPage() {
                         className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left sticky left-[2.5rem] z-10 bg-gray-50/80 border-r border-border">APL Rep Code</th>
-                    <th className="px-4 py-3 text-left sticky left-[11.5rem] z-10 bg-gray-50/80 border-r border-border">Full Name</th>
+                    <th className="px-4 py-3 text-left hidden sm:table-cell sticky left-[2.5rem] z-10 bg-gray-50/80 border-r border-border">APL Rep Code</th>
+                    <th className="px-4 py-3 text-left hidden sm:table-cell sticky left-[11.5rem] z-10 bg-gray-50/80 border-r border-border">Full Name</th>
                     <th className="px-4 py-3 text-left">Email</th>
                     <th className="px-4 py-3 text-left">Phone</th>
                     <th className="px-4 py-3 text-center">Status</th>
@@ -347,12 +347,12 @@ export default function AgentsPage() {
                           className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
                         />
                       </td>
-                      <td className="px-4 py-3 sticky left-[2.5rem] z-10 bg-white border-r border-border">
+                      <td className="px-4 py-3 hidden sm:table-cell sticky left-[2.5rem] z-10 bg-white border-r border-border">
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary font-mono gap-1">
                           <Hash size={12} /> {agent.agentCode}
                         </span>
                       </td>
-                      <td className="px-4 py-3 sticky left-[11.5rem] z-10 bg-white border-r border-border font-medium">{agent.fullName}</td>
+                      <td className="px-4 py-3 hidden sm:table-cell sticky left-[11.5rem] z-10 bg-white border-r border-border font-medium">{agent.fullName}</td>
                       <td className="px-4 py-3 text-muted">{agent.email}</td>
                       <td className="px-4 py-3 text-muted">{agent.phone}</td>
                       <td className="px-4 py-3 text-center">

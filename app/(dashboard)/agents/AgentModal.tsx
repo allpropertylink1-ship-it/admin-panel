@@ -32,7 +32,7 @@ export default function AgentModal({ open, editingAgent, formLoading, formError,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{editingAgent ? "Edit Representative" : "Add Representative"}</h2>
           <button onClick={onClose} className="rounded-xl p-1.5 text-muted hover:bg-gray-50 hover:text-foreground transition-all">

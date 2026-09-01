@@ -47,7 +47,7 @@ export default function KycDetail({
     <div className="flex flex-1 flex-col overflow-y-auto bg-background">
       {/* User header */}
       <div className="border-b border-border bg-gradient-to-r from-card to-background px-6 py-5">
-        <div className="flex items-start justify-between">
+        <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="flex items-center gap-3.5">
             {onBack && (
               <button
@@ -282,7 +282,7 @@ export default function KycDetail({
                     <User size={11} />
                     Identity Details
                   </label>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
                     <div>
                       <span className="text-muted">First Name:</span>
                       <span className="ml-1.5 font-medium text-foreground">{doc.bioData.firstName || "\u2014"}</span>

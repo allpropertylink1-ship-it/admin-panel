@@ -221,7 +221,7 @@ setUser(data.user);
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-lg font-semibold text-gray-600">
                 {user.firstName[0]}{user.lastName[0]}
               </div>
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">{user.firstName} {user.lastName}</h2>

@@ -127,7 +127,7 @@ export default function AdminAccountsPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="rounded-xl border border-border bg-card shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-muted" />
@@ -139,7 +139,7 @@ export default function AdminAccountsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[700px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
                   <th className="w-10 px-2 py-3.5 text-left">

@@ -63,7 +63,7 @@ export function PropertyModal({ property, open, onClose }: PropertyModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-3 min-w-0">
             <Building2 size={20} className="shrink-0 text-primary" />
@@ -79,7 +79,7 @@ export function PropertyModal({ property, open, onClose }: PropertyModalProps) {
           <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-muted" /></div>
         ) : detail ? (
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3">
               {[
                 { icon: <DollarSign size={14} />, label: "Price", value: formatPrice(property.price, property.currency, property.listingPurpose) },
                 { icon: <Home size={14} />, label: "Type", value: typeLabel(property.propertyType) },

@@ -38,7 +38,7 @@ export function DashboardHeader() {
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 sticky top-0 z-20">
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={toggle}
@@ -52,9 +52,9 @@ export function DashboardHeader() {
           <DashboardDate />
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         {user && (
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="flex items-center gap-2.5 pl-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white text-xs font-bold shadow-sm">
                 {user.fullName?.split(" ").map((n: string) => n[0]).join("").slice(0, 2) || "A"}

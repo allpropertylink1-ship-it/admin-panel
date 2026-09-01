@@ -60,7 +60,7 @@ export function ServiceModal({ service, open, onClose }: ServiceModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-xl max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-3 min-w-0">
             <Wrench size={20} className="shrink-0 text-primary" />
@@ -83,7 +83,7 @@ export function ServiceModal({ service, open, onClose }: ServiceModalProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3">
               {[
                 { icon: <DollarSign size={14} />, label: "Price", value: detail.price ? formatPrice(detail.price, detail.currency ?? "KES") : "\u2014" },
                 { icon: <MapPin size={14} />, label: "Location", value: [detail.city, detail.region, detail.location].filter(Boolean).join(", ") || "\u2014" },

@@ -82,7 +82,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="h-7 w-24 animate-pulse rounded bg-gray-200" />
             <div className="mt-2 h-4 w-44 animate-pulse rounded bg-gray-200" />
@@ -186,7 +186,7 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Reports</h1>
           <p className="mt-1 text-sm text-muted">
@@ -205,7 +205,7 @@ export default function ReportsPage() {
             key={s.label}
             className="rounded-xl border border-border bg-card shadow-sm p-5"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                 <s.icon size={20} className="text-primary" />
               </div>
@@ -271,7 +271,7 @@ export default function ReportsPage() {
               <div className="divide-y divide-border">
                 {topCities.slice(0, 10).map((city, i) => (
                   <div key={city.city} className="px-5 py-3 space-y-1.5">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-50 text-xs font-bold text-primary">
                           {i + 1}

@@ -1,9 +1,9 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#faf9f6]">
+    <div className="min-h-[100dvh] bg-[#faf9f6]">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4 sm:gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4 sm:p-5">
                 <div className="mb-3 h-10 w-10 rounded-xl bg-gray-200" />

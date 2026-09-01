@@ -23,7 +23,7 @@ export function AgentResendInviteModal({ target, done, loading, onSend, onDone, 
   if (done && target) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-        <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto text-center">
+        <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
             <CheckCircle size={24} className="text-success" />
           </div>
@@ -44,7 +44,7 @@ export function AgentResendInviteModal({ target, done, loading, onSend, onDone, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto">
         <h2 className="text-lg font-semibold">Resend Invitation</h2>
         <p className="mt-2 text-sm text-muted">
           Send a new activation email to <strong>{target.fullName}</strong> ({target.email})?

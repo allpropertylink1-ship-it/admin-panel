@@ -116,7 +116,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground font-heading">Users</h1>
           <p className="mt-1 text-sm text-muted">{data ? `${data.total} total users` : "Loading..."}</p>
@@ -147,9 +147,9 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="rounded-xl border border-border bg-card shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="border-b border-border bg-gray-50/80">
                 <th className="w-10 px-2 py-3.5 text-left">
@@ -232,7 +232,7 @@ export default function UsersPage() {
                       </div>
                       {deleteConfirm === user.id && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDeleteConfirm(null)}>
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-semibold text-foreground">Delete user?</h3>
                             <p className="mt-2 text-sm text-muted">This permanently removes {user.firstName} {user.lastName} and all associated data. Cannot be undone.</p>
                             <div className="mt-5 flex justify-end gap-3">

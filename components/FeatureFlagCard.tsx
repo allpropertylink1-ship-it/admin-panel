@@ -70,7 +70,7 @@ interface ModeSelectProps {
 function ModeSelect({ value, onChange, disabled, error }: ModeSelectProps) {
   return (
     <div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {(["off", "everyone", "beta"] as Mode[]).map((mode) => (
           <button
             key={mode}

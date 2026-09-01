@@ -35,7 +35,7 @@ export default function KycList({
   const pendingCount = docs.filter((d) => d.status === "PENDING").length
 
   return (
-    <div className="flex w-[420px] flex-shrink-0 flex-col border-r border-border bg-card">
+    <div className="flex w-full max-w-full flex-shrink-0 flex-col border-r border-border bg-card lg:w-[420px] lg:max-w-[420px]">
       {/* Header */}
       <div className="border-b border-border px-4 py-4">
         <div className="mb-3 flex items-center justify-between">
