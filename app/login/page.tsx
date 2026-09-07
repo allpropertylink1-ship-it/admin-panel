@@ -15,12 +15,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const { error: loginError } = await login(email, password);
+    const form = e.currentTarget as HTMLFormElement;
+    const rememberMe = form.rememberMe?.checked ?? true;
+    const { error: loginError } = await login(email, password, rememberMe);
     if (loginError) {
       setError(loginError);
       setLoading(false);
@@ -94,6 +96,19 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                id="rememberMe"
+                name="rememberMe"
+                type="checkbox"
+                defaultChecked={true}
+                className="rounded border-primary-600 text-accent focus:ring-accent/20"
+              />
+              <label htmlFor="rememberMe" className="text-sm text-primary-100">
+                Remember me
+              </label>
             </div>
 
             <div className="mt-1 text-right">

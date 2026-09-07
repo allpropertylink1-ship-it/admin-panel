@@ -15,7 +15,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<{ error?: string }>
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ error?: string }>
   logout: () => Promise<void>
 }
 
@@ -53,8 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void (async () => { await fetchUser() })()
   }, [fetchUser])
 
-  const login = useCallback(async (email: string, password: string) => {
-    const { data, error } = await api.post<{ user: User }>("/api/auth/admin-login", { email, password })
+  const login = useCallback(async (email: string, password: string, rememberMe = true) => {
+    const { data, error } = await api.post<{ user: User }>("/api/auth/admin-login", { email, password, rememberMe })
     if (data?.user) {
       setUser(data.user)
       return {}
