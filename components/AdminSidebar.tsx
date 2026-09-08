@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -11,7 +11,6 @@ import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
   X, Receipt, Wrench, ShieldCheck, BookUser, Archive, Flag,
-  Menu,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -75,6 +74,16 @@ export function AdminSidebar() {
   const { user, logout: signOut } = useAuth()
   const { isOpen, close } = useSidebar()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Escape key handler for mobile dropdown
+  useEffect(() => {
+    if (!mobileOpen) return
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false)
+    }
+    document.addEventListener("keydown", handleEscape)
+    return () => document.removeEventListener("keydown", handleEscape)
+  }, [mobileOpen])
 
   function canAccess(permission: string): boolean {
     if (!user) return false
@@ -164,6 +173,54 @@ export function AdminSidebar() {
     </>
   )
 
+  // Mobile nav with proper ARIA menu roles
+  const renderMobileNav = () => (
+    <>
+      {navGroups.map((group) => {
+        const visibleItems = group.items.filter((item) => canAccess(item.permission))
+        if (visibleItems.length === 0) return null
+        return (
+        <div key={group.group} className="mb-4 last:mb-0">
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            {group.group}
+          </p>
+          <div className="space-y-1" role="group" aria-label={group.group}>
+            {visibleItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href!}
+                onClick={() => setMobileOpen(false)}
+                role="menuitem"
+                className={cn(
+                  "touch-target flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive(item.href!)
+                    ? "bg-sidebar-active text-white"
+                    : item.label === "Deleted Accounts"
+                    ? "text-primary-300/50 hover:bg-sidebar-hover hover:text-primary-200/70"
+                    : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"
+                )}
+              >
+                <item.icon size={18} className={cn("shrink-0", isActive(item.href!) && "text-accent")} />
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+        )
+      })}
+      <div className="border-t border-border pt-3 mt-2">
+        <button
+          onClick={() => { signOut(); setMobileOpen(false); }}
+          role="menuitem"
+          className="touch-target flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary-300/70 transition-colors hover:bg-sidebar-hover hover:text-white"
+        >
+          <LogOut size={18} />
+          Sign out
+        </button>
+      </div>
+    </>
+  )
+
   return (
     <>
       {/* Desktop Sidebar - always visible on lg+ */}
@@ -203,20 +260,9 @@ export function AdminSidebar() {
         </div>
       </aside>
 
-      {/* Mobile Dropdown Menu - matches Navbar design */}
-      <button
-        type="button"
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="touch-target lg:hidden fixed right-4 top-4 z-50 flex items-center justify-center rounded-lg border border-transparent hover:bg-surface-secondary"
-        aria-label={mobileOpen ? "Close menu" : "Open menu"}
-        aria-expanded={mobileOpen}
-        aria-controls="admin-mobile-nav"
-      >
-        {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-      </button>
-
+      {/* Mobile Dropdown Menu - controlled by DashboardHeader */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden">
+        <div className="fixed inset-0 z-[60] lg:hidden" role="menu" id="admin-mobile-nav">
           <button type="button" aria-label="Close menu" className="absolute inset-0 bg-black/20" onClick={() => setMobileOpen(false)} />
           <div className="absolute right-4 top-[calc(4rem+env(safe-area-inset-top))] max-h-[calc(100dvh-5rem)] w-full max-w-[85vw] sm:w-64 overflow-y-auto rounded-2xl bg-white border border-border shadow-2xl">
             <div className="flex h-12 items-center justify-between px-4 border-b border-border">
@@ -230,9 +276,9 @@ export function AdminSidebar() {
                 <X size={16} />
               </button>
             </div>
-            <div className="p-3 space-y-1">
-              {renderNav()}
-            </div>
+            <nav className="p-3 space-y-1" role="menu">
+              {renderMobileNav()}
+            </nav>
           </div>
         </div>
       )}

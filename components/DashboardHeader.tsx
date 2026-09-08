@@ -36,8 +36,6 @@ export function useSidebar() {
 export function DashboardHeader() {
   const { user } = useAuth()
   const { isOpen, toggle } = useSidebar()
-  const pathname = usePathname()
-  const isHome = pathname === "/"
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 sticky top-0 z-20">
@@ -66,17 +64,15 @@ export function DashboardHeader() {
             </div>
           </div>
         )}
-        {isHome && (
-          <button
-            type="button"
-            onClick={toggle}
-            className="touch-target lg:hidden flex items-center justify-center rounded-lg p-2 text-muted hover:text-foreground hover:bg-gray-100 transition-colors"
-            aria-label={isOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isOpen}
-          >
-            <Menu size={20} />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={toggle}
+          className="touch-target lg:hidden flex items-center justify-center rounded-lg p-2 text-muted hover:text-foreground hover:bg-gray-100 transition-colors"
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+        >
+          <Menu size={20} />
+        </button>
       </div>
     </header>
   )

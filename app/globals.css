@@ -47,6 +47,16 @@
   --radius-md: 10px;
   --radius-lg: 18px;
   --radius-xl: 24px;
+
+  /* Z-index scale for layering */
+  --z-dropdown: 40;
+  --z-sticky: 50;
+  --z-fixed: 60;
+  --z-modal-backdrop: 70;
+  --z-modal: 80;
+  --z-popover: 90;
+  --z-tooltip: 100;
+  --z-toast: 110;
 }
 
 body {
