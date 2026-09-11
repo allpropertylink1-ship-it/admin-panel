@@ -8,6 +8,8 @@ interface ApiResponse<T = unknown> {
 class ApiClient {
   private baseUrl: string
   private refreshPromise: Promise<boolean> | null = null
+  private getCache = new Map<string, { at: number; data: unknown }>()
+  private static GET_TTL_MS = 45000
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
@@ -65,6 +67,15 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     try {
       const method = options.method || "GET"
+      // In-memory GET cache: repeat visits (back-nav, tab switches) resolve
+      // instantly without another ~1.5s origin round trip. Any successful
+      // mutation clears it so lists never show stale data.
+      if (method === "GET") {
+        const hit = this.getCache.get(path)
+        if (hit && Date.now() - hit.at < ApiClient.GET_TTL_MS) {
+          return { data: hit.data as T }
+        }
+      }
       const headers = {
         "Content-Type": "application/json",
         ...options.headers,
@@ -116,6 +127,15 @@ class ApiClient {
       }
 
       const body = await finalRes.json()
+      if (method === "GET") {
+        this.getCache.set(path, { at: Date.now(), data: body })
+        if (this.getCache.size > 200) {
+          const oldest = this.getCache.keys().next().value
+          if (oldest) this.getCache.delete(oldest)
+        }
+      } else {
+        this.getCache.clear()
+      }
       return { data: body as T }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
