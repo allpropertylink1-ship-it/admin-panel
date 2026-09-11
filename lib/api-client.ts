@@ -37,28 +37,59 @@ class ApiClient {
     }
   }
 
+  private async fetchOnce(
+    path: string,
+    options: RequestInit,
+    timeoutMs: number
+  ): Promise<Response> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      return await fetch(`${this.baseUrl}${path}`, {
+        ...options,
+        credentials: "include",
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+
+  private isRetriableStatus(status: number): boolean {
+    return status === 502 || status === 503 || status === 504
+  }
+
   private async request<T>(
     path: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000)
+      const method = options.method || "GET"
+      const headers = {
+        "Content-Type": "application/json",
+        ...options.headers,
+      }
+      // Transient Passenger/Vercel-proxy blips (502/503/504, timeouts) are
+      // retried with backoff: GETs are idempotent (2 retries); mutations get
+      // a single retry (a duplicate login only leaves an extra refresh-token
+      // row, pruned by the 3-session cap).
+      const maxAttempts = method === "GET" ? 3 : 2
+      let res: Response | null = null
+      let attempt = 0
+      for (;;) {
+        attempt += 1
+        try {
+          res = await this.fetchOnce(path, { ...options, headers }, 30000)
+          if (!this.isRetriableStatus(res.status) || attempt >= maxAttempts) break
+        } catch (err) {
+          if (attempt >= maxAttempts) throw err
+        }
+        await new Promise((r) => setTimeout(r, 300 * attempt))
+      }
+      const finalRes = res as Response
 
-      const res = await fetch(`${this.baseUrl}${path}`, {
-        ...options,
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...options.headers,
-        },
-        signal: controller.signal,
-      })
-
-      clearTimeout(timeoutId)
-
-      if (res.status === 401) {
-        const body = await res.json().catch(() => ({}))
+      if (finalRes.status === 401) {
+        const body = await finalRes.json().catch(() => ({}))
         const refreshed = await this.refresh()
         if (refreshed) {
           const retryRes = await fetch(`${this.baseUrl}${path}`, {
@@ -79,12 +110,12 @@ class ApiClient {
         return { error: body.error || "Session expired" }
       }
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        return { error: body.error || `HTTP ${res.status}` }
+      if (!finalRes.ok) {
+        const body = await finalRes.json().catch(() => ({}))
+        return { error: body.error || `HTTP ${finalRes.status}` }
       }
 
-      const body = await res.json()
+      const body = await finalRes.json()
       return { data: body as T }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
