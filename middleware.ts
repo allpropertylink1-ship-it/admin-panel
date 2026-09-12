@@ -30,8 +30,12 @@ export default function middleware(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/_next")
   ) {
-    const token = request.cookies.get("access_token")?.value
-    if (!token) {
+    // Either cookie grants entry: the access cookie expires after 15 min but
+    // /api/auth/me rotates a valid refresh token into a fresh pair, so gating
+    // on the access cookie alone bounced admins to login on every refresh.
+    const access = request.cookies.get("access_token")?.value
+    const refresh = request.cookies.get("refresh_token")?.value
+    if (!access && !refresh) {
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", request.nextUrl.pathname)
       return NextResponse.redirect(loginUrl)
