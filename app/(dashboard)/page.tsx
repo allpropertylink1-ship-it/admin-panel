@@ -7,7 +7,7 @@ import { api } from "@/lib/api-client"
 import {
   Users, UserCheck, Building2, ShieldOff,
   Handshake, Clock, AlertCircle, ArrowUpRight,
-  UserPlus, ChevronRight,
+  UserPlus, ChevronRight, Wrench, Star, Mail,
 } from "@/components/ui/icons"
 
 interface RecentUser {
@@ -17,6 +17,7 @@ interface RecentUser {
 interface DashboardData {
   totalUsers: number; pendingApprovals: number; activeProperties: number
   pendingReviews: number; kycPending: number; totalAgents: number
+  totalServices?: number; totalReviews?: number; unreadMessages?: number
   recentRegistrations: RecentUser[]
   topCities: { city: string; count: number }[]
   registrationsByDay: { date: string; count: number }[]
@@ -26,9 +27,12 @@ const cards = [
   { label: "Total Users", key: "totalUsers", icon: Users, color: "text-blue-600", bg: "bg-blue-50", link: "/users" },
   { label: "Pending Approvals", key: "pendingApprovals", icon: UserCheck, color: "text-amber-600", bg: "bg-amber-50", link: "/approvals" },
   { label: "Active Properties", key: "activeProperties", icon: Building2, color: "text-emerald-600", bg: "bg-emerald-50", link: "/properties" },
-  { label: "Pending Reviews", key: "pendingReviews", icon: Clock, color: "text-orange-600", bg: "bg-orange-50", link: "/properties" },
+  { label: "Pending Properties", key: "pendingReviews", icon: Clock, color: "text-orange-600", bg: "bg-orange-50", link: "/properties" },
   { label: "KYC Pending", key: "kycPending", icon: ShieldOff, color: "text-rose-600", bg: "bg-rose-50", link: "/kyc" },
   { label: "APL Reps", key: "totalAgents", icon: Handshake, color: "text-cyan-600", bg: "bg-cyan-50", link: "/agents" },
+  { label: "Service Listings", key: "totalServices", icon: Wrench, color: "text-violet-600", bg: "bg-violet-50", link: "/services" },
+  { label: "Reviews", key: "totalReviews", icon: Star, color: "text-amber-600", bg: "bg-amber-50", link: "/reviews" },
+  { label: "Unread Messages", key: "unreadMessages", icon: Mail, color: "text-sky-600", bg: "bg-sky-50", link: "/messages" },
 ]
 
 const roleBadge: Record<string, string> = {
@@ -151,7 +155,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4 sm:gap-4">
         {cards.map((card) => {
-          const value = data[card.key as keyof DashboardData] as number
+          const value = (data[card.key as keyof DashboardData] as number) ?? 0
           return <StatCard key={card.key} item={card} value={value} />
         })}
       </div>

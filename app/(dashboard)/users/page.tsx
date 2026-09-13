@@ -188,7 +188,12 @@ export default function UsersPage() {
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
                           {user.firstName[0]}{user.lastName[0]}
                         </div>
-                        <span className="font-medium text-foreground">{user.firstName} {user.lastName}</span>
+                        <div className="min-w-0">
+                          <span className="block font-medium text-foreground">{user.firstName} {user.lastName}</span>
+                          {(user.referredByAgentCode || user.aplAgent?.agentCode) && (
+                            <span className="block text-[11px] text-muted">Ref: {user.referredByAgentCode || user.aplAgent?.agentCode}</span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted text-xs">{user.email}</td>

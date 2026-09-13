@@ -24,6 +24,9 @@ interface DashboardData {
   pendingApprovals: number;
   pendingReviews: number;
   kycPending: number;
+  totalServices?: number;
+  totalReviews?: number;
+  unreadMessages?: number;
   registrationsByDay: { date: string; count: number }[];
   topCities: { city: string; count: number }[];
   recentRegistrations: RecentUser[];
@@ -168,6 +171,9 @@ export default function ReportsPage() {
     totalUsers,
     activeProperties,
     totalAgents,
+    totalServices,
+    totalReviews,
+    unreadMessages,
     registrationsByDay,
     topCities,
     recentRegistrations,
@@ -177,6 +183,9 @@ export default function ReportsPage() {
     { label: "Users", value: totalUsers, icon: Users },
     { label: "Properties", value: activeProperties, icon: Building2 },
     { label: "Agents", value: totalAgents, icon: UserCheck },
+    { label: "Service Listings", value: totalServices ?? 0, icon: Building2 },
+    { label: "Reviews", value: totalReviews ?? 0, icon: Users },
+    { label: "Unread Messages", value: unreadMessages ?? 0, icon: Users },
   ];
 
   const last7Days = registrationsByDay.slice(-7);

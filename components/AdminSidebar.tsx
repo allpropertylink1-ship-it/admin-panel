@@ -11,6 +11,7 @@ import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
   X, Receipt, Wrench, ShieldCheck, BookUser, Archive, Flag,
+  Mail, Star, Briefcase,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -33,6 +34,9 @@ const navGroups: { group: string; items: NavItem[] }[] = [
       { href: "/users", label: "All Users", icon: Users, permission: "users" },
       { href: "/properties", label: "Properties", icon: Building2, permission: "properties" },
       { href: "/services", label: "Fundis & Service Providers", icon: Wrench, permission: "services" },
+      { href: "/categories", label: "Categories", icon: Briefcase, permission: "services" },
+      { href: "/reviews", label: "Reviews", icon: Star, permission: "reviews" },
+      { href: "/messages", label: "Contact Messages", icon: Mail, permission: "messages" },
       { href: "/users/deleted", label: "Deleted Accounts", icon: Archive, permission: "users" },
     ],
   },
@@ -106,6 +110,9 @@ export function AdminSidebar() {
     if (href === "/settings") return pathname.startsWith("/settings")
     if (href === "/feature-flags") return pathname.startsWith("/feature-flags")
     if (href === "/services") return pathname.startsWith("/services")
+    if (href === "/categories") return pathname.startsWith("/categories")
+    if (href === "/reviews") return pathname.startsWith("/reviews")
+    if (href === "/messages") return pathname.startsWith("/messages")
     if (href === "/admin-accounts") return pathname.startsWith("/admin-accounts")
     return pathname === href
   }

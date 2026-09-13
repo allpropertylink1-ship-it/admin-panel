@@ -9,6 +9,12 @@ export interface User {
   createdAt: string
   phone?: string
   category?: string
+  specialties?: string[]
+  website?: string
+  estateSubLocation?: string
+  onboardingComplete?: boolean
+  referredByAgentCode?: string
+  aplAgent?: { id: string; fullName: string; agentCode: string } | null
   userTypes?: string[]
   primaryUserType?: string
   _count?: { properties: number; serviceListings: number }
