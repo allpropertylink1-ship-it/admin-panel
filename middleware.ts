@@ -6,6 +6,18 @@ const API_BACKEND = process.env.API_BACKEND_URL || "https://api.allpropertylink.
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  if (pathname.startsWith("/uploads/")) {
+    // Images live on the cPanel origin, which is unreachable from some
+    // user networks (host-level IP filtering on :80/:443). Serve them
+    // same-origin through the Vercel proxy so <img> tags never depend on
+    // a direct browser -> origin connection.
+    const url = new URL(request.url)
+    url.host = new URL(API_BACKEND).host
+    url.protocol = "https"
+    url.port = ""
+    return NextResponse.rewrite(url.toString())
+  }
+
   if (pathname.startsWith("/api/")) {
     const url = new URL(request.url)
     url.host = new URL(API_BACKEND).host
