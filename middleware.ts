@@ -18,13 +18,9 @@ export default function middleware(request: NextRequest) {
     return NextResponse.rewrite(url.toString())
   }
 
-  if (pathname.startsWith("/api/")) {
-    const url = new URL(request.url)
-    url.host = new URL(API_BACKEND).host
-    url.protocol = "https"
-    url.port = ""
-    return NextResponse.rewrite(url.toString())
-  }
+  // NOTE: /api/* is proxied via app/api/[...path]/route.ts (serverless) for the
+  // same reason as the main site — edge rewrites to the cPanel origin were
+  // timing out due to host-level edge IP filtering.
 
   const devAuth = process.env.DEV_AUTH
   if (devAuth) {
