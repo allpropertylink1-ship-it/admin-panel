@@ -36,7 +36,8 @@ export default function middleware(request: NextRequest) {
 
   if (
     !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/_next")
+    !request.nextUrl.pathname.startsWith("/_next") &&
+    !request.nextUrl.pathname.startsWith("/api/")
   ) {
     // Either cookie grants entry: the access cookie expires after 15 min but
     // /api/auth/me rotates a valid refresh token into a fresh pair, so gating
