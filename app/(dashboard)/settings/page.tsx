@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
@@ -12,6 +12,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Eye,
 } from "@/components/ui/icons";
 import { useAuth } from "@/lib/auth-context";
 
@@ -110,11 +111,16 @@ export default function SettingsPage() {
   const [form, setForm] = useState<Settings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Two-step confirm when switching maintenance OFF→ON. Tracks the loaded
+  // value so saving other fields while already ON never re-prompts.
+  const [confirmingMaintenance, setConfirmingMaintenance] = useState(false);
+  const initialMaintenance = useRef(false);
   const { user } = useAuth();
   const canWrite =
     user?.role === "SUPER_ADMIN" || !!user?.permissions?.settings?.write;
@@ -127,6 +133,8 @@ export default function SettingsPage() {
       );
       if (!error && data?.settings) {
         setForm((prev) => ({ ...prev, ...data.settings }));
+        initialMaintenance.current = data.settings.maintenanceMode === true;
+        setConfirmingMaintenance(false);
       }
     } catch {
       // use defaults
@@ -161,11 +169,24 @@ export default function SettingsPage() {
       setFieldErrors(errors);
       return;
     }
+    // Switching maintenance OFF→ON takes the public site offline: require an
+    // explicit second click. Already-ON saves and the confirm click itself
+    // pass straight through.
+    if (
+      form.maintenanceMode &&
+      !initialMaintenance.current &&
+      !confirmingMaintenance
+    ) {
+      setConfirmingMaintenance(true);
+      return;
+    }
+    setConfirmingMaintenance(false);
     setSaving(true);
     setMessage(null);
     try {
       const { data, error } = await api.put("/api/admin/settings", form);
       if (!error && data) {
+        initialMaintenance.current = form.maintenanceMode === true;
         setMessage({ type: "success", text: "Settings saved successfully." });
       } else {
         setMessage({
@@ -185,6 +206,39 @@ export default function SettingsPage() {
 
   function updateField<K extends keyof Settings>(key: K, value: Settings[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handlePreview() {
+    setPreviewLoading(true);
+    setMessage(null);
+    try {
+      const { data, error } = await api.post<{ token: string }>(
+        "/api/admin/maintenance-bypass",
+        {}
+      );
+      if (error || !data?.token) {
+        setMessage({
+          type: "error",
+          text: error || "Failed to issue preview link. Please try again.",
+        });
+        return;
+      }
+      // Main site lives on www; the admin panel lives on admin. Do not derive
+      // from NEXT_PUBLIC vars (they may be unset) — hardcode the canonical host.
+      const mainOrigin = "https://www.allpropertylink.co.ke";
+      window.open(
+        `${mainOrigin}/api/bypass?token=${encodeURIComponent(data.token)}`,
+        "_blank",
+        "noopener"
+      );
+    } catch {
+      setMessage({
+        type: "error",
+        text: "An unexpected error occurred while issuing the preview link.",
+      });
+    } finally {
+      setPreviewLoading(false);
+    }
   }
 
   if (loading) return <SettingsSkeleton />;
@@ -361,6 +415,29 @@ export default function SettingsPage() {
             <p className="mt-1 text-xs text-muted">
               Turning this ON replaces the main site with a maintenance page.
             </p>
+            {confirmingMaintenance && form.maintenanceMode && (
+              <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <p className="font-medium">
+                  Saving now will take the public site offline for all
+                  visitors.
+                </p>
+                <p className="mt-1">
+                  Click Save Settings again to confirm, switch back to Off to
+                  cancel, or press Cancel.
+                </p>
+                <button
+                  type="button"
+                  disabled={!canWrite}
+                  onClick={() => {
+                    setConfirmingMaintenance(false);
+                    updateField("maintenanceMode", false);
+                  }}
+                  className="mt-2 rounded-lg border border-amber-300 bg-background px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-foreground">
@@ -386,6 +463,24 @@ export default function SettingsPage() {
               className="mt-1.5 min-h-[88px] w-full resize-y rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
+          <div>
+            <button
+              type="button"
+              onClick={handlePreview}
+              disabled={!canWrite || previewLoading}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:border-primary/40 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {previewLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Eye size={16} />
+              )}
+              {previewLoading ? "Issuing preview link..." : "Preview live site"}
+            </button>
+            <p className="mt-1 text-xs text-muted">
+              Opens the live site in a new tab with a 12-hour preview bypass.
+            </p>
+          </div>
         </SectionCard>
 
         <div className="flex justify-end">
@@ -399,7 +494,11 @@ export default function SettingsPage() {
             ) : (
               <Save size={16} />
             )}
-            {saving ? "Saving..." : "Save Settings"}
+            {saving
+              ? "Saving..."
+              : confirmingMaintenance && form.maintenanceMode
+                ? "Confirm: Take Site Offline"
+                : "Save Settings"}
           </button>
         </div>
       </form>
