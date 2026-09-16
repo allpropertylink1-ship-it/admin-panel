@@ -8,10 +8,12 @@ import {
   Globe,
   Mail,
   MessageCircle,
+  Wrench,
   Loader2,
   CheckCircle2,
   AlertCircle,
 } from "@/components/ui/icons";
+import { useAuth } from "@/lib/auth-context";
 
 interface Settings {
   platformName: string;
@@ -22,6 +24,9 @@ interface Settings {
   emailReplyTo: string;
   whatsappNumber: string;
   whatsappResponseTime: string;
+  maintenanceMode: boolean;
+  maintenanceTitle: string;
+  maintenanceMessage: string;
 }
 
 const RESPONSE_TIMES = [
@@ -42,6 +47,10 @@ const defaultSettings: Settings = {
   emailReplyTo: "",
   whatsappNumber: "",
   whatsappResponseTime: "Within 1 hour",
+  maintenanceMode: false,
+  maintenanceTitle: "We'll be back shortly",
+  maintenanceMessage:
+    "Our site is currently undergoing scheduled maintenance. Thank you for your patience and understanding.",
 };
 
 interface SectionCardProps {
@@ -106,6 +115,9 @@ export default function SettingsPage() {
     text: string;
   } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const { user } = useAuth();
+  const canWrite =
+    user?.role === "SUPER_ADMIN" || !!user?.permissions?.settings?.write;
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
@@ -131,7 +143,7 @@ export default function SettingsPage() {
     e.preventDefault();
     setFieldErrors({});
     const errors: Record<string, string> = {};
-    const urlFields: (keyof Settings)[] = ["platformUrl"];
+    const urlFields = ["platformUrl"] as const;
     for (const key of urlFields) {
       const val = form[key];
       if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
@@ -216,7 +228,8 @@ export default function SettingsPage() {
               type="text"
               value={form.platformName}
               onChange={(e) => updateField("platformName", e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+              disabled={!canWrite}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
           <div>
@@ -227,7 +240,8 @@ export default function SettingsPage() {
               type="url"
               value={form.platformUrl}
               onChange={(e) => updateField("platformUrl", e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+              disabled={!canWrite}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             />
             {fieldErrors.platformUrl && <p className="mt-1 text-xs text-red-600">{fieldErrors.platformUrl}</p>}
           </div>
@@ -242,7 +256,8 @@ export default function SettingsPage() {
               type="email"
               value={form.contactEmail}
               onChange={(e) => updateField("contactEmail", e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+              disabled={!canWrite}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
           <div>
@@ -253,7 +268,8 @@ export default function SettingsPage() {
               type="text"
               value={form.emailFromName}
               onChange={(e) => updateField("emailFromName", e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+              disabled={!canWrite}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
           <div>
@@ -264,7 +280,8 @@ export default function SettingsPage() {
               type="email"
               value={form.emailFromEmail}
               onChange={(e) => updateField("emailFromEmail", e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+              disabled={!canWrite}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
           <div>
@@ -275,7 +292,8 @@ export default function SettingsPage() {
               type="email"
               value={form.emailReplyTo}
               onChange={(e) => updateField("emailReplyTo", e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+              disabled={!canWrite}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
         </SectionCard>
@@ -289,8 +307,9 @@ export default function SettingsPage() {
               type="text"
               value={form.whatsappNumber}
               onChange={(e) => updateField("whatsappNumber", e.target.value)}
+              disabled={!canWrite}
               placeholder="+254700000000"
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
           <div>
@@ -302,7 +321,8 @@ export default function SettingsPage() {
               onChange={(e) =>
                 updateField("whatsappResponseTime", e.target.value)
               }
-              className="mt-1.5 w-full appearance-none rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all"
+              disabled={!canWrite}
+              className="mt-1.5 w-full appearance-none rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
             >
               {RESPONSE_TIMES.map((t) => (
                 <option key={t} value={t}>
@@ -313,10 +333,65 @@ export default function SettingsPage() {
           </div>
         </SectionCard>
 
+        <SectionCard icon={<Wrench size={18} />} title="Maintenance Mode">
+          <div>
+            <span className="block text-sm font-medium text-foreground">
+              Status
+            </span>
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              {([false, true] as boolean[]).map((mode) => (
+                <button
+                  key={String(mode)}
+                  type="button"
+                  disabled={!canWrite}
+                  onClick={() => updateField("maintenanceMode", mode)}
+                  className={cn(
+                    "rounded-xl border px-3 py-2 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                    form.maintenanceMode === mode
+                      ? mode
+                        ? "border-amber-200 bg-amber-50 text-amber-700"
+                        : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-border bg-background text-muted hover:border-primary/40 hover:text-foreground"
+                  )}
+                >
+                  {mode ? "On" : "Off"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-muted">
+              Turning this ON replaces the main site with a maintenance page.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Page Title
+            </label>
+            <input
+              type="text"
+              value={form.maintenanceTitle}
+              onChange={(e) => updateField("maintenanceTitle", e.target.value)}
+              disabled={!canWrite}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Message
+            </label>
+            <textarea
+              rows={3}
+              value={form.maintenanceMessage}
+              onChange={(e) => updateField("maintenanceMessage", e.target.value)}
+              disabled={!canWrite}
+              className="mt-1.5 min-h-[88px] w-full resize-y rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        </SectionCard>
+
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || !canWrite}
             className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-all disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center gap-2"
           >
             {saving ? (
