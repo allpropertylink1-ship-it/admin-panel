@@ -4,7 +4,6 @@ import { useAuth } from "@/lib/auth-context"
 import { DashboardDate } from "@/components/DashboardDate"
 import { Menu, User } from "@/components/ui/icons"
 import { useContext, createContext, useState } from "react"
-import { usePathname } from "next/navigation"
 
 interface SidebarContextType {
   isOpen: boolean

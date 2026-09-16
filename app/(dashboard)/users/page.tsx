@@ -121,13 +121,14 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-foreground font-heading">Users</h1>
           <p className="mt-1 text-sm text-muted">{data ? `${data.total} total users` : "Loading..."}</p>
         </div>
-        <a
-          href="/api/admin/exports/users"
+        <button
+          type="button"
+          onClick={() => { window.location.href = "/api/admin/exports/users" }}
           className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-2"
         >
           <Download size={16} />
           Export
-        </a>
+        </button>
       </div>
 
       <UserFilters

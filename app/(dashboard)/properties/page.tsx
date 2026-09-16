@@ -102,13 +102,14 @@ export default function PropertiesPage() {
           <h1 className="text-2xl font-bold text-foreground">Properties</h1>
           <p className="mt-1 text-sm text-muted">{total} total properties</p>
         </div>
-        <a
-          href="/api/admin/exports/properties"
+        <button
+          type="button"
+          onClick={() => { window.location.href = "/api/admin/exports/properties" }}
           className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-2"
         >
           <Download size={16} />
           Export
-        </a>
+        </button>
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm">

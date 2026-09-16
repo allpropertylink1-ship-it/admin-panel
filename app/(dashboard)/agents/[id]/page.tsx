@@ -135,12 +135,14 @@ async function handleResetPassword() {
     setSavingCoverage(false)
   }
 
-  useEffect(() => {
-    if (agent) {
-      setCoverageRegions(agent.regions || [])
-      setCoverageSpecificArea(agent.specificArea || "")
-    }
-  }, [agent])
+  // Sync editable coverage fields when a different agent loads (render-time
+  // adjustment — avoids setState-in-effect cascading renders).
+  const [syncedAgentId, setSyncedAgentId] = useState<string | null>(null)
+  if (agent && agent.id !== syncedAgentId) {
+    setSyncedAgentId(agent.id)
+    setCoverageRegions(agent.regions || [])
+    setCoverageSpecificArea(agent.specificArea || "")
+  }
 
   if (loading) return (
     <div className="space-y-6 animate-fade-in">
@@ -259,7 +261,7 @@ async function handleResetPassword() {
             <CitiesCovered size={16} className="text-primary" />
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">Cities Covered</h2>
           </div>
-          <p className="text-xs text-muted mt-0.5 ml-6">Regions shown on the rep's public profile card</p>
+          <p className="text-xs text-muted mt-0.5 ml-6">Regions shown on the rep&apos;s public profile card</p>
           <button onClick={handleSaveCoverage} disabled={savingCoverage}
             className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-50 transition-colors"
           >

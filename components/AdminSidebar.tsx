@@ -6,7 +6,6 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
-import { useSidebar } from "@/components/DashboardHeader"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
@@ -76,7 +75,6 @@ const navGroups: { group: string; items: NavItem[] }[] = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const { user, logout: signOut } = useAuth()
-  const { isOpen, close } = useSidebar()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   // Escape key handler for mobile dropdown

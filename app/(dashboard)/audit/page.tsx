@@ -106,13 +106,14 @@ export default function AuditPage() {
           <p className="mt-1 text-sm text-muted">Track all actions performed across the platform.</p>
         </div>
         <div className="flex items-center gap-3">
-          <a
-            href="/api/admin/exports/audit"
+          <button
+            type="button"
+            onClick={() => { window.location.href = "/api/admin/exports/audit" }}
             className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-card"
           >
             <Download size={15} />
             Export
-          </a>
+          </button>
           <button
             onClick={() => { setPage(1); fetchAudit() }}
             className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-gray-50"

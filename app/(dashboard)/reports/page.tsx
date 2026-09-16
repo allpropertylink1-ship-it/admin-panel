@@ -202,10 +202,10 @@ export default function ReportsPage() {
             Platform analytics and key metrics.
           </p>
         </div>
-        <a href="/api/admin/exports/audit" className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all inline-flex items-center gap-2">
+        <button type="button" onClick={() => { window.location.href = "/api/admin/exports/audit" }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all inline-flex items-center gap-2">
           <Download size={16} />
           Export
-        </a>
+        </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

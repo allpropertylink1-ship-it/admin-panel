@@ -50,13 +50,14 @@ export default function KycList({
               )}
             </p>
           </div>
-          <a
-            href="/api/admin/exports/kyc"
+          <button
+            type="button"
+            onClick={() => { window.location.href = "/api/admin/exports/kyc" }}
             className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-1.5"
           >
             <Download size={14} />
             Export
-          </a>
+          </button>
         </div>
 
         {/* Search */}
