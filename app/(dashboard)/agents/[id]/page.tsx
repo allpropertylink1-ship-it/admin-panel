@@ -20,7 +20,7 @@ interface ReferredUser {
   properties: {
     id: string; title: string; slug: string; price: number; currency: string
     propertyType: string; moderationStatus: string; city: string
-    createdAt: string; images: string[]
+    createdAt: string; coverImage?: string | null; images: string[]
   }[]
 }
 
@@ -372,8 +372,8 @@ async function handleResetPassword() {
                         {(user.properties ?? []).map((p) => (
                           <div key={p.id} className="flex items-center gap-4 px-5 py-3 hover:bg-primary-50/20 transition-colors">
                             <div className="h-10 w-14 shrink-0 rounded-lg bg-primary-100 overflow-hidden">
-                              {p.images?.[0] ? (
-                                <img src={absUpload(p.images[0])} alt="" className="h-full w-full object-cover" />
+                              {(p.coverImage ?? p.images?.[0]) ? (
+                                <img src={absUpload(p.coverImage ?? p.images?.[0] ?? "")} alt="" className="h-full w-full object-cover" />
                               ) : (
                                 <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={16} /></div>
                               )}

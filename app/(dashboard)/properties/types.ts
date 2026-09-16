@@ -19,6 +19,7 @@ export interface Property {
   isFeatured: boolean
   rejectionReason: string | null
   createdAt: string
+  coverImage?: string | null
   agent: Agent | null
 }
 

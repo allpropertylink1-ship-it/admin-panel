@@ -28,6 +28,7 @@ export interface PropertyDetail {
   createdAt?: string
   updatedAt?: string | null
   agent?: { id?: string; firstName?: string; lastName?: string; email?: string; phone?: string | null } | null
+  coverImage?: string | null
   images?: string | string[]
 }
 
@@ -115,16 +116,25 @@ export function PropertyModal({ property, open, onClose }: PropertyModalProps) {
               )}
             </div>
 
-            {detail.images && detail.images.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Images ({detail.images.length})</p>
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {(typeof detail.images === "string" ? JSON.parse(detail.images) : detail.images).map((img: string, i: number) => (
-                    <img key={i} src={img} alt="" className="h-20 w-28 shrink-0 rounded-lg object-cover border border-border" />
-                  ))}
+            {detail.images && detail.images.length > 0 && (() => {
+              const parsed: string[] = typeof detail.images === "string" ? JSON.parse(detail.images as string) : (detail.images as string[])
+              const cover = detail.coverImage ?? parsed[0] ?? null
+              return (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Images ({parsed.length})</p>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {parsed.map((img: string, i: number) => (
+                      <div key={i} className="relative shrink-0">
+                        <img src={img} alt="" className="h-20 w-28 rounded-lg object-cover border border-border" />
+                        {img === cover && (
+                          <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-white">Cover</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
         ) : (
           <div className="flex items-center justify-center py-16 text-sm text-muted">Failed to load property details</div>
