@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "validate:build": "npm run build || (node ../../scripts/log-error.js && exit 1)",
-    "validate:lint": "npm run lint || (node ../../scripts/log-error.js && exit 1)"
+    "validate:build": "npm run build || (node ../scripts/log-error.js && exit 1)",
+    "validate:lint": "npm run lint || (node ../scripts/log-error.js && exit 1)"
   },
   "dependencies": {
     "clsx": "^2.1.1",
