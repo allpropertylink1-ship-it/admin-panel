@@ -69,7 +69,7 @@ interface Rep {
   status: string
 }
 
-const ISSUE_CODES = ["", "NO_EMAIL", "NO_PHONE", "PASSWORD_RESET_PENDING", "KYC_INCOMPLETE", "ACCOUNT_PENDING", "NO_LOCATION", "NO_COVER", "NO_PHOTOS", "LEGACY_PHOTOS", "NO_PIN"]
+const ISSUE_CODES = ["", "NO_EMAIL", "NO_PHONE", "PASSWORD_RESET_PENDING", "KYC_INCOMPLETE", "ACCOUNT_PENDING", "ROLE_TRADE_MISMATCH", "COMPANY_HTML", "NO_LOCATION", "NO_COVER", "NO_PHOTOS", "LEGACY_PHOTOS", "NO_PIN"]
 
 export default function IssuesPage() {
   const [data, setData] = useState<IssuesResponse | null>(null)
