@@ -16,6 +16,7 @@ const PERMISSION_SECTIONS = [
   { key: "claims", label: "Claims", readOnly: false },
   { key: "disputes", label: "Disputes", readOnly: false },
   { key: "kyc", label: "KYC", readOnly: false },
+  { key: "issues", label: "Issues Queue", readOnly: false },
   { key: "approvals", label: "Approvals", readOnly: false },
   { key: "reports", label: "Reports", readOnly: true },
   { key: "audit", label: "Audit", readOnly: true },

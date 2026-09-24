@@ -37,6 +37,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
       { href: "/reviews", label: "Reviews", icon: Star, permission: "reviews" },
       { href: "/messages", label: "Contact Messages", icon: Mail, permission: "messages" },
       { href: "/users/deleted", label: "Deleted Accounts", icon: Archive, permission: "users" },
+      { href: "/issues", label: "Issues Queue", icon: Flag, permission: "issues" },
     ],
   },
   {
@@ -96,6 +97,7 @@ export function AdminSidebar() {
   function isActive(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard"
     if (href === "/users") return pathname === "/users"
+    if (href === "/issues") return pathname.startsWith("/issues")
     if (href === "/users/deleted") return pathname === "/users/deleted"
     if (href === "/approvals") return pathname.startsWith("/approvals")
     if (href === "/properties") return pathname.startsWith("/properties")
