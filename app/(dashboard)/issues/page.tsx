@@ -43,6 +43,7 @@ interface OrphanRow {
 interface DuplicateGroup {
   key: string
   members: { id: string; firstName: string; lastName: string; email: string | null; phone: string | null }[]
+  dismissedPairs?: string[][]
 }
 
 interface IssuesResponse {
@@ -52,6 +53,7 @@ interface IssuesResponse {
   totalPages: number
   orphans: OrphanRow[]
   duplicates: DuplicateGroup[]
+  dismissed: DuplicateGroup[]
   summary: {
     blankEmails: number
     pendingResets: number
@@ -85,6 +87,7 @@ export default function IssuesPage() {
   const [actionError, setActionError] = useState("")
   const [reassignFor, setReassignFor] = useState<string | null>(null)
   const [mergeWinners, setMergeWinners] = useState<Record<string, string>>({})
+  const [showDismissed, setShowDismissed] = useState(false)
   const pageSize = 20
 
   const fetchIssues = useCallback(async () => {
@@ -97,6 +100,7 @@ export default function IssuesPage() {
       if (search) p.set("search", search)
       if (rep !== "all") p.set("rep", rep)
       if (code) p.set("code", code)
+      if (showDismissed) p.set("showDismissed", "1")
       const { data: d, error } = await api.get<IssuesResponse>(`/api/admin/issues?${p}`)
       if (error || !d) throw new Error(error || "No data")
       setData(d)
@@ -105,7 +109,7 @@ export default function IssuesPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, rep, code])
+  }, [page, search, rep, code, showDismissed])
 
   const fetchReps = useCallback(async () => {
     const { data } = await api.get<{ agents: Rep[] }>(`/api/admin/agents?limit=100`)
@@ -151,6 +155,47 @@ export default function IssuesPage() {
       await fetchIssues()
     } catch (err: unknown) {
       setActionError(err instanceof Error ? err.message : "Failed to merge")
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  async function handleDismiss(groupKey: string, members: DuplicateGroup["members"]) {
+    const pairs: [string, string][] = []
+    for (let i = 0; i < members.length; i++) {
+      for (let j = i + 1; j < members.length; j++) pairs.push([members[i].id, members[j].id])
+    }
+    if (!window.confirm(`Mark ${members.length} accounts as NOT duplicates (${pairs.length} pair${pairs.length === 1 ? "" : "s"})? They leave the queue. This is reversible.`)) return
+    setActionLoading(`dismiss-${groupKey}`)
+    setActionError("")
+    try {
+      for (const [a, b] of pairs) {
+        const { error } = await api.post(`/api/admin/issues/duplicates/dismiss`, { userId1: a, userId2: b })
+        if (error) throw new Error(error)
+      }
+      await fetchIssues()
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to dismiss")
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  async function handleUndismiss(groupKey: string, members: DuplicateGroup["members"]) {
+    setActionLoading(`dismiss-${groupKey}`)
+    setActionError("")
+    try {
+      const pairs: [string, string][] = []
+      for (let i = 0; i < members.length; i++) {
+        for (let j = i + 1; j < members.length; j++) pairs.push([members[i].id, members[j].id])
+      }
+      for (const [a, b] of pairs) {
+        const { error } = await api.post(`/api/admin/issues/duplicates/undismiss`, { userId1: a, userId2: b })
+        if (error) throw new Error(error)
+      }
+      await fetchIssues()
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to undo")
     } finally {
       setActionLoading(null)
     }
@@ -332,16 +377,51 @@ export default function IssuesPage() {
                         </label>
                       ))}
                     </div>
-                    <button type="button" onClick={() => void handleMerge(g.key, g.members)}
-                      disabled={actionLoading === `merge-${g.key}`}
-                      className="touch-target mt-2 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
-                      {actionLoading === `merge-${g.key}` ? <Loader2 size={14} className="animate-spin" /> : <Flag size={14} />}
-                      Merge into kept account
-                    </button>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => void handleMerge(g.key, g.members)}
+                        disabled={actionLoading === `merge-${g.key}` || actionLoading === `dismiss-${g.key}`}
+                        className="touch-target inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
+                        {actionLoading === `merge-${g.key}` ? <Loader2 size={14} className="animate-spin" /> : <Flag size={14} />}
+                        Merge into kept account
+                      </button>
+                      <button type="button" onClick={() => void handleDismiss(g.key, g.members)}
+                        disabled={actionLoading === `dismiss-${g.key}` || actionLoading === `merge-${g.key}`}
+                        className="touch-target inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-gray-50 disabled:opacity-50">
+                        {actionLoading === `dismiss-${g.key}` ? <Loader2 size={14} className="animate-spin" /> : null}
+                        Not duplicates — keep separate
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
+            <div className="border-t border-border px-4 py-3">
+              <button type="button" onClick={() => setShowDismissed((v) => !v)}
+                className="text-xs font-semibold text-primary hover:underline" aria-expanded={showDismissed}>
+                {showDismissed ? "Hide decided groups" : `Show decided groups (${data?.dismissed.length ?? 0})`}
+              </button>
+              {showDismissed && (
+                <ul className="mt-2 divide-y divide-border rounded-lg border border-border">
+                  {(data?.dismissed ?? []).length === 0 ? (
+                    <li className="px-3 py-4 text-center text-xs text-muted" role="status">No decided groups yet.</li>
+                  ) : (
+                    (data?.dismissed ?? []).map((g) => (
+                      <li key={g.key} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold capitalize text-foreground">{g.key}</p>
+                          <p className="truncate text-[11px] text-muted">{g.members.length} accounts · decided separate</p>
+                        </div>
+                        <button type="button" onClick={() => void handleUndismiss(g.key, g.members)}
+                          disabled={actionLoading === `dismiss-${g.key}`}
+                          className="touch-target rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-gray-50 disabled:opacity-50">
+                          {actionLoading === `dismiss-${g.key}` ? <Loader2 size={14} className="animate-spin" /> : "Undo"}
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
           </section>
         </>
       )}
