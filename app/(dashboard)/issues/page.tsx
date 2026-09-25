@@ -167,8 +167,52 @@ function ConfirmModal({ open, title, lines, confirmLabel, danger, loading, onCon
   )
 }
 
-function IssueChip({ code }: { code: string }) {
-  const critical = CRITICAL_USER_CODES.has(code)
+function ContactRepairRow({ userId, hasEmail, hasPhone, busy, onSave }: {
+  userId: string
+  hasEmail: boolean
+  hasPhone: boolean
+  busy: boolean
+  onSave: (patch: { email?: string; phone?: string }) => Promise<void>
+}) {
+  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50/40 p-3">
+      <p className="text-xs font-semibold text-foreground">Unreachable account — add a way to reach them</p>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        {!hasEmail && (
+          <div>
+            <label htmlFor={`contact-email-${userId}`} className="block text-[11px] font-semibold text-muted">Email address</label>
+            <input id={`contact-email-${userId}`} type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com" autoComplete="off"
+              className="mt-1 block w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          </div>
+        )}
+        {!hasPhone && (
+          <div>
+            <label htmlFor={`contact-phone-${userId}`} className="block text-[11px] font-semibold text-muted">Phone number</label>
+            <input id={`contact-phone-${userId}`} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+              placeholder="+2547…" autoComplete="off"
+              className="mt-1 block w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          </div>
+        )}
+      </div>
+      <button type="button" disabled={busy || (!email.trim() && !phone.trim())}
+        onClick={() => {
+          const patch: { email?: string; phone?: string } = {}
+          if (email.trim()) patch.email = email.trim()
+          if (phone.trim()) patch.phone = phone.trim()
+          void onSave(patch)
+        }}
+        className="touch-target mt-2 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">
+        {busy && <Loader2 size={14} className="animate-spin" />}
+        Save contact
+      </button>
+    </div>
+  )
+}
+
+function IssueChip({ code }: { code: string }) {  const critical = CRITICAL_USER_CODES.has(code)
   return (
     <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium",
       critical ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700")}>
@@ -484,6 +528,27 @@ export default function IssuesPage() {
                             Move to rep…
                           </button>
                         </div>
+                        {(u.issues.some((i) => i.code === "NO_EMAIL" || i.code === "NO_PHONE")) && (
+                          <ContactRepairRow
+                            userId={u.id}
+                            hasEmail={!!u.email}
+                            hasPhone={!!u.phone}
+                            busy={actionLoading === `contact-${u.id}`}
+                            onSave={async (patch) => {
+                              setActionLoading(`contact-${u.id}`)
+                              try {
+                                const { error } = await api.patch(`/api/admin/users/${u.id}`, patch)
+                                if (error) throw new Error(error)
+                                setToast({ kind: "success", text: "Contact saved — the person can now log in." })
+                                await fetchIssues()
+                              } catch (err: unknown) {
+                                setToast({ kind: "error", text: err instanceof Error ? err.message : "Failed to save contact" })
+                              } finally {
+                                setActionLoading(null)
+                              }
+                            }}
+                          />
+                        )}
                       </div>
                     )}
                   </li>
