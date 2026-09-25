@@ -23,6 +23,14 @@ const statusConfig: Record<string, { bg: string; text: string; label: string }> 
   ARCHIVED: { bg: "bg-gray-200", text: "text-gray-600", label: "Archived" },
 }
 
+const purposeTabs = [
+  { key: "ALL", label: "All", purpose: "", type: "" },
+  { key: "FOR_SALE", label: "For Sale", purpose: "FOR_SALE", type: "" },
+  { key: "FOR_RENT_LONG_TERM", label: "For Rent", purpose: "FOR_RENT_LONG_TERM", type: "" },
+  { key: "FOR_RENT_SHORT_TERM", label: "Airbnbs", purpose: "FOR_RENT_SHORT_TERM", type: "" },
+  { key: "LAND", label: "Land", purpose: "", type: "LAND" },
+] as const
+
 const propertyColumns = [
   { width: "w-48" }, { width: "w-24" }, { width: "w-20" }, { width: "w-24" }, { width: "w-28" }, { width: "w-20" }, { width: "w-12" }, { width: "w-24" },
 ]
@@ -36,11 +44,32 @@ export default function PropertiesPage() {
   const [searchInput, setSearchInput] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
   const [purposeFilter, setPurposeFilter] = useState("")
+  const [activeTab, setActiveTab] = useState<typeof purposeTabs[number]["key"]>("ALL")
+  const [tabCounts, setTabCounts] = useState<Record<string, number>>({})
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const limit = 20
+
+  const fetchTabCounts = useCallback(async () => {
+    try {
+      const counts: Record<string, number> = {}
+      await Promise.all(
+        purposeTabs.map(async (tab) => {
+          const params = new URLSearchParams()
+          params.set("limit", "1")
+          if (tab.purpose) params.set("listingPurpose", tab.purpose)
+          if (tab.type) params.set("type", tab.type)
+          const { data } = await api.get<PropertiesResponse>(`/api/admin/properties?${params}`)
+          counts[tab.key] = data?.pagination?.total || 0
+        })
+      )
+      setTabCounts(counts)
+    } catch {
+      // ignore count errors
+    }
+  }, [])
 
   const fetchProperties = useCallback(async () => {
     setLoading(true)
@@ -69,10 +98,24 @@ export default function PropertiesPage() {
     void (async () => { await fetchProperties() })()
   }, [fetchProperties])
 
+  useEffect(() => {
+    setTimeout(() => { void fetchTabCounts() }, 0)
+  }, [fetchTabCounts])
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     setSearch(searchInput)
     setPage(1)
+  }
+
+  function handleTabChange(tabKey: typeof purposeTabs[number]["key"]) {
+    setActiveTab(tabKey)
+    const tab = purposeTabs.find(t => t.key === tabKey)
+    if (tab) {
+      setPurposeFilter(tab.purpose)
+      setTypeFilter(tab.type)
+      setPage(1)
+    }
   }
 
   function openPropertyDetail(prop: Property) {
@@ -95,6 +138,24 @@ export default function PropertiesPage() {
     return type.charAt(0) + type.slice(1).toLowerCase()
   }
 
+  function purposeBadge(purpose: string | null | undefined) {
+    if (!purpose) return null
+    return (
+      <span className="ml-1.5 rounded-full bg-primary/5 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+        {purpose === "FOR_RENT_SHORT_TERM" ? "Airbnb" : purpose === "FOR_RENT_LONG_TERM" ? "Rent" : "Sale"}
+      </span>
+    )
+  }
+
+  function landBadge(type: string) {
+    if (type !== "LAND") return null
+    return (
+      <span className="ml-1.5 rounded-full bg-teal/10 px-1.5 py-0.5 text-[10px] font-medium text-teal-700">
+        Land & Plots
+      </span>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -110,6 +171,32 @@ export default function PropertiesPage() {
           <Download size={16} />
           Export
         </button>
+      </div>
+
+      {/* Purpose Tabs with Counts */}
+      <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-card p-1">
+        {purposeTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabChange(tab.key)}
+            className={cn(
+              "touch-target flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all border border-border",
+              activeTab === tab.key
+                ? "bg-accent text-white border-accent shadow-sm"
+                : "text-muted hover:text-foreground hover:border-primary/30"
+            )}
+          >
+            <span>{tab.label}</span>
+            {tabCounts[tab.key] !== undefined && (
+              <span className={cn(
+                "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                activeTab === tab.key ? "bg-white/20 text-white" : "bg-muted/10 text-muted"
+              )}>
+                {tabCounts[tab.key]}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm">
@@ -210,13 +297,10 @@ export default function PropertiesPage() {
                         <p className="max-w-xs truncate text-sm font-medium text-foreground" title={p.title}>{p.title}</p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">{formatPrice(p.price, p.currency, p.listingPurpose)}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 flex items-center gap-1.5 flex-wrap">
                         <span className="text-sm text-muted">{typeLabel(p.propertyType)}</span>
-                        {p.listingPurpose && (
-                          <span className="ml-1.5 rounded-full bg-primary/5 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                            {p.listingPurpose === "FOR_RENT_SHORT_TERM" ? "Airbnb" : p.listingPurpose === "FOR_RENT_LONG_TERM" ? "Rent" : "Sale"}
-                          </span>
-                        )}
+                        {purposeBadge(p.listingPurpose)}
+                        {landBadge(p.propertyType)}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted">{p.city}</td>
                       <td className="px-4 py-3 text-sm text-muted">

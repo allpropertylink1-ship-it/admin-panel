@@ -32,8 +32,9 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/users", label: "All Users", icon: Users, permission: "users" },
       { href: "/properties", label: "Properties", icon: Building2, permission: "properties" },
-      { href: "/services", label: "Fundis & Service Providers", icon: Wrench, permission: "services" },
-      { href: "/categories", label: "Categories", icon: Briefcase, permission: "services" },
+      { href: "/services?type=FUNDI", label: "Fundis", icon: Wrench, permission: "services" },
+      { href: "/services?type=SERVICE_PROVIDER", label: "Service Providers", icon: Briefcase, permission: "services" },
+      { href: "/categories", label: "Categories", icon: Star, permission: "services" },
       { href: "/reviews", label: "Reviews", icon: Star, permission: "reviews" },
       { href: "/messages", label: "Contact Messages", icon: Mail, permission: "messages" },
       { href: "/users/deleted", label: "Deleted Accounts", icon: Archive, permission: "users" },
@@ -109,11 +110,11 @@ export function AdminSidebar() {
     if (href === "/audit") return pathname.startsWith("/audit")
     if (href === "/settings") return pathname.startsWith("/settings")
     if (href === "/feature-flags") return pathname.startsWith("/feature-flags")
-    if (href === "/services") return pathname.startsWith("/services")
     if (href === "/categories") return pathname.startsWith("/categories")
     if (href === "/reviews") return pathname.startsWith("/reviews")
     if (href === "/messages") return pathname.startsWith("/messages")
     if (href === "/admin-accounts") return pathname.startsWith("/admin-accounts")
+    if (href.startsWith("/services")) return pathname.startsWith("/services")
     return pathname === href
   }
 

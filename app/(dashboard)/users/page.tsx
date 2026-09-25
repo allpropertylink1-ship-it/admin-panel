@@ -29,6 +29,15 @@ const badge: Record<string, string> = {
   APPLICANT: "bg-gray-50 text-gray-600",
 }
 
+const userTypeTabs = [
+  { key: "ALL", label: "All Types", userType: "" },
+  { key: "PROPERTY_OWNER", label: "Property Owners", userType: "PROPERTY_OWNER" },
+  { key: "AGENT", label: "Agents", userType: "AGENT" },
+  { key: "FUNDI", label: "Fundis", userType: "FUNDI" },
+  { key: "SERVICE_PROVIDER", label: "Service Providers", userType: "SERVICE_PROVIDER" },
+  { key: "CUSTOMER", label: "Customers", userType: "CUSTOMER" },
+] as const
+
 const statusFilterMap: Record<string, string> = { "All": "", "Active": "ACTIVE", "Pending": "PENDING_APPROVAL", "Suspended": "SUSPENDED" }
 
 const userColumns = [
@@ -43,12 +52,32 @@ export default function UsersPage() {
   const [searchValue, setSearchValue] = useState("")
   const [activeFilter, setActiveFilter] = useState("All")
   const [userTypeFilter, setUserTypeFilter] = useState("")
+  const [activeUserTypeTab, setActiveUserTypeTab] = useState<typeof userTypeTabs[number]["key"]>("ALL")
+  const [userTypeTabCounts, setUserTypeTabCounts] = useState<Record<string, number>>({})
   const [page, setPage] = useState(1)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  const fetchUserTypeTabCounts = useCallback(async () => {
+    try {
+      const counts: Record<string, number> = {}
+      await Promise.all(
+        userTypeTabs.map(async (tab) => {
+          const params = new URLSearchParams()
+          params.set("pageSize", "1")
+          if (tab.userType) params.set("userType", tab.userType)
+          const { data } = await api.get<UsersResponse>(`/api/admin/users?${params}`)
+          counts[tab.key] = data?.total || 0
+        })
+      )
+      setUserTypeTabCounts(counts)
+    } catch {
+      // ignore count errors
+    }
+  }, [])
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -72,10 +101,23 @@ export default function UsersPage() {
 
   useEffect(() => { void (async () => { await fetchUsers() })() }, [fetchUsers])
 
+  useEffect(() => {
+    setTimeout(() => { void fetchUserTypeTabCounts() }, 0)
+  }, [fetchUserTypeTabCounts])
+
   function handleSearch(v: string) {
     setSearchValue(v)
     if (searchTimeout) clearTimeout(searchTimeout)
     setSearchTimeout(setTimeout(() => { setSearch(v); setPage(1) }, 350))
+  }
+
+  function handleUserTypeTabChange(tabKey: typeof userTypeTabs[number]["key"]) {
+    setActiveUserTypeTab(tabKey)
+    const tab = userTypeTabs.find(t => t.key === tabKey)
+    if (tab) {
+      setUserTypeFilter(tab.userType)
+      setPage(1)
+    }
   }
 
   async function handleToggleStatus(userId: string, currentStatus: string) {
@@ -131,6 +173,32 @@ export default function UsersPage() {
         </button>
       </div>
 
+      {/* User Type Tabs with Counts */}
+      <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-card p-1">
+        {userTypeTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => handleUserTypeTabChange(tab.key)}
+            className={cn(
+              "touch-target flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all border border-border",
+              activeUserTypeTab === tab.key
+                ? "bg-accent text-white border-accent shadow-sm"
+                : "text-muted hover:text-foreground hover:border-primary/30"
+            )}
+          >
+            <span>{tab.label}</span>
+            {userTypeTabCounts[tab.key] !== undefined && (
+              <span className={cn(
+                "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                activeUserTypeTab === tab.key ? "bg-white/20 text-white" : "bg-muted/10 text-muted"
+              )}>
+                {userTypeTabCounts[tab.key]}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       <UserFilters
         searchValue={searchValue}
         activeFilter={activeFilter}
@@ -177,83 +245,83 @@ export default function UsersPage() {
                 data.users.map((user) => (
                   <tr key={user.id} onClick={() => openUserDetail(user)}
                     className={cn("cursor-pointer transition-colors hover:bg-gray-50/40", selectedIds.includes(user.id) && "bg-primary/5")}>
-                    <td className="w-10 px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                      <input type="checkbox"
-                        checked={selectedIds.includes(user.id)}
-                        onChange={() => setSelectedIds(prev => prev.includes(user.id) ? prev.filter(id => id !== user.id) : [...prev, user.id])}
-                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
-                          {user.firstName[0]}{user.lastName[0]}
-                        </div>
-                        <div className="min-w-0">
-                          <span className="block font-medium text-foreground">{user.firstName} {user.lastName}</span>
-                          {(user.referredByAgentCode || user.aplAgent?.agentCode) && (
-                            <span className="block text-[11px] text-muted">Ref: {user.referredByAgentCode || user.aplAgent?.agentCode}</span>
-                          )}
-                        </div>
+                  <td className="w-10 px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox"
+                      checked={selectedIds.includes(user.id)}
+                      onChange={() => setSelectedIds(prev => prev.includes(user.id) ? prev.filter(id => id !== user.id) : [...prev, user.id])}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 text-xs font-bold text-primary">
+                        {user.firstName[0]}{user.lastName[0]}
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted text-xs">{user.email}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/5 text-primary">
-                        {user.userTypes?.join(", ") || user.primaryUserType || "—"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium", badge[user.accountStatus] || "")}>
-                        {user.accountStatus === "PENDING_APPROVAL" ? "Pending" : user.accountStatus}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium", badge[user.kycStatus] || "")}>
-                        {user.kycStatus}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted tabular-nums">
-                      {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-0.5">
-                        <button onClick={() => openUserDetail(user)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
-                          <Eye size={13} />
-                          View
-                        </button>
-                        <button onClick={() => handleToggleStatus(user.id, user.accountStatus)} disabled={actionLoading === user.id}
-                          className={cn("inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors", actionLoading === user.id && "opacity-50",
-                            user.accountStatus === "SUSPENDED" ? "text-success hover:bg-success/10" : "text-warning hover:bg-warning/10")}
-                          title={user.accountStatus === "SUSPENDED" ? "Activate" : "Suspend"}>
-                          {actionLoading === user.id ? <Loader2 size={13} className="animate-spin" /> : user.accountStatus === "SUSPENDED" ? <Shield size={13} /> : <ShieldOff size={13} />}
-                          {user.accountStatus === "SUSPENDED" ? "Activate" : "Suspend"}
-                        </button>
-                        <button onClick={() => setDeleteConfirm(user.id)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors">
-                          <Trash2 size={13} />
-                          Delete
-                        </button>
+                      <div className="min-w-0">
+                        <span className="block font-medium text-foreground">{user.firstName} {user.lastName}</span>
+                        {(user.referredByAgentCode || user.aplAgent?.agentCode) && (
+                          <span className="block text-[11px] text-muted">Ref: {user.referredByAgentCode || user.aplAgent?.agentCode}</span>
+                        )}
                       </div>
-                      {deleteConfirm === user.id && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDeleteConfirm(null)}>
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-semibold text-foreground">Delete user?</h3>
-                            <p className="mt-2 text-sm text-muted">This permanently removes {user.firstName} {user.lastName} and all associated data. Cannot be undone.</p>
-                            <div className="mt-5 flex justify-end gap-3">
-                              <button onClick={() => setDeleteConfirm(null)} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-gray-50">Cancel</button>
-                              <button onClick={() => handleDelete(user.id)} disabled={actionLoading === user.id}
-                                className="rounded-xl bg-error px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50">
-                                {actionLoading === user.id ? "Deleting..." : "Delete"}
-                              </button>
-                            </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted text-xs">{user.email}</td>
+                  <td className="px-4 py-3">
+                    <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/5 text-primary">
+                      {user.userTypes?.join(", ") || user.primaryUserType || "—"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium", badge[user.accountStatus] || "")}>
+                      {user.accountStatus === "PENDING_APPROVAL" ? "Pending" : user.accountStatus}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-xs font-medium", badge[user.kycStatus] || "")}>
+                      {user.kycStatus}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-muted tabular-nums">
+                    {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </td>
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button onClick={() => openUserDetail(user)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors">
+                        <Eye size={13} />
+                        View
+                      </button>
+                      <button onClick={() => handleToggleStatus(user.id, user.accountStatus)} disabled={actionLoading === user.id}
+                        className={cn("inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors", actionLoading === user.id && "opacity-50",
+                          user.accountStatus === "SUSPENDED" ? "text-success hover:bg-success/10" : "text-warning hover:bg-warning/10")}
+                        title={user.accountStatus === "SUSPENDED" ? "Activate" : "Suspend"}>
+                        {actionLoading === user.id ? <Loader2 size={13} className="animate-spin" /> : user.accountStatus === "SUSPENDED" ? <Shield size={13} /> : <ShieldOff size={13} />}
+                        {user.accountStatus === "SUSPENDED" ? "Activate" : "Suspend"}
+                      </button>
+                      <button onClick={() => setDeleteConfirm(user.id)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors">
+                        <Trash2 size={13} />
+                        Delete
+                      </button>
+                    </div>
+                    {deleteConfirm === user.id && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDeleteConfirm(null)}>
+                        <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                          <h3 className="text-base font-semibold text-foreground">Delete user?</h3>
+                          <p className="mt-2 text-sm text-muted">This permanently removes {user.firstName} {user.lastName} and all associated data. Cannot be undone.</p>
+                          <div className="mt-5 flex justify-end gap-3">
+                            <button onClick={() => setDeleteConfirm(null)} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-gray-50">Cancel</button>
+                            <button onClick={() => handleDelete(user.id)} disabled={actionLoading === user.id}
+                              className="rounded-xl bg-error px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50">
+                              {actionLoading === user.id ? "Deleting..." : "Delete"}
+                            </button>
                           </div>
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))
               ) : (
                 <tr>
                   <td colSpan={8} className="px-4 py-16 text-center">
