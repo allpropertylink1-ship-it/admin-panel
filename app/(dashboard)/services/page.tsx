@@ -49,6 +49,7 @@ export default function ServicesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [showBin, setShowBin] = useState(false)
   const [modLoading, setModLoading] = useState<string | null>(null)
   const [selectedService, setSelectedService] = useState<ServiceListing | null>(null)
   const limit = 20
@@ -79,6 +80,7 @@ export default function ServicesPage() {
       if (search) params.set("search", search)
       if (userTypeFilter) params.set("userType", userTypeFilter)
       if (statusFilter) params.set("moderationStatus", statusFilter)
+      if (showBin) params.set("deleted", "1")
       params.set("page", String(page))
       params.set("limit", String(limit))
       const { data: result, error } = await api.get<ServicesResponse>(`/api/admin/services?${params}`)
@@ -91,7 +93,7 @@ export default function ServicesPage() {
     } finally {
       setLoading(false)
     }
-  }, [search, userTypeFilter, statusFilter, page])
+  }, [search, userTypeFilter, statusFilter, page, showBin])
 
   useEffect(() => { void (async () => { await fetchServices() })() }, [fetchServices])
 
@@ -162,12 +164,21 @@ export default function ServicesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground font-heading">Fundis & Service Providers</h1>
-          <p className="mt-1 text-sm text-muted">{total} total service listings</p>
+          <p className="mt-1 text-sm text-muted">{total} total service listings{showBin ? " in recycle bin (auto-removed after 3 days)" : ""}</p>
         </div>
-        <button className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-2" disabled>
-          <Download size={16} />
-          Export
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => { setShowBin(!showBin); setSelectedIds([]); setPage(1) }}
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card transition-all"
+          >
+            {showBin ? "Show active" : "Recycle bin"}
+          </button>
+          <button className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-2" disabled>
+            <Download size={16} />
+            Export
+          </button>
+        </div>
       </div>
 
       {/* Provider Tabs with Counts */}
@@ -342,15 +353,19 @@ export default function ServicesPage() {
         <BulkActionsBar
           selectedIds={selectedIds}
           onClear={() => setSelectedIds([])}
-          actions={[
+          actions={showBin ? [
+            { label: "Restore", action: "restore", requiresConfirmation: true },
+            { label: "Purge forever", action: "purge", variant: "destructive", requiresConfirmation: true },
+          ] : [
             { label: "Approve", action: "approve" },
             { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
             { label: "Send Back", action: "pending" },
+            { label: "Delete", action: "delete", variant: "destructive", requiresConfirmation: true },
           ]}
           onAction={async (action) => {
             setLoading(true)
             try {
-              const { error } = await api.post("/api/admin/services/bulk", { ids: selectedIds, action })
+              const { error } = await api.post("/api/admin/services/bulk", action === "purge" ? { ids: selectedIds, action, confirmAll: true } : { ids: selectedIds, action })
               if (error) throw new Error(error)
               setSelectedIds([])
               await fetchServices()
