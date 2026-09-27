@@ -116,9 +116,27 @@ export default function CategoriesPage() {
     setSeedLoading(true)
     setSeedResult("")
     try {
-      const { data, error } = await api.post<{ roots: number; children: number }>("/api/admin/categories/seed-taxonomy", {})
+      const { data, error } = await api.post<{ started?: boolean; running?: boolean }>("/api/admin/categories/seed-taxonomy", {})
       if (error || !data) throw new Error(error || "No data")
-      setSeedResult(`Loaded ${data.roots} sectors and ${data.children} services.`)
+      if (data.running) {
+        setSeedResult("The sector menu is already loading — refresh this page in a few seconds.")
+        return
+      }
+      // The server loads ~200 shelves in the background (takes ~30s).
+      // Poll until a new sector root appears, then refresh.
+      setSeedResult("Loading the sector menu in the background… this takes about 30 seconds. Please wait.")
+      for (let i = 0; i < 18; i++) {
+        await new Promise((r) => setTimeout(r, 5000))
+        try {
+          const check = await api.get<{ categories: Category[] }>("/api/admin/categories")
+          if (check.data?.categories.some((c) => c.slug === "pets-veterinary")) {
+            setSeedResult("Sector menu loaded.")
+            await fetchCategories()
+            return
+          }
+        } catch { /* keep polling */ }
+      }
+      setSeedResult("Still loading — refresh this page in a few seconds to see the sectors.")
       await fetchCategories()
     } catch (err: unknown) {
       setSeedResult(err instanceof Error ? err.message : "Failed to load sector menu")
