@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
-import { AlertCircle, Loader2, Plus, Pencil, Trash2, Wrench } from "@/components/ui/icons"
+import { AlertCircle, Check, Loader2, Plus, Pencil, Trash2, Wrench } from "@/components/ui/icons"
 
 interface Category {
   id: string
@@ -26,6 +26,13 @@ export default function CategoriesPage() {
   const [formError, setFormError] = useState("")
   const [formLoading, setFormLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [seedLoading, setSeedLoading] = useState(false)
+  const [seedResult, setSeedResult] = useState("")
+  const [mergeSource, setMergeSource] = useState("")
+  const [mergeTarget, setMergeTarget] = useState("")
+  const [mergePreview, setMergePreview] = useState<{ sourceName: string; targetName: string; listings: number; children: number } | null>(null)
+  const [mergeLoading, setMergeLoading] = useState(false)
+  const [mergeResult, setMergeResult] = useState("")
 
   const fetchCategories = useCallback(async () => {
     setLoading(true)
@@ -105,6 +112,67 @@ export default function CategoriesPage() {
     }
   }
 
+  async function handleSeedTaxonomy() {
+    setSeedLoading(true)
+    setSeedResult("")
+    try {
+      const { data, error } = await api.post<{ roots: number; children: number }>("/api/admin/categories/seed-taxonomy", {})
+      if (error || !data) throw new Error(error || "No data")
+      setSeedResult(`Loaded ${data.roots} sectors and ${data.children} services.`)
+      await fetchCategories()
+    } catch (err: unknown) {
+      setSeedResult(err instanceof Error ? err.message : "Failed to load sector menu")
+    } finally {
+      setSeedLoading(false)
+    }
+  }
+
+  async function handleMergePreview() {
+    setMergeLoading(true)
+    setMergePreview(null)
+    setMergeResult("")
+    try {
+      const source = categories.find((c) => c.id === mergeSource)
+      const target = categories.find((c) => c.id === mergeTarget)
+      if (!source || !target) throw new Error("Pick both a duplicate and its target")
+      if (source.id === target.id) throw new Error("Duplicate and target must differ")
+      const { data, error } = await api.post<{ plan: { sourceName: string; targetName: string; listings: number; children: number }[] }>(
+        "/api/admin/categories/merge",
+        { merges: [{ sourceId: source.id, targetSlug: target.slug }], dryRun: true }
+      )
+      if (error || !data) throw new Error(error || "No data")
+      setMergePreview(data.plan[0])
+    } catch (err: unknown) {
+      setMergeResult(err instanceof Error ? err.message : "Preview failed")
+    } finally {
+      setMergeLoading(false)
+    }
+  }
+
+  async function handleMergeConfirm() {
+    if (!mergePreview) return
+    setMergeLoading(true)
+    setMergeResult("")
+    try {
+      const source = categories.find((c) => c.id === mergeSource)
+      const target = categories.find((c) => c.id === mergeTarget)
+      if (!source || !target) throw new Error("Pick both a duplicate and its target")
+      const { data, error } = await api.post<{ moved: number }>("/api/admin/categories/merge", {
+        merges: [{ sourceId: source.id, targetSlug: target.slug }],
+      })
+      if (error || !data) throw new Error(error || "No data")
+      setMergeResult(`Joined “${source.name}” into “${target.name}” — ${data.moved} advert(s) moved.`)
+      setMergePreview(null)
+      setMergeSource("")
+      setMergeTarget("")
+      await fetchCategories()
+    } catch (err: unknown) {
+      setMergeResult(err instanceof Error ? err.message : "Join failed")
+    } finally {
+      setMergeLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -112,6 +180,16 @@ export default function CategoriesPage() {
           <h1 className="text-2xl font-bold text-foreground font-heading">Service Categories</h1>
           <p className="mt-1 text-sm text-muted">{categories.length} categories · used by fundi &amp; service listings</p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={handleSeedTaxonomy}
+          disabled={seedLoading}
+          title="Load the 17 sector groups and their services (safe to re-run)"
+          className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          {seedLoading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+          Load sector menu
+        </button>
         <button
           onClick={openCreate}
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-colors"
@@ -119,6 +197,76 @@ export default function CategoriesPage() {
           <Plus size={16} />
           Add Category
         </button>
+        </div>
+      </div>
+
+      {seedResult && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
+          {seedResult}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-foreground">Join duplicates</h2>
+        <p className="mt-0.5 text-xs text-muted">Move all adverts from a duplicate shelf into the correct one, then remove the empty duplicate. Preview first — joining cannot be undone.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-foreground" htmlFor="merge-source">Duplicate shelf</label>
+            <select
+              id="merge-source"
+              value={mergeSource}
+              onChange={(e) => { setMergeSource(e.target.value); setMergePreview(null); setMergeResult("") }}
+              className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">Select duplicate…</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c._count.serviceListings})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-foreground" htmlFor="merge-target">Correct shelf</label>
+            <select
+              id="merge-target"
+              value={mergeTarget}
+              onChange={(e) => { setMergeTarget(e.target.value); setMergePreview(null); setMergeResult("") }}
+              className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">Select target…</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-end gap-2">
+            <button
+              onClick={handleMergePreview}
+              disabled={mergeLoading || !mergeSource || !mergeTarget}
+              className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              {mergeLoading ? "Checking…" : "Preview"}
+            </button>
+            {mergePreview && (
+              <button
+                onClick={handleMergeConfirm}
+                disabled={mergeLoading || mergePreview.children > 0}
+                title={mergePreview.children > 0 ? "Has sub-shelves — re-home them first" : "Move adverts and remove duplicate"}
+                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
+              >
+                Join ({mergePreview.listings})
+              </button>
+            )}
+          </div>
+        </div>
+        {mergePreview && (
+          <p className="mt-2 text-xs text-muted" role="status">
+            “{mergePreview.sourceName}” → “{mergePreview.targetName}”: {mergePreview.listings} advert(s) will move
+            {mergePreview.children > 0 ? ` — blocked: ${mergePreview.children} sub-shelf/shelves inside` : ""}.
+          </p>
+        )}
+        {mergeResult && (
+          <p className="mt-2 text-xs text-muted" role="status">{mergeResult}</p>
+        )}
       </div>
 
       {error && (
