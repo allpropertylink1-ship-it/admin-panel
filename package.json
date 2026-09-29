@@ -11,6 +11,7 @@
     "validate:lint": "npm run lint || (node ../scripts/log-error.js && exit 1)"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.48.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
