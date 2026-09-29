@@ -77,6 +77,10 @@ export default function CategoriesPage() {
       setFormError("Name is required")
       return
     }
+    if (/[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u2B00-\u2BFF\uFE0F]/u.test(form.icon)) {
+      setFormError("Icon must not contain emoji — use plain text or leave it empty")
+      return
+    }
     setFormLoading(true)
     try {
       const payload = {
@@ -409,7 +413,7 @@ export default function CategoriesPage() {
                   id="cat-icon"
                   value={form.icon}
                   onChange={(e) => setForm({ ...form, icon: e.target.value })}
-                  placeholder="optional"
+                  placeholder="optional — text only, never emoji"
                   className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
