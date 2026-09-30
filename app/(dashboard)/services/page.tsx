@@ -20,11 +20,8 @@ const MODERATION_BADGES: Record<string, string> = {
   DRAFT: "bg-gray-50 text-gray-600",
 }
 
-const providerTabs = [
-  { key: "ALL", label: "All", userType: "" },
-  { key: "FUNDI", label: "Fundis", userType: "FUNDI" },
-  { key: "SERVICE_PROVIDER", label: "Service Providers", userType: "SERVICE_PROVIDER" },
-] as const
+// Provider merge: one pool, no persona tabs. The ?userType= server filter
+// stays for direct links, but the UI no longer splits Fundis/Providers.
 
 function formatPrice(price: number | null, currency: string) {
   if (price === null) return "\u2014"
@@ -42,10 +39,7 @@ export default function ServicesPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
-  const [userTypeFilter, setUserTypeFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
-  const [activeTab, setActiveTab] = useState<typeof providerTabs[number]["key"]>("ALL")
-  const [tabCounts, setTabCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -54,31 +48,12 @@ export default function ServicesPage() {
   const [selectedService, setSelectedService] = useState<ServiceListing | null>(null)
   const limit = 20
 
-  const fetchTabCounts = useCallback(async () => {
-    try {
-      const counts: Record<string, number> = {}
-      await Promise.all(
-        providerTabs.map(async (tab) => {
-          const params = new URLSearchParams()
-          params.set("limit", "1")
-          if (tab.userType) params.set("userType", tab.userType)
-          const { data } = await api.get<ServicesResponse>(`/api/admin/services?${params}`)
-          counts[tab.key] = data?.pagination?.total || 0
-        })
-      )
-      setTabCounts(counts)
-    } catch {
-      // ignore count errors
-    }
-  }, [])
-
   const fetchServices = useCallback(async () => {
     setLoading(true)
     setError("")
     try {
       const params = new URLSearchParams()
       if (search) params.set("search", search)
-      if (userTypeFilter) params.set("userType", userTypeFilter)
       if (statusFilter) params.set("moderationStatus", statusFilter)
       if (showBin) params.set("deleted", "1")
       params.set("page", String(page))
@@ -93,24 +68,11 @@ export default function ServicesPage() {
     } finally {
       setLoading(false)
     }
-  }, [search, userTypeFilter, statusFilter, page, showBin])
+  }, [search, statusFilter, page, showBin])
 
   useEffect(() => { void (async () => { await fetchServices() })() }, [fetchServices])
 
-  useEffect(() => {
-    setTimeout(() => { void fetchTabCounts() }, 0)
-  }, [fetchTabCounts])
-
   function handleSearch(e: React.FormEvent) { e.preventDefault(); setSearch(searchInput); setPage(1) }
-
-  function handleTabChange(tabKey: typeof providerTabs[number]["key"]) {
-    setActiveTab(tabKey)
-    const tab = providerTabs.find(t => t.key === tabKey)
-    if (tab) {
-      setUserTypeFilter(tab.userType)
-      setPage(1)
-    }
-  }
 
   function openServiceDetail(svc: ServiceListing) {
     setSelectedService(svc)
@@ -163,7 +125,7 @@ export default function ServicesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-heading">Fundis & Service Providers</h1>
+          <h1 className="text-2xl font-bold text-foreground font-heading">Service Providers</h1>
           <p className="mt-1 text-sm text-muted">{total} total service listings{showBin ? " in recycle bin (auto-removed after 3 days)" : ""}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -181,37 +143,9 @@ export default function ServicesPage() {
         </div>
       </div>
 
-      {/* Provider Tabs with Counts */}
-      <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-card p-1">
-        {providerTabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            className={cn(
-              "touch-target flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all border border-border",
-              activeTab === tab.key
-                ? "bg-accent text-white border-accent shadow-sm"
-                : "text-muted hover:text-foreground hover:border-primary/30"
-            )}
-          >
-            <span>{tab.label}</span>
-            {tabCounts[tab.key] !== undefined && (
-              <span className={cn(
-                "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                activeTab === tab.key ? "bg-white/20 text-white" : "bg-muted/10 text-muted"
-              )}>
-                {tabCounts[tab.key]}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
       <ServiceFilters
-        userTypeFilter={userTypeFilter}
         statusFilter={statusFilter}
         searchInput={searchInput}
-        onUserTypeChange={(ut) => { setUserTypeFilter(ut); setPage(1) }}
         onStatusChange={(s) => { setStatusFilter(s); setPage(1) }}
         onSearchInputChange={setSearchInput}
         onSearch={handleSearch}

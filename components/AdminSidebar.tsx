@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
-  X, Receipt, Wrench, ShieldCheck, BookUser, Archive, Flag,
+  X, Receipt, ShieldCheck, BookUser, Archive, Flag,
   Mail, Star, Briefcase,
 } from "@/components/ui/icons"
 
@@ -32,8 +32,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/users", label: "All Users", icon: Users, permission: "users" },
       { href: "/properties", label: "Properties", icon: Building2, permission: "properties" },
-      { href: "/services?type=FUNDI", label: "Fundis", icon: Wrench, permission: "services" },
-      { href: "/services?type=SERVICE_PROVIDER", label: "Service Providers", icon: Briefcase, permission: "services" },
+      { href: "/services", label: "Providers", icon: Briefcase, permission: "services" },
       { href: "/categories", label: "Categories", icon: Star, permission: "services" },
       { href: "/reviews", label: "Reviews", icon: Star, permission: "reviews" },
       { href: "/messages", label: "Contact Messages", icon: Mail, permission: "messages" },

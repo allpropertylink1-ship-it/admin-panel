@@ -4,32 +4,18 @@ import { cn } from "@/lib/utils"
 import { Search, X } from "@/components/ui/icons"
 
 interface ServiceFiltersProps {
-  userTypeFilter: string
   statusFilter: string
   searchInput: string
-  onUserTypeChange: (ut: string) => void
   onStatusChange: (s: string) => void
   onSearchInputChange: (v: string) => void
   onSearch: (e: React.FormEvent) => void
   onClearSearch: () => void
 }
 
-const USER_TYPE_TABS = ["", "FUNDI", "SERVICE_PROVIDER"]
-const USER_TYPE_LABELS: Record<string, string> = { "": "All Types", FUNDI: "Fundis", SERVICE_PROVIDER: "Service Providers" }
-
-export function ServiceFilters({ userTypeFilter, statusFilter, searchInput, onUserTypeChange, onStatusChange, onSearchInputChange, onSearch, onClearSearch }: ServiceFiltersProps) {
+export function ServiceFilters({ statusFilter, searchInput, onStatusChange, onSearchInputChange, onSearch, onClearSearch }: ServiceFiltersProps) {
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        {USER_TYPE_TABS.map((ut) => (
-          <button key={ut} onClick={() => onUserTypeChange(ut)}
-            className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all border border-border",
-              userTypeFilter === ut ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
-            )}>
-            {USER_TYPE_LABELS[ut]}
-          </button>
-        ))}
-        <span className="w-px h-5 bg-border mx-1" />
         {["", "PENDING_REVIEW", "APPROVED", "REJECTED"].map((s) => (
           <button key={s} onClick={() => onStatusChange(s)}
             className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-all border border-border",
