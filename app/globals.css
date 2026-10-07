@@ -59,12 +59,32 @@
   --z-toast: 110;
 }
 
+html {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+:where(main, section) {
+  min-width: 0;
+}
+
+img, video, canvas, iframe {
+  max-width: 100%;
+}
+
+pre, code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .touch-target {
@@ -74,6 +94,7 @@ body {
 
 input, textarea, select {
   font-family: inherit;
+  font-size: 16px;
 }
 
 kbd {

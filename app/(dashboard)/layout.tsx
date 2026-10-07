@@ -11,11 +11,11 @@ export default function DashboardLayout({
   return (
     <AuthGate>
       <SidebarProvider>
-        <div className="flex min-h-[100dvh] lg:pb-0 pb-16">
+        <div className="flex max-w-full min-h-[100dvh] overflow-x-clip lg:pb-0 pb-16">
           <AdminSidebar />
-          <div className="flex flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col">
             <DashboardHeader />
-            <main className="flex-1 overflow-auto p-4 lg:p-8">
+            <main className="min-w-0 flex-1 overflow-auto p-4 lg:p-8">
               <div className="mx-auto max-w-7xl">{children}</div>
             </main>
           </div>
