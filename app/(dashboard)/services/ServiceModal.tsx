@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { api } from "@/lib/api-client"
-import { X, Loader2, Wrench, DollarSign, MapPin, Check, Calendar, Eye } from "@/components/ui/icons"
+import { X, Loader2, Wrench, DollarSign, Check, Calendar, Eye } from "@/components/ui/icons"
 
 interface ServiceListing {
   id: string; title: string; description: string
@@ -86,7 +86,7 @@ export function ServiceModal({ service, open, onClose }: ServiceModalProps) {
             <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3">
               {[
                 { icon: <DollarSign size={14} />, label: "Price", value: detail.price ? formatPrice(detail.price, detail.currency ?? "KES") : "\u2014" },
-                { icon: <MapPin size={14} />, label: "Location", value: [detail.city, detail.region, detail.location].filter(Boolean).join(", ") || "\u2014" },
+                { icon: null, label: "Location", value: [detail.city, detail.region, detail.location].filter(Boolean).join(", ") || "\u2014" },
                 { icon: <Wrench size={14} />, label: "Category", value: detail.category?.name || "\u2014" },
                 { icon: <Check size={14} />, label: "Status", value: detail.moderationStatus === "PENDING_REVIEW" ? "Pending" : detail.moderationStatus },
                 { icon: <Calendar size={14} />, label: "Created", value: detail.createdAt ? new Date(detail.createdAt).toLocaleDateString() : "\u2014" },
