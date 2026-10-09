@@ -6,18 +6,18 @@ import { Search, X } from "@/components/ui/icons"
 interface UserFiltersProps {
   searchValue: string
   activeFilter: string
-  userTypeFilter: string
   onSearchChange: (v: string) => void
   onClearSearch: () => void
   onFilterChange: (f: string) => void
-  onUserTypeChange: (ut: string) => void
 }
 
 const FILTERS = ["All", "Active", "Pending", "Suspended"]
-const USER_TYPE_TABS = ["", "PROPERTY_OWNER", "AGENT", "FUNDI", "SERVICE_PROVIDER"]
-const USER_TYPE_LABELS: Record<string, string> = { "": "All Types", PROPERTY_OWNER: "Property Owners", AGENT: "Agents", FUNDI: "Fundis", SERVICE_PROVIDER: "Service Providers" }
 
-export function UserFilters({ searchValue, activeFilter, userTypeFilter, onSearchChange, onClearSearch, onFilterChange, onUserTypeChange }: UserFiltersProps) {
+// NOTE: user-type selection lives ONLY in the page-level tabs above
+// (which include CUSTOMER). This filter keeps search + status only so the
+// two controls can never disagree.
+
+export function UserFilters({ searchValue, activeFilter, onSearchChange, onClearSearch, onFilterChange }: UserFiltersProps) {
   return (
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -49,16 +49,6 @@ export function UserFilters({ searchValue, activeFilter, userTypeFilter, onSearc
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        {USER_TYPE_TABS.map((ut) => (
-          <button key={ut} onClick={() => onUserTypeChange(ut)}
-            className={cn("rounded-lg px-3 py-1.5 text-xs font-medium transition-all border border-border",
-              userTypeFilter === ut ? "bg-accent text-white border-accent shadow-sm" : "text-muted hover:text-foreground hover:border-primary/30"
-            )}>
-            {USER_TYPE_LABELS[ut] || ut}
-          </button>
-        ))}
-      </div>
     </>
   )
 }

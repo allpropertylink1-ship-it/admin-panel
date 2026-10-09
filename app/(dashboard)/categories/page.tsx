@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
+import { PermissionGuard } from "@/components/PermissionGuard"
 import { AlertCircle, Check, Loader2, Plus, Pencil, Trash2, Wrench } from "@/components/ui/icons"
 
 interface Category {
@@ -261,6 +262,8 @@ export default function CategoriesPage() {
             </select>
           </div>
           <div className="flex items-end gap-2">
+            {/* Merge enforced server-side via `services` write (routes/admin/categories.ts) */}
+            <PermissionGuard permission="services" action="write" redirect={false}>
             <button
               onClick={handleMergePreview}
               disabled={mergeLoading || !mergeSource || !mergeTarget}
@@ -268,7 +271,9 @@ export default function CategoriesPage() {
             >
               {mergeLoading ? "Checking…" : "Preview"}
             </button>
+            </PermissionGuard>
             {mergePreview && (
+              <PermissionGuard permission="services" action="write" redirect={false}>
               <button
                 onClick={handleMergeConfirm}
                 disabled={mergeLoading || mergePreview.children > 0}
@@ -277,6 +282,7 @@ export default function CategoriesPage() {
               >
                 Join ({mergePreview.listings})
               </button>
+              </PermissionGuard>
             )}
           </div>
         </div>
@@ -317,6 +323,8 @@ export default function CategoriesPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Slug</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Icon</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Parent</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Listings</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
                 </tr>
@@ -330,6 +338,10 @@ export default function CategoriesPage() {
                     </td>
                     <td className="px-4 py-3 text-xs text-muted">{c.slug}</td>
                     <td className="px-4 py-3 text-xs text-muted">{c.type}</td>
+                    <td className="px-4 py-3 text-xs text-muted">{c.icon || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-muted">
+                      {c.parentId ? (categories.find((p) => p.id === c.parentId)?.name ?? "—") : "—"}
+                    </td>
                     <td className="px-4 py-3 text-sm text-foreground tabular-nums">{c._count.serviceListings}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">

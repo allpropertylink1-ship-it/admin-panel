@@ -47,11 +47,13 @@ export default function ApprovalsPage() {
   }
 
   async function handleReject(userId: string) {
-    if (!rejectReason.trim()) return
+    const reason = rejectReason.trim()
+    if (!reason) return
     setActionLoading(userId)
     try {
       const { error } = await api.patch(`/api/admin/users/${userId}`, {
         accountStatus: "SUSPENDED",
+        rejectionReason: reason,
       })
       if (error) throw new Error("Failed to reject user")
       setUsers((prev) => prev.filter((u) => u.id !== userId))

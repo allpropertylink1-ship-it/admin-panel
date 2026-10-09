@@ -47,6 +47,9 @@ async function proxy(req: NextRequest, key: string) {
 
   const ct = upstream.headers.get("content-type")
   if (ct) res.headers.set("Content-Type", ct)
+  // Forwarded so api-client blob downloads can derive the export filename.
+  const disposition = upstream.headers.get("content-disposition")
+  if (disposition) res.headers.set("Content-Disposition", disposition)
   const setCookie = upstream.headers.getSetCookie?.() || []
   for (const sc of setCookie) res.headers.append("set-cookie", sc)
   if (setCookie.length === 0) {

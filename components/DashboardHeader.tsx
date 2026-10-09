@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context"
 import { DashboardDate } from "@/components/DashboardDate"
 import { Menu, User } from "@/components/ui/icons"
-import { useContext, createContext, useState } from "react"
+import { useContext, createContext, useState, useCallback, useMemo } from "react"
 
 interface SidebarContextType {
   isOpen: boolean
@@ -11,14 +11,18 @@ interface SidebarContextType {
   close: () => void
 }
 
+// Single SidebarContext for the dashboard shell: DashboardHeader toggles it,
+// AdminSidebar reads it via useSidebar(). Do not create a second context or
+// duplicate open-state elsewhere.
 const SidebarContext = createContext<SidebarContextType | null>(null)
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
-  const toggle = () => setIsOpen(prev => !prev)
-  const close = () => setIsOpen(false)
+  const toggle = useCallback(() => setIsOpen((prev) => !prev), [])
+  const close = useCallback(() => setIsOpen(false), [])
+  const value = useMemo(() => ({ isOpen, toggle, close }), [isOpen, toggle, close])
   return (
-    <SidebarContext.Provider value={{ isOpen, toggle, close }}>
+    <SidebarContext.Provider value={value}>
       {children}
     </SidebarContext.Provider>
   )
@@ -37,7 +41,7 @@ export function DashboardHeader() {
   const { isOpen, toggle } = useSidebar()
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 sticky top-0 z-20">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 sticky top-0 z-sticky">
       <div className="flex min-w-0 items-center gap-3">
         <DashboardDate />
       </div>
@@ -69,6 +73,7 @@ export function DashboardHeader() {
           className="touch-target lg:hidden flex items-center justify-center rounded-lg p-2 text-muted hover:text-foreground hover:bg-gray-100 transition-colors"
           aria-label={isOpen ? "Close menu" : "Open menu"}
           aria-expanded={isOpen}
+          aria-controls="admin-mobile-nav"
         >
           <Menu size={20} />
         </button>

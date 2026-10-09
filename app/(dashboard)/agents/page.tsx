@@ -317,7 +317,7 @@ export default function AgentsPage() {
               <table className="w-full min-w-[800px] text-sm">
                 <thead className="sticky top-0 z-10">
                   <tr className="border-b border-border bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-muted">
-                    <th className="w-10 px-2 py-3.5 text-left sticky left-0 z-20 bg-gray-50/80 border-r border-border">
+                    <th className="w-10 px-2 py-3.5 text-left sticky left-0 z-sticky bg-gray-50/80 border-r border-border">
                       <input type="checkbox"
                         checked={agents.length > 0 && selectedIds.length === agents.length}
                         onChange={() => {
@@ -340,7 +340,7 @@ export default function AgentsPage() {
                 <tbody className="divide-y divide-border">
                   {agents.map((agent) => (
                     <tr key={agent.id} onClick={() => router.push(`/agents/${agent.id}`)} className={cn("hover:bg-primary-50/30 cursor-pointer transition-colors", selectedIds.includes(agent.id) && "bg-primary/5")}>
-                      <td className="w-10 px-2 py-3 text-center sticky left-0 z-20 bg-white border-r border-border">
+                      <td className="w-10 px-2 py-3 text-center sticky left-0 z-sticky bg-white border-r border-border">
                         <input type="checkbox"
                           checked={selectedIds.includes(agent.id)}
                           onChange={() => setSelectedIds(prev => prev.includes(agent.id) ? prev.filter(id => id !== agent.id) : [...prev, agent.id])}

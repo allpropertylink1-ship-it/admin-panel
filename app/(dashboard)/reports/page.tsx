@@ -6,9 +6,10 @@ import {
   Users,
   Building2,
   UserCheck,
-  Download,
   MapPin,
+  TrendingUp,
 } from "@/components/ui/icons";
+import { ExportButton } from "@/components/shared/ExportButton";
 
 type RecentUser = {
   id: string;
@@ -202,10 +203,7 @@ export default function ReportsPage() {
             Platform analytics and key metrics.
           </p>
         </div>
-        <button type="button" onClick={() => { window.location.href = "/api/admin/exports/audit" }} className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-50 transition-all inline-flex items-center gap-2">
-          <Download size={16} />
-          Export
-        </button>
+        <ExportButton exportPath="/api/admin/exports/audit" filename="audit.csv" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -341,7 +339,48 @@ export default function ReportsPage() {
           )}
         </div>
 
-
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+          <div className="border-b border-border px-5 py-4">
+            <h2 className="text-sm font-semibold text-foreground">
+              7-Day Snapshot
+            </h2>
+          </div>
+          <div className="space-y-4 p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <TrendingUp size={20} className="text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">
+                  {last7Days.reduce((sum, d) => sum + d.count, 0).toLocaleString()}
+                </p>
+                <p className="text-xs text-muted">registrations in the last 7 days</p>
+              </div>
+            </div>
+            {last7Days.length > 0 && (
+              <div>
+                <div className="flex items-end gap-1.5 h-20">
+                  {last7Days.map((d) => (
+                    <div
+                      key={d.date}
+                      title={`${new Date(d.date).toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}`}
+                      className="flex-1 rounded bg-gradient-to-t from-primary/80 to-primary/40"
+                      style={{ height: `${Math.max((d.count / maxCount) * 100, d.count > 0 ? 8 : 2)}%` }}
+                    />
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-muted">
+                  Peak: {(() => {
+                    const peak = last7Days.reduce((a, b) => (b.count > a.count ? b : a), last7Days[0]);
+                    return `${peak.count} on ${new Date(peak.date).toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}`;
+                  })()}
+                  {" · "}
+                  Top city: {topCities[0] ? `${topCities[0].city} (${topCities[0].count})` : "—"}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { useSidebar } from "@/components/DashboardHeader"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
@@ -76,17 +77,19 @@ const navGroups: { group: string; items: NavItem[] }[] = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const { user, logout: signOut } = useAuth()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  // Mobile menu state lives in DashboardHeader's SidebarContext (single source
+  // of truth) so the header hamburger actually controls this menu.
+  const { isOpen: mobileOpen, close: closeMobileNav } = useSidebar()
 
   // Escape key handler for mobile dropdown
   useEffect(() => {
     if (!mobileOpen) return
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileOpen(false)
+      if (e.key === "Escape") closeMobileNav()
     }
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [mobileOpen])
+  }, [mobileOpen, closeMobileNav])
 
   function canAccess(permission: string): boolean {
     if (!user) return false
@@ -103,6 +106,7 @@ export function AdminSidebar() {
     if (href === "/properties") return pathname.startsWith("/properties")
     if (href === "/kyc") return pathname.startsWith("/kyc")
     if (href === "/claims") return pathname.startsWith("/claims")
+    if (href === "/payouts") return pathname.startsWith("/payouts")
     if (href === "/agents") return pathname.startsWith("/agents")
     if (href === "/disputes") return pathname.startsWith("/disputes")
     if (href === "/reports") return pathname.startsWith("/reports")
@@ -118,66 +122,42 @@ export function AdminSidebar() {
   }
 
   const renderNav = () => (
-    <>
-      <div className="mb-2">
-        <Link
-          href="/"
-          className="flex shrink-0 items-center">
-          <Image
-            src="/logos/logo.png"
-            alt="All Property Link"
-            width={756}
-            height={319}
-            className="h-8 w-auto"
-          />
-        </Link>
-      </div>
-      <nav className="space-y-2">
-        {navGroups.map((group) => {
-          const visibleItems = group.items.filter((item) => canAccess(item.permission))
-          if (visibleItems.length === 0) return null
-          return (
-          <div key={group.group} className="mb-5 last:mb-0">
-            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-200/50">
-              {group.group}
-            </p>
-            <div className="space-y-0.5">
-              {visibleItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href!}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "touch-target group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 lg:px-4",
-                    isActive(item.href!)
-                      ? "bg-sidebar-active text-white shadow-sm shadow-black/10"
-                      : item.label === "Deleted Accounts"
-                      ? "text-primary-300/50 hover:bg-sidebar-hover hover:text-primary-200/70"
-                      : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"
-                  )}
-                >
-                  {isActive(item.href!) && (
-                    <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-accent" />
-                  )}
-                  <item.icon size={18} className={cn("shrink-0", isActive(item.href!) && "text-accent")} />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </div>
+    <div className="space-y-2">
+      {navGroups.map((group) => {
+        const visibleItems = group.items.filter((item) => canAccess(item.permission))
+        if (visibleItems.length === 0) return null
+        return (
+        <div key={group.group} className="mb-5 last:mb-0">
+          <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-200/50">
+            {group.group}
+          </p>
+          <div className="space-y-0.5">
+            {visibleItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href!}
+                onClick={() => closeMobileNav()}
+                className={cn(
+                  "touch-target group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 lg:px-4",
+                  isActive(item.href!)
+                    ? "bg-sidebar-active text-white shadow-sm shadow-black/10"
+                    : item.label === "Deleted Accounts"
+                    ? "text-primary-300/50 hover:bg-sidebar-hover hover:text-primary-200/70"
+                    : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"
+                )}
+              >
+                {isActive(item.href!) && (
+                  <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-accent" />
+                )}
+                <item.icon size={18} className={cn("shrink-0", isActive(item.href!) && "text-accent")} />
+                <span>{item.label}</span>
+              </Link>
+            ))}
           </div>
-          )
-        })}
-      </nav>
-      <div className="border-t border-primary-800/30 p-3 mt-4">
-        <button
-          onClick={() => { signOut(); setMobileOpen(false); }}
-          className="touch-target flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary-300/70 transition-all duration-150 hover:bg-sidebar-hover hover:text-white"
-        >
-          <LogOut size={18} />
-          Sign out
-        </button>
-      </div>
-    </>
+        </div>
+        )
+      })}
+    </div>
   )
 
   // Mobile nav with proper ARIA menu roles
@@ -196,10 +176,10 @@ export function AdminSidebar() {
               <Link
                 key={item.href}
                 href={item.href!}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => closeMobileNav()}
                 role="menuitem"
                 className={cn(
-                  "touch-target flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  "touch-target relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive(item.href!)
                     ? "bg-sidebar-active text-white"
                     : item.label === "Deleted Accounts"
@@ -207,6 +187,9 @@ export function AdminSidebar() {
                     : "text-primary-200/80 hover:bg-sidebar-hover hover:text-white"
                 )}
               >
+                {isActive(item.href!) && (
+                  <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-accent" />
+                )}
                 <item.icon size={18} className={cn("shrink-0", isActive(item.href!) && "text-accent")} />
                 <span>{item.label}</span>
               </Link>
@@ -217,7 +200,7 @@ export function AdminSidebar() {
       })}
       <div className="border-t border-border pt-3 mt-2">
         <button
-          onClick={() => { signOut(); setMobileOpen(false); }}
+          onClick={() => { signOut(); closeMobileNav(); }}
           role="menuitem"
           className="touch-target flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-primary-300/70 transition-colors hover:bg-sidebar-hover hover:text-white"
         >
@@ -233,11 +216,11 @@ export function AdminSidebar() {
       {/* Desktop Sidebar - always visible on lg+ */}
       <aside
         className={cn(
-          "hidden lg:block fixed inset-y-0 left-0 z-40 flex w-64 max-w-[85vw] flex-col bg-sidebar shadow-2xl shadow-black/20 lg:static lg:w-56"
+          "hidden lg:flex fixed inset-y-0 left-0 z-fixed w-64 max-w-[85vw] flex-col bg-sidebar shadow-2xl shadow-black/20 lg:static lg:w-56"
         )}
       >
         <div className="flex h-16 items-center gap-3 border-b border-primary-800/30 px-5">
-          <div className="flex shrink-0 items-center rounded-lg bg-white p-1.5 shadow-sm">
+          <Link href="/dashboard" className="flex shrink-0 items-center rounded-lg bg-white p-1.5 shadow-sm" aria-label="All Property Link admin dashboard">
             <Image
               src="/logos/logo.png"
               alt="All Property Link"
@@ -245,7 +228,7 @@ export function AdminSidebar() {
               height={319}
               className="h-5 w-auto"
             />
-          </div>
+          </Link>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">Admin Panel</p>
             <p className="text-[11px] text-primary-200/70 truncate">All Property Link</p>
@@ -267,17 +250,17 @@ export function AdminSidebar() {
         </div>
       </aside>
 
-      {/* Mobile Dropdown Menu - controlled by DashboardHeader */}
+      {/* Mobile Dropdown Menu - controlled by DashboardHeader via SidebarContext */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden" role="menu" id="admin-mobile-nav">
-          <button type="button" aria-label="Close menu" className="absolute inset-0 bg-black/20" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 z-modal lg:hidden" role="menu" id="admin-mobile-nav">
+          <button type="button" aria-label="Close menu" className="absolute inset-0 bg-black/20" onClick={() => closeMobileNav()} />
           <div className="absolute right-4 top-[calc(4rem+env(safe-area-inset-top))] max-h-[calc(100dvh-5rem)] w-full max-w-[85vw] sm:w-64 overflow-y-auto rounded-2xl bg-white border border-border shadow-2xl">
             <div className="flex h-12 items-center justify-between px-4 border-b border-border">
               <span className="text-[15px] font-bold tracking-tight text-text-primary">Navigation</span>
               <button
                 type="button"
                 className="flex h-11 w-11 touch-target items-center justify-center rounded-full hover:bg-surface-secondary"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => closeMobileNav()}
                 aria-label="Close menu"
               >
                 <X size={16} />

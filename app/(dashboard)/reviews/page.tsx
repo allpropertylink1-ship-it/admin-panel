@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { AlertCircle, Loader2, Star, Trash2 } from "@/components/ui/icons"
 import { TablePagination } from "@/components/shared/TablePagination"
+import { BulkActionsBar } from "@/components/BulkActionsBar"
+import { ExportButton } from "@/components/shared/ExportButton"
 
 interface Review {
   id: string
@@ -36,6 +38,7 @@ export default function ReviewsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const limit = 20
 
   const fetchReviews = useCallback(async () => {
@@ -88,6 +91,8 @@ export default function ReviewsPage() {
           <h1 className="text-2xl font-bold text-foreground font-heading">Reviews</h1>
           <p className="mt-1 text-sm text-muted">{total} total customer reviews</p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <ExportButton exportPath="/api/admin/exports/reviews" filename="reviews.csv" />
         <select
           value={targetType}
           onChange={(e) => { setTargetType(e.target.value); setPage(1) }}
@@ -99,6 +104,7 @@ export default function ReviewsPage() {
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
+        </div>
       </div>
 
       <form onSubmit={handleSearch} className="flex gap-2">
@@ -148,6 +154,17 @@ export default function ReviewsPage() {
             <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
+                  <th className="w-10 px-2 py-3 text-left">
+                    <input type="checkbox"
+                      checked={reviews.length > 0 && selectedIds.length === reviews.length}
+                      onChange={() => {
+                        if (selectedIds.length === reviews.length) { setSelectedIds([]) }
+                        else { setSelectedIds(reviews.map(r => r.id)) }
+                      }}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                      aria-label="Select all reviews"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Reviewer</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Target</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Rating</th>
@@ -159,6 +176,14 @@ export default function ReviewsPage() {
               <tbody className="divide-y divide-border">
                 {reviews.map((r) => (
                   <tr key={r.id} className="transition-colors hover:bg-gray-50/60">
+                    <td className="w-10 px-2 py-3 text-center">
+                      <input type="checkbox"
+                        checked={selectedIds.includes(r.id)}
+                        onChange={() => setSelectedIds(prev => prev.includes(r.id) ? prev.filter(id => id !== r.id) : [...prev, r.id])}
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                        aria-label={`Select review by ${r.user.firstName} ${r.user.lastName}`}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <p className="text-sm text-foreground">{r.user.firstName} {r.user.lastName}</p>
                       <p className="text-xs text-muted">{r.user.email}</p>
@@ -199,6 +224,30 @@ export default function ReviewsPage() {
         {totalPages > 1 && (
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={limit} onPageChange={setPage} />
         )}
+
+        <BulkActionsBar
+          selectedIds={selectedIds}
+          onClear={() => setSelectedIds([])}
+          actions={[
+            { label: "Delete", action: "delete", variant: "destructive", requiresConfirmation: true },
+          ]}
+          onAction={async () => {
+            setActionLoading("bulk")
+            try {
+              for (const id of selectedIds) {
+                const { error } = await api.delete(`/api/admin/reviews/${id}`)
+                if (error) throw new Error(error)
+              }
+              setSelectedIds([])
+              await fetchReviews()
+            } catch (err: unknown) {
+              setError(err instanceof Error ? err.message : "Bulk delete failed")
+            } finally {
+              setActionLoading(null)
+            }
+          }}
+          loading={actionLoading === "bulk"}
+        />
       </div>
     </div>
   )

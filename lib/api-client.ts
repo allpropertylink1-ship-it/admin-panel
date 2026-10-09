@@ -182,6 +182,90 @@ class ApiClient {
       headers: { "Cache-Control": "no-store" },
     })
   }
+
+  /** Clear the in-memory GET cache (e.g. via list-header "Clear cache"). */
+  clearGetCache(): void {
+    this.getCache.clear()
+  }
+
+  /**
+   * Milliseconds since `path` was cached, or null when not cached / expired.
+   * TTL is unchanged (ApiClient.GET_TTL_MS). Omit `path` for the freshest
+   * entry age across the whole cache.
+   */
+  getCacheAge(path?: string): number | null {
+    if (path) {
+      const hit = this.getCache.get(path)
+      if (!hit || Date.now() - hit.at >= ApiClient.GET_TTL_MS) return null
+      return Date.now() - hit.at
+    }
+    let freshest: number | null = null
+    for (const entry of this.getCache.values()) {
+      const age = Date.now() - entry.at
+      if (age < ApiClient.GET_TTL_MS && (freshest === null || age < freshest)) {
+        freshest = age
+      }
+    }
+    return freshest
+  }
+
+  /**
+   * Blob download for CSV/export endpoints (which return files, not JSON,
+   * so they bypass request()/GET-cache). Forwards cookies so the admin
+   * proxy authenticates the same as JSON calls.
+   */
+  async download(
+    path: string
+  ): Promise<{ blob?: Blob; filename?: string; error?: string }> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
+      let res: Response
+      try {
+        res = await fetch(`${this.baseUrl}${path}`, {
+          method: "GET",
+          credentials: "include",
+          signal: controller.signal,
+        })
+      } finally {
+        clearTimeout(timeoutId)
+      }
+      if (res.status === 401) {
+        const refreshed = await this.refresh()
+        if (!refreshed) return { error: "Session expired" }
+        res = await fetch(`${this.baseUrl}${path}`, {
+          method: "GET",
+          credentials: "include",
+        })
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const msg =
+          typeof body?.error === "string" ? body.error : `HTTP ${res.status}`
+        return { error: msg }
+      }
+      const blob = await res.blob()
+      const disposition = res.headers.get("content-disposition") || ""
+      const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)
+      const filename = match?.[1] ? decodeURIComponent(match[1]) : undefined
+      return { blob, filename }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return { error: "Request timed out" }
+      }
+      return { error: err instanceof Error ? err.message : "Network error" }
+    }
+  }
 }
 
 export const api = new ApiClient(API_BASE)
+
+/** Clear the shared in-memory GET cache without touching its TTL. */
+export function clearApiCache(): void {
+  api.clearGetCache()
+}
+
+/** Age (ms) of a cached GET entry, or null when uncached/expired. */
+export function getApiCacheAge(path?: string): number | null {
+  return api.getCacheAge(path)
+}

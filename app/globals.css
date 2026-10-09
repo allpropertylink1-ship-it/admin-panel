@@ -59,6 +59,29 @@
   --z-toast: 110;
 }
 
+:root {
+  /* Z-index scale (runtime variables mirroring @theme above) */
+  --z-dropdown: 40;
+  --z-sticky: 50;
+  --z-fixed: 60;
+  --z-modal-backdrop: 70;
+  --z-modal: 80;
+  --z-popover: 90;
+  --z-tooltip: 100;
+  --z-toast: 110;
+}
+
+@layer utilities {
+  .z-dropdown { z-index: var(--z-dropdown); }
+  .z-sticky { z-index: var(--z-sticky); }
+  .z-fixed { z-index: var(--z-fixed); }
+  .z-modal-backdrop { z-index: var(--z-modal-backdrop); }
+  .z-modal { z-index: var(--z-modal); }
+  .z-popover { z-index: var(--z-popover); }
+  .z-tooltip { z-index: var(--z-tooltip); }
+  .z-toast { z-index: var(--z-toast); }
+}
+
 html {
   max-width: 100%;
   overflow-x: clip;
@@ -89,6 +112,8 @@ pre, code {
 }
 
 .touch-target {
+  min-height: 44px;
+  min-width: 44px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }

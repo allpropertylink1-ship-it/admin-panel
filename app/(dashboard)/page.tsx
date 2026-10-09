@@ -8,6 +8,7 @@ import {
   Users, UserCheck, Building2, ShieldOff,
   Handshake, Clock, AlertCircle, ArrowUpRight,
   UserPlus, ChevronRight, Wrench, Star, Mail,
+  MapPin, BarChart3,
 } from "@/components/ui/icons"
 
 interface RecentUser {
@@ -197,7 +198,64 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <div className="flex items-center gap-2.5">
+                <MapPin size={16} className="text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Top Cities</h2>
+              </div>
+              <Link href="/reports" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors">
+                Reports <ChevronRight size={12} />
+              </Link>
+            </div>
+            <div className="divide-y divide-border">
+              {data.topCities.length === 0 ? (
+                <p className="px-5 py-8 text-center text-sm text-muted">No city data yet</p>
+              ) : (
+                data.topCities.slice(0, 5).map((c, i) => (
+                  <div key={c.city} className="flex items-center gap-2.5 px-5 py-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-xs font-bold text-primary">
+                      {i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{c.city}</span>
+                    <span className="shrink-0 text-sm font-semibold text-foreground tabular-nums">{c.count}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
 
+          <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex items-center gap-2.5 border-b border-border px-5 py-4">
+              <BarChart3 size={16} className="text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Registrations (7 days)</h2>
+            </div>
+            <div className="p-5">
+              {data.registrationsByDay.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted">No registration data yet</p>
+              ) : (
+                <div className="flex h-24 items-end gap-1.5">
+                  {data.registrationsByDay.slice(-7).map((d) => {
+                    const max = Math.max(...data.registrationsByDay.slice(-7).map((x) => x.count), 1)
+                    return (
+                      <div key={d.date} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                        <div
+                          title={`${new Date(d.date).toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}`}
+                          className="w-full rounded bg-gradient-to-t from-primary/80 to-primary/40"
+                          style={{ height: `${Math.max((d.count / max) * 100, d.count > 0 ? 10 : 3)}%`, minHeight: 4 }}
+                        />
+                        <span className="text-[10px] text-muted">
+                          {new Date(d.date).toLocaleDateString("en-US", { weekday: "narrow" })}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -1,12 +1,13 @@
-﻿/* eslint-disable @next/next/no-img-element */
-"use client"
+﻿"use client"
 
-import { Search, X, Shield, Download, FileText } from "@/components/ui/icons"
+import { Search, X, Shield, FileText } from "@/components/ui/icons"
 import { KycDocThumbnail } from "./KycDocThumbnail"
 import { TablePagination } from "@/components/shared/TablePagination"
+import { ExportButton } from "@/components/shared/ExportButton"
+import { ListFreshness } from "@/components/shared/ListFreshness"
 import { cn, isValidUrl } from "@/lib/utils"
 import { absUpload } from "@/lib/img";
-import { FILTERS, docLabels, timeAgo, initials, Skeleton, EmptyState, DocStatusBadge } from "./utils"
+import { FILTERS, docLabels, timeAgo, initials, Skeleton, EmptyState, DocStatusBadge, ImgWithFallback } from "./utils"
 import type { KycDocument } from "./types"
 
 interface KycListProps {
@@ -26,11 +27,15 @@ interface KycListProps {
   onToggleSelectAll: () => void
   onPageChange: (p: number) => void
   listRef: React.RefObject<HTMLDivElement | null>
+  lastUpdated?: number | null
+  onRefresh?: () => void
+  onClearCache?: () => void
 }
 
 export default function KycList({
   docs, total, selectedDoc, selectedIds, search, filter, loading, page, totalPages,
   onSelectDoc, onSearchChange, onFilterChange, onToggleSelect, onToggleSelectAll, onPageChange, listRef,
+  lastUpdated, onRefresh, onClearCache,
 }: KycListProps) {
   const pendingCount = docs.filter((d) => d.status === "PENDING").length
 
@@ -45,20 +50,23 @@ export default function KycList({
               <span className="font-medium text-foreground">{total}</span> total
               {pendingCount > 0 && (
                 <span className="ml-1.5">
-                  Â· <span className="font-medium text-warning">{pendingCount}</span> pending
+                  · <span className="font-medium text-warning">{pendingCount}</span> pending
                 </span>
               )}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => { window.location.href = "/api/admin/exports/kyc" }}
-            className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-1.5"
-          >
-            <Download size={14} />
-            Export
-          </button>
+          <ExportButton exportPath="/api/admin/exports/kyc" filename="kyc.csv" label="Export" className="px-3 py-1.5 text-xs" />
         </div>
+        {onRefresh && onClearCache && (
+          <div className="mt-2">
+            <ListFreshness
+              lastUpdated={lastUpdated ?? null}
+              refreshing={loading}
+              onRefresh={onRefresh}
+              onClearCache={onClearCache}
+            />
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative mb-3">
@@ -163,10 +171,9 @@ export default function KycList({
                   onClick={(e) => e.stopPropagation()}
                 />
                 <div className="flex min-w-0 items-center gap-2.5">
-                  {doc.user?.avatar && isValidUrl(doc.user.avatar) ? (
-                    <img src={absUpload(doc.user.avatar)} alt=""
+                  {doc.user?.avatar && isValidUrl(absUpload(doc.user.avatar) || "") ? (
+                    <ImgWithFallback src={absUpload(doc.user.avatar)} alt=""
                       className="h-8 w-8 flex-shrink-0 rounded-full object-cover ring-2 ring-primary/10"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
                     />
                   ) : (
                     <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 text-xs font-bold text-primary">
@@ -184,7 +191,7 @@ export default function KycList({
               </div>
               <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
                 <span>{docLabels[doc.documentType] || doc.documentType}</span>
-                <span className="text-border">Â·</span>
+                <span className="text-border">·</span>
                 <span>{timeAgo(doc.createdAt)}</span>
               </div>
               {(doc.frontImage || doc.backImage || doc.businessPermit) && (
@@ -196,7 +203,7 @@ export default function KycList({
                     <KycDocThumbnail url={doc.backImage} label="Back" />
                   )}
                   {doc.businessPermit && (
-                    isValidUrl(absUpload(doc.businessPermit) || doc.businessPermit) ? (
+                    isValidUrl(absUpload(doc.businessPermit) || "") ? (
                       <a href={absUpload(doc.businessPermit)} target="_blank" rel="noopener noreferrer"
                         className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10 text-warning/60 hover:bg-warning/20 transition-colors"
                         title="View Business Permit"

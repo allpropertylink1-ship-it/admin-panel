@@ -1,10 +1,10 @@
-﻿/* eslint-disable @next/next/no-img-element */
-"use client"
+﻿"use client"
 
 import { useRef } from "react"
 import { Shield, AlertCircle, Loader2, CheckCircle, XCircle, RefreshCcw, Clock, User, FileText, ArrowUp, ArrowDown, ArrowLeft } from "@/components/ui/icons"
 import PdfViewer from "@/components/PdfViewer"
 import { cn, isValidUrl } from "@/lib/utils"
+import { PermissionGuard } from "@/components/PermissionGuard"
 import { absUpload } from "@/lib/img";
 import { docLabels, timeAgo, fmtDate, initials, ImgWithFallback, Skeleton, EmptyState, StatusBadge, DocStatusBadge } from "./utils"
 import type { KycDocument } from "./types"
@@ -23,6 +23,19 @@ interface KycDetailProps {
   onOpenLightbox: (images: { src: string; label: string }[], index: number) => void
   onRetry?: () => void
   onBack?: () => void
+}
+
+function buildDocLightboxImages(doc: KycDocument, userName: string): { src: string; label: string }[] {
+  const images: { src: string; label: string }[] = []
+  const front = absUpload(doc.frontImage) || ""
+  const back = absUpload(doc.backImage) || ""
+  if (front && isValidUrl(front) && !front.match(/\.pdf/i)) {
+    images.push({ src: front, label: `${docLabels[doc.documentType] || doc.documentType} \u2014 ${userName}` })
+  }
+  if (back && isValidUrl(back) && !back.match(/\.pdf/i)) {
+    images.push({ src: back, label: `Back \u2014 ${docLabels[doc.documentType] || doc.documentType}` })
+  }
+  return images
 }
 
 export default function KycDetail({
@@ -59,10 +72,9 @@ export default function KycDetail({
                 <ArrowLeft size={20} />
               </button>
             )}
-            {selectedDoc.user?.avatar && isValidUrl(selectedDoc.user.avatar) ? (
-              <img src={absUpload(selectedDoc.user.avatar)} alt=""
+            {selectedDoc.user?.avatar && isValidUrl(absUpload(selectedDoc.user.avatar) || "") ? (
+              <ImgWithFallback src={absUpload(selectedDoc.user.avatar)} alt=""
                 className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/15"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
               />
             ) : (
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-accent/15 text-lg font-bold text-primary shadow-sm ring-2 ring-primary/10">
@@ -150,11 +162,11 @@ export default function KycDetail({
                     <label className="mb-1.5 text-[11px] font-semibold text-muted uppercase tracking-widest">
                       Front Image
                     </label>
-                    {isValidUrl(doc.frontImage) ? (
-                      doc.frontImage.match(/\.pdf/i) ? (
-                        <PdfViewer url={doc.frontImage} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Front`} compact />
+                    {isValidUrl(absUpload(doc.frontImage) || "") ? (
+                      doc.frontImage!.match(/\.pdf/i) ? (
+                        <PdfViewer url={doc.frontImage!} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Front`} compact />
                       ) : (
-                        <button onClick={() => onOpenLightbox([{ src: absUpload(doc.frontImage)!, label: `${docLabels[doc.documentType] || doc.documentType} \u2014 ${selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}` }], 0)}
+                        <button onClick={() => onOpenLightbox(buildDocLightboxImages(doc, selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"), 0)}
                           className="group relative overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-md active:scale-[0.99]"
                         >
                           <ImgWithFallback src={absUpload(doc.frontImage)} alt={doc.documentType}
@@ -185,18 +197,16 @@ export default function KycDetail({
                 {doc.backImage ? (
                   <div className="flex flex-col">
                     <label className="mb-2 text-[11px] font-semibold text-muted uppercase tracking-widest">Back Image</label>
-                    {isValidUrl(doc.backImage) ? (
-                      doc.backImage.match(/\.pdf/i) ? (
-                        <PdfViewer url={doc.backImage} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Back`} compact />
+                    {isValidUrl(absUpload(doc.backImage) || "") ? (
+                      doc.backImage!.match(/\.pdf/i) ? (
+                        <PdfViewer url={doc.backImage!} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Back`} compact />
                       ) : (
-                        <button onClick={() => onOpenLightbox([{ src: absUpload(doc.backImage)!, label: `Back \u2014 ${docLabels[doc.documentType] || doc.documentType}` }], 0)}
+                        <button onClick={() => { const imgs = buildDocLightboxImages(doc, selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"); onOpenLightbox(imgs, imgs.length > 1 ? 1 : 0) }}
                           className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all hover:shadow-md active:scale-[0.99]"
                         >
-                          <img src={absUpload(doc.backImage)} alt="Back"
+                          <ImgWithFallback src={absUpload(doc.backImage)} alt="Back"
                             className="h-52 w-full object-contain p-2"
-                            onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = "none"; t.parentElement!.querySelector(".fallback")?.classList.remove("hidden") }}
                           />
-                          <ImgWithFallback src="" alt="Back" className="hidden fallback absolute inset-0 h-full w-full" />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/5">
                             <span className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
                               Click to zoom
@@ -228,7 +238,7 @@ export default function KycDetail({
                     Business Permit
                     <span className="font-normal normal-case text-muted/60">(Optional)</span>
                   </label>
-                  {isValidUrl(doc.businessPermit) ? (
+                  {isValidUrl(absUpload(doc.businessPermit) || "") ? (
                     <div className="flex items-center gap-3 rounded-lg border border-border bg-warning/5 px-4 py-3">
                       <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-warning/10">
                         <FileText size={20} className="text-warning" />
@@ -310,6 +320,7 @@ export default function KycDetail({
               {/* Action buttons */}
               <div className="border-t border-border px-5 py-3">
                 {doc.status === "PENDING" && (
+                  <PermissionGuard permission="kyc" action="write" redirect={false}>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => onUpdateDoc(doc.id, { status: "VERIFIED" })}
@@ -339,9 +350,11 @@ export default function KycDetail({
                       </button>
                     </div>
                   </div>
+                  </PermissionGuard>
                 )}
 
                 {doc.status === "VERIFIED" && (
+                  <PermissionGuard permission="kyc" action="write" redirect={false}>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => onUpdateDoc(doc.id, { status: "PENDING" })}
@@ -362,9 +375,11 @@ export default function KycDetail({
                       />
                     </div>
                   </div>
+                  </PermissionGuard>
                 )}
 
                 {doc.status === "REJECTED" && (
+                  <PermissionGuard permission="kyc" action="write" redirect={false}>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => onUpdateDoc(doc.id, { status: "PENDING", rejectionReason: undefined })}
@@ -375,6 +390,7 @@ export default function KycDetail({
                       Re-open for Resubmission
                     </button>
                   </div>
+                  </PermissionGuard>
                 )}
               </div>
             </div>

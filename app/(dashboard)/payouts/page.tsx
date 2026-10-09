@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import Link from "next/link"
 import { api } from "@/lib/api-client"
-import { Loader2, AlertCircle, CheckCircle } from "@/components/ui/icons"
+import { Loader2, AlertCircle, CheckCircle, Banknote, Receipt } from "@/components/ui/icons"
+import { ExportButton } from "@/components/shared/ExportButton"
 
 interface PayoutClaim {
   id: string
@@ -42,9 +44,26 @@ export default function AdminPayoutsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-heading text-2xl font-bold text-text-primary">Payouts</h1>
-        <p className="mt-1 text-sm text-text-secondary">All payouts are generated from approved payment claims · {total} total</p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10">
+            <Banknote size={20} className="text-success" />
+          </div>
+          <div>
+            <h1 className="font-heading text-2xl font-bold text-text-primary">Payouts</h1>
+            <p className="mt-1 text-sm text-text-secondary">Paid (approved) payment claims · {total} total</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/claims"
+            className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-card"
+          >
+            <Receipt size={16} />
+            Claims
+          </Link>
+          <ExportButton exportPath="/api/admin/exports/claims?status=PAID" filename="payouts.csv" />
+        </div>
       </div>
 
       {loading ? (

@@ -44,14 +44,15 @@ export function timeAgo(d: string) {
 
 export function ImgWithFallback({ src, alt, className, style }: { src: string | null | undefined; alt: string; className?: string; style?: React.CSSProperties }) {
   const [failed, setFailed] = useState(false)
-  if (!src || failed || !isValidUrl(src)) {
+  const abs = absUpload(src) || ""
+  if (!src || failed || !isValidUrl(abs)) {
     return (
       <div className={cn("flex items-center justify-center bg-gray-100 text-muted", className)} style={style}>
         <ImageIcon size={20} />
       </div>
     )
   }
-  return <img src={absUpload(src)} alt={alt} className={className} style={style} onError={() => setFailed(true)} />
+  return <img src={abs} alt={alt} className={className} style={style} onError={() => setFailed(true)} />
 }
 
 export function Skeleton({ className }: { className?: string }) {

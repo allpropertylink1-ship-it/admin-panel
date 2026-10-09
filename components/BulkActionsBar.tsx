@@ -33,11 +33,11 @@ export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loadin
 
   return (
     <>
-      <div className="fixed bottom-6 left-1/2 z-50 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 shadow-lg lg:bottom-24">
-        <span className="whitespace-nowrap text-sm font-medium text-amber-800">
+      <div className="fixed bottom-6 left-1/2 z-fixed flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center items-center gap-3 rounded-xl border border-warning/30 bg-warning-50 px-5 py-3 shadow-lg lg:bottom-24">
+        <span className="whitespace-nowrap text-sm font-medium text-accent-700">
           {selectedIds.length} selected
         </span>
-        <div className="h-5 w-px bg-amber-200" />
+        <div className="h-5 w-px bg-warning/30" />
         {actions.map((actionDef) => (
           <button
             key={actionDef.action}
@@ -46,13 +46,13 @@ export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loadin
             className={`touch-target inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
               actionDef.variant === "destructive"
                 ? "bg-red-100 text-red-700 hover:bg-red-200"
-                : "bg-white text-amber-800 hover:bg-amber-100"
+                : "bg-white text-accent-700 hover:bg-warning-50"
             }`}
           >
             {actionDef.label}
           </button>
         ))}
-        <div className="h-5 w-px bg-amber-200" />
+        <div className="h-5 w-px bg-warning/30" />
         <button
           onClick={onClear}
           disabled={loading}
@@ -63,7 +63,7 @@ export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loadin
       </div>
 
       {confirmAction && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 lg:p-0">
+        <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/40 p-4 lg:p-0">
           <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-foreground">
               Confirm {actions.find((a) => a.action === confirmAction)?.label.toLowerCase()}?

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { api } from "@/lib/api-client"
+import { api, clearApiCache } from "@/lib/api-client"
 import ImageLightbox from "@/components/ImageLightbox"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import KycList from "./KycList"
@@ -28,6 +28,7 @@ export default function KycPage() {
   const [lightbox, setLightbox] = useState<{ images: { src: string; label: string }[]; index: number } | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const [mobileView, setMobileView] = useState<"list" | "detail">("list")
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null)
 
   const fetchDocs = useCallback(async () => {
     setLoading(true)
@@ -43,6 +44,7 @@ export default function KycPage() {
       setDocs(r.documents)
       setTotal(r.total)
       setTotalPages(r.totalPages)
+      setLastUpdated(Date.now())
       if (r.documents.length > 0) {
         if (!selectedDoc || !r.documents.find((d) => d.id === selectedDoc.id)) {
           setSelectedDoc(r.documents[0])
@@ -123,12 +125,14 @@ export default function KycPage() {
   }, [navigate, lightbox])
 
   const openLightbox = (images: { src: string; label: string }[], index: number) => {
-    if (images.length === 0) return
-    if (images[index]?.src.match(/\.pdf/i)) {
-      window.open(images[index].src, "_blank", "noopener,noreferrer")
+    const clean = images.filter((i) => i?.src)
+    if (clean.length === 0) return
+    const safeIndex = Math.min(Math.max(index, 0), clean.length - 1)
+    if (clean[safeIndex]?.src.match(/\.pdf/i)) {
+      window.open(clean[safeIndex].src, "_blank", "noopener,noreferrer")
       return
     }
-    setLightbox({ images, index })
+    setLightbox({ images: clean, index: safeIndex })
   }
 
   const toggleSelectAll = () => {
@@ -155,7 +159,7 @@ export default function KycPage() {
 
   return (
     <div className="flex h-[calc(100dvh-5rem)] flex-col lg:flex-row gap-0">
-      {lightbox && <ImageLightbox {...lightbox} onClose={() => setLightbox(null)} />}
+      {lightbox && <ImageLightbox images={lightbox.images} initialIndex={lightbox.index} key={`${lightbox.index}-${lightbox.images.length}-${lightbox.images[lightbox.index]?.src}`} onClose={() => setLightbox(null)} />}
 
       {/* Mobile: List view */}
       <div className={cn(
@@ -179,6 +183,9 @@ export default function KycPage() {
           onToggleSelectAll={toggleSelectAll}
           onPageChange={setPage}
           listRef={listRef}
+          lastUpdated={lastUpdated}
+          onRefresh={() => { void fetchDocs() }}
+          onClearCache={() => { clearApiCache(); void fetchDocs() }}
         />
 
         <BulkActionsBar

@@ -1,15 +1,18 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { api } from "@/lib/api-client"
+import { api, clearApiCache } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Shield, ShieldOff, Trash2,
-  AlertCircle, Eye, UserPlus, Loader2, Download,
+  AlertCircle, Eye, UserPlus, Loader2,
 } from "@/components/ui/icons"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
 import { TablePagination } from "@/components/shared/TablePagination"
+import { ExportButton } from "@/components/shared/ExportButton"
+import { ListFreshness } from "@/components/shared/ListFreshness"
+import { PermissionGuard } from "@/components/PermissionGuard"
 import { UserFilters } from "./UserFilters"
 import { UserModal } from "./UserModal"
 
@@ -60,6 +63,7 @@ export default function UsersPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null)
 
   const fetchUserTypeTabCounts = useCallback(async () => {
     try {
@@ -92,6 +96,7 @@ export default function UsersPage() {
       const { data: d, error } = await api.get<UsersResponse>(`/api/admin/users?${p}`)
       if (error || !d) throw new Error(error || "No data")
       setData(d)
+      setLastUpdated(Date.now())
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -163,14 +168,15 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-foreground font-heading">Users</h1>
           <p className="mt-1 text-sm text-muted">{data ? `${data.total} total users` : "Loading..."}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => { window.location.href = "/api/admin/exports/users" }}
-          className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-2"
-        >
-          <Download size={16} />
-          Export
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <ListFreshness
+            lastUpdated={lastUpdated}
+            refreshing={loading}
+            onRefresh={() => { void fetchUsers() }}
+            onClearCache={() => { clearApiCache(); void fetchUsers() }}
+          />
+          <ExportButton exportPath="/api/admin/exports/users" filename="users.csv" />
+        </div>
       </div>
 
       {/* User Type Tabs with Counts */}
@@ -202,11 +208,9 @@ export default function UsersPage() {
       <UserFilters
         searchValue={searchValue}
         activeFilter={activeFilter}
-        userTypeFilter={userTypeFilter}
         onSearchChange={handleSearch}
         onClearSearch={() => { setSearchValue(""); setSearch(""); setPage(1) }}
         onFilterChange={(f) => { setActiveFilter(f); setPage(1) }}
-        onUserTypeChange={(ut) => { setUserTypeFilter(ut); setPage(1) }}
       />
 
       {error && (
@@ -291,6 +295,7 @@ export default function UsersPage() {
                         <Eye size={13} />
                         View
                       </button>
+                      <PermissionGuard permission="users" action="write" redirect={false}>
                       <button onClick={() => handleToggleStatus(user.id, user.accountStatus)} disabled={actionLoading === user.id}
                         className={cn("inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors", actionLoading === user.id && "opacity-50",
                           user.accountStatus === "SUSPENDED" ? "text-success hover:bg-success/10" : "text-warning hover:bg-warning/10")}
@@ -298,11 +303,14 @@ export default function UsersPage() {
                         {actionLoading === user.id ? <Loader2 size={13} className="animate-spin" /> : user.accountStatus === "SUSPENDED" ? <Shield size={13} /> : <ShieldOff size={13} />}
                         {user.accountStatus === "SUSPENDED" ? "Activate" : "Suspend"}
                       </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="users" action="write" redirect={false}>
                       <button onClick={() => setDeleteConfirm(user.id)}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors">
                         <Trash2 size={13} />
                         Delete
                       </button>
+                      </PermissionGuard>
                     </div>
                     {deleteConfirm === user.id && (
                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDeleteConfirm(null)}>

@@ -13,7 +13,7 @@ interface KycDocThumbnailProps {
 
 export function KycDocThumbnail({ url, label, className = "h-9 w-14" }: KycDocThumbnailProps) {
   if (!url) return null
-  const abs = absUpload(url) || url
+  const abs = absUpload(url) || ""
   if (!isValidUrl(abs)) {
     return (
       <span className={`flex items-center justify-center rounded-lg bg-gray-100 text-[10px] text-muted ${className}`}>

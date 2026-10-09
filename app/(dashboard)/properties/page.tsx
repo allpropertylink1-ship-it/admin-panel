@@ -2,15 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { api } from "@/lib/api-client"
+import { api, clearApiCache } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import {
   Eye, Globe, GlobeOff,
-  AlertCircle, Building2, Download,
+  AlertCircle, Building2,
 } from "@/components/ui/icons"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
 import { TablePagination } from "@/components/shared/TablePagination"
+import { ExportButton } from "@/components/shared/ExportButton"
+import { ListFreshness } from "@/components/shared/ListFreshness"
 import { PropertyFilters } from "./PropertyFilters"
 import { PropertyModal } from "./PropertyModal"
 import type { Property, PropertiesResponse } from "./types"
@@ -18,6 +20,9 @@ import type { Property, PropertiesResponse } from "./types"
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
   APPROVED: { bg: "bg-green-100", text: "text-green-800", label: "Approved" },
   REJECTED: { bg: "bg-red-100", text: "text-red-800", label: "Rejected" },
+  PENDING: { bg: "bg-amber-100", text: "text-amber-800", label: "Pending" },
+  PENDING_APPROVAL: { bg: "bg-amber-100", text: "text-amber-800", label: "Pending approval" },
+  PENDING_REVIEW: { bg: "bg-amber-100", text: "text-amber-800", label: "Pending review" },
   DRAFT: { bg: "bg-gray-100", text: "text-gray-700", label: "Draft" },
   EXPIRED: { bg: "bg-purple-100", text: "text-purple-800", label: "Expired" },
   ARCHIVED: { bg: "bg-gray-200", text: "text-gray-600", label: "Archived" },
@@ -51,6 +56,7 @@ export default function PropertiesPage() {
   const [error, setError] = useState("")
   const [showBin, setShowBin] = useState(false)
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null)
   const limit = 20
 
   const fetchTabCounts = useCallback(async () => {
@@ -89,6 +95,7 @@ export default function PropertiesPage() {
       setProperties(result.properties)
       setTotal(result.pagination.total)
       setTotalPages(result.pagination.totalPages)
+      setLastUpdated(Date.now())
     } catch {
       setError("Failed to load properties. Please try again.")
     } finally {
@@ -114,10 +121,30 @@ export default function PropertiesPage() {
     setActiveTab(tabKey)
     const tab = purposeTabs.find(t => t.key === tabKey)
     if (tab) {
+      // Tabs own the purpose dimension only — never wipe an independent
+      // type select (e.g. HOUSE + For Sale). LAND is the exception: it owns
+      // the type dimension, and leaving it restores the previous type.
       setPurposeFilter(tab.purpose)
-      setTypeFilter(tab.type)
+      if (tab.type) {
+        setTypeFilter(tab.type)
+      } else {
+        setTypeFilter((prev) => (prev === "LAND" ? "" : prev))
+      }
       setPage(1)
     }
+  }
+
+  function syncTab(nextType: string, nextPurpose: string) {
+    if (nextType === "LAND") {
+      setActiveTab("LAND")
+      return
+    }
+    if (!nextType && !nextPurpose) {
+      setActiveTab("ALL")
+      return
+    }
+    const match = purposeTabs.find((t) => !t.type && t.purpose === nextPurpose)
+    setActiveTab(match ? match.key : "ALL")
   }
 
   function openPropertyDetail(prop: Property) {
@@ -125,7 +152,7 @@ export default function PropertiesPage() {
   }
 
   function formatPrice(price: number | null, currency: string, listingPurpose?: string | null) {
-    if (price == null) return "Price on request"
+    if (price == null) return "—"
     const formatted = new Intl.NumberFormat("en-KE", {
       style: "currency",
       currency,
@@ -173,15 +200,14 @@ export default function PropertiesPage() {
           >
             {showBin ? "Show active" : "Recycle bin"}
           </button>
-          <button
-            type="button"
-            onClick={() => { window.location.href = "/api/admin/exports/properties" }}
-            className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-2"
-          >
-            <Download size={16} />
-            Export
-          </button>
+          <ExportButton exportPath="/api/admin/exports/properties" filename="properties.csv" />
         </div>
+        <ListFreshness
+          lastUpdated={lastUpdated}
+          refreshing={loading}
+          onRefresh={() => { void fetchProperties() }}
+          onClearCache={() => { clearApiCache(); void fetchProperties() }}
+        />
       </div>
 
       {/* Purpose Tabs with Counts */}
@@ -215,8 +241,8 @@ export default function PropertiesPage() {
           typeFilter={typeFilter}
           purposeFilter={purposeFilter}
           searchInput={searchInput}
-          onTypeChange={(t) => { setTypeFilter(t); setPage(1) }}
-          onPurposeChange={(p) => { setPurposeFilter(p); setPage(1) }}
+          onTypeChange={(t) => { setTypeFilter(t); setPage(1); syncTab(t, purposeFilter) }}
+          onPurposeChange={(p) => { setPurposeFilter(p); setPage(1); syncTab(typeFilter, p) }}
           onSearchInputChange={setSearchInput}
           onSearch={handleSearch}
           onClearSearch={() => { setSearchInput(""); setSearch(""); setPage(1) }}

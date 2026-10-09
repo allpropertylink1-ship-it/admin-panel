@@ -1,12 +1,16 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { api } from "@/lib/api-client"
+import Link from "next/link"
+import { api, clearApiCache } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
-import { Search, X, Banknote, CheckCircle, XCircle, Loader2, AlertCircle, Download } from "@/components/ui/icons"
+import { Search, X, Receipt, Banknote, CheckCircle, XCircle, Loader2, AlertCircle } from "@/components/ui/icons"
 import { BulkActionsBar } from "@/components/BulkActionsBar"
 import { TablePagination } from "@/components/shared/TablePagination"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
+import { ExportButton } from "@/components/shared/ExportButton"
+import { ListFreshness } from "@/components/shared/ListFreshness"
+import { PermissionGuard } from "@/components/PermissionGuard"
 import type { Claim } from "./types"
 
 const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n)
@@ -41,6 +45,7 @@ export default function ClaimsPage() {
   const [modifiedAmount, setModifiedAmount] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null)
 
   useEffect(() => {
     const t = window.setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
@@ -59,6 +64,7 @@ export default function ClaimsPage() {
       setClaims(data.claims ?? [])
       setTotal(data.total ?? 0)
       setTotalPages(data.totalPages ?? 1)
+      setLastUpdated(Date.now())
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load claims")
       setClaims([])
@@ -101,13 +107,25 @@ export default function ClaimsPage() {
           <h1 className="text-2xl font-bold font-heading">Payment Claims</h1>
           <p className="mt-1 text-sm text-muted">Review and manage payment claims raised by APL Representatives.</p>
         </div>
-        <a
-          href={`/api/admin/exports/claims${statusFilter ? `?status=${statusFilter}` : ""}`}
-          className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-card transition-all inline-flex items-center gap-2"
-        >
-          <Download size={16} />
-          Export
-        </a>
+        <div className="flex flex-wrap items-center gap-2">
+          <ListFreshness
+            lastUpdated={lastUpdated}
+            refreshing={loading}
+            onRefresh={() => { void fetchClaims() }}
+            onClearCache={() => { clearApiCache(); void fetchClaims() }}
+          />
+          <Link
+            href="/payouts"
+            className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-card"
+          >
+            <Banknote size={16} />
+            Payouts
+          </Link>
+          <ExportButton
+            exportPath={() => `/api/admin/exports/claims${statusFilter ? `?status=${statusFilter}` : ""}`}
+            filename={statusFilter ? `claims-${statusFilter.toLowerCase()}.csv` : "claims.csv"}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -125,7 +143,7 @@ export default function ClaimsPage() {
             <div className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Banknote size={20} className="text-primary" />
+                  <Receipt size={20} className="text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted">Total Claims</p>
@@ -150,7 +168,7 @@ export default function ClaimsPage() {
                   <CheckCircle size={20} className="text-success" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted">Paid</p>
+                  <p className="text-sm text-muted">Paid (approved)</p>
                   <p className="text-xl font-bold">{stats.paid}</p>
                 </div>
               </div>
@@ -209,7 +227,7 @@ export default function ClaimsPage() {
               </table>
             ) : claims.length === 0 ? (
               <div className="flex flex-col items-center py-16">
-                <Banknote size={40} className="opacity-30 text-muted" />
+                <Receipt size={40} className="opacity-30 text-muted" />
                 <p className="mt-3 text-sm text-muted">{debouncedSearch || statusFilter ? "No claims match your filters." : "No claims yet."}</p>
               </div>
             ) : (
@@ -326,6 +344,7 @@ export default function ClaimsPage() {
             </div>
 
             {reviewModal.status === "PENDING" && (
+              <PermissionGuard permission="claims" action="write" redirect={false}>
               <>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-muted mb-1">Modify Amount (leave empty to accept original)</label>
@@ -339,15 +358,17 @@ export default function ClaimsPage() {
                   >{submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={16} />}Accept & Pay</button>
                   <button onClick={() => handleReview(reviewModal.id, "AWAITING_AGENT_ACCEPTANCE", Number(modifiedAmount))} disabled={submitting || !modifiedAmount || Number(modifiedAmount) <= 0}
                     className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
-                  >{submitting ? <Loader2 size={14} className="animate-spin" /> : <Banknote size={16} />}Modify Amount</button>
+                  >{submitting ? <Loader2 size={14} className="animate-spin" /> : <Receipt size={16} />}Modify Amount</button>
                   <button onClick={() => handleReview(reviewModal.id, "REJECTED")} disabled={submitting}
                     className="flex-1 rounded-xl bg-error px-5 py-2.5 text-sm font-medium text-white hover:bg-error/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
                   >{submitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={16} />}Reject</button>
                 </div>
               </>
+              </PermissionGuard>
             )}
 
             {reviewModal.status === "AWAITING_AGENT_ACCEPTANCE" && (
+              <PermissionGuard permission="claims" action="write" redirect={false}>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <button onClick={() => handleReview(reviewModal.id, "PAID")} disabled={submitting}
                   className="flex-1 rounded-xl bg-success px-5 py-2.5 text-sm font-medium text-white hover:bg-success/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
@@ -356,6 +377,7 @@ export default function ClaimsPage() {
                   className="flex-1 rounded-xl bg-error px-5 py-2.5 text-sm font-medium text-white hover:bg-error/90 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
                 >{submitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={16} />}Reject</button>
               </div>
+              </PermissionGuard>
             )}
           </div>
         </div>
