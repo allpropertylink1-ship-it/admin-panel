@@ -13,8 +13,8 @@ const INSTALLED_KEY = "pwa-installed";
 const VIEWS_KEY = "pwa-page-views";
 const FIRST_VISIT_KEY = "pwa-first-visit";
 const DISMISS_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const ENGAGEMENT_MIN_VIEWS = 2;
-const ENGAGEMENT_MIN_ELAPSED_MS = 30_000;
+const ENGAGEMENT_MIN_VIEWS = 1;
+const ENGAGEMENT_MIN_ELAPSED_MS = 10_000;
 
 function isDismissedValid(): boolean {
   try {
