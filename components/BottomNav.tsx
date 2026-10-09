@@ -21,8 +21,8 @@ const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" },
   { href: "/users", label: "Users", icon: Users, permission: "users" },
   { href: "/properties", label: "Properties", icon: Building2, permission: "properties" },
-  { href: "/agents", label: "Representatives", icon: Handshake, permission: "agents" },
   { href: "/kyc", label: "KYC", icon: Shield, permission: "kyc" },
+  { href: "/agents", label: "Representatives", icon: Handshake, permission: "agents" },
   { href: "/disputes", label: "Disputes", icon: ScrollText, permission: "disputes" },
   { href: "/settings", label: "Settings", icon: Settings, permission: "settings" },
 ]
