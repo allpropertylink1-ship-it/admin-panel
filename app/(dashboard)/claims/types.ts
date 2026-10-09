@@ -11,6 +11,8 @@ export interface Claim {
   createdAt: string
   aplAgent: { id: string; fullName: string; email: string; agentCode: string }
   property: { id: string; title: string; slug: string; city: string } | null
+  unitId?: string | null
+  unit?: { id: string; configuration: string; label: string | null } | null
 }
 
 export interface ClaimResponse {

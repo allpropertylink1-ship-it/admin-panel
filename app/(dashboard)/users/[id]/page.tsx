@@ -65,6 +65,8 @@ interface UserDetail {
     propertyType: string; listingPurpose: string | null
     moderationStatus: string; city: string | null; createdAt: string
     images: unknown
+    hasMultipleUnits?: boolean
+    units?: { id: string; configuration: string; price: number | null }[]
   }[];
   serviceListings?: {
     id: string; title: string; price: number | null
@@ -356,6 +358,9 @@ setUser(data.user);
                       <p className="text-sm font-medium text-foreground truncate">{prop.title}</p>
                       <p className="text-xs text-muted">
                         {prop.propertyType} · KES {Number(prop.price).toLocaleString()}
+                        {prop.hasMultipleUnits && (
+                          <span className="ml-1.5 text-purple-700">· Multi-unit{(prop.units?.length ?? 0) > 0 ? ` (${prop.units?.length})` : ""}</span>
+                        )}
                         {prop.listingPurpose && (
                           <span className="ml-1.5 text-primary">· {prop.listingPurpose === "FOR_RENT_SHORT_TERM" ? "Airbnb" : prop.listingPurpose === "FOR_RENT_LONG_TERM" ? "Rent" : "Sale"}</span>
                         )}

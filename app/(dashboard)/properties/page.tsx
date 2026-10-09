@@ -163,6 +163,30 @@ export default function PropertiesPage() {
     return formatted
   }
 
+  function formatRange(p: Property) {
+    if (!p.hasMultipleUnits || !p.units || p.units.length === 0) {
+      return formatPrice(p.price, p.currency, p.listingPurpose)
+    }
+    const prices = p.units
+      .map((u) => (typeof u.price === "number" ? u.price : Number(u.price)))
+      .filter((n) => Number.isFinite(n) && n > 0)
+    if (prices.length === 0) return formatPrice(p.price, p.currency, p.listingPurpose)
+    const min = Math.min(...prices)
+    const max = Math.max(...prices)
+    const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: p.currency, minimumFractionDigits: 0 }).format(n)
+    return min === max ? fmt(min) : `${fmt(min)} – ${fmt(max)}`
+  }
+
+  function multiUnitBadge(p: Property) {
+    if (!p.hasMultipleUnits) return null
+    const n = p.units?.length ?? 0
+    return (
+      <span className="ml-1.5 rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
+        Multi-unit{n > 0 ? ` (${n})` : ""}
+      </span>
+    )
+  }
+
   function typeLabel(type: string) {
     return type.charAt(0) + type.slice(1).toLowerCase()
   }
@@ -333,11 +357,12 @@ export default function PropertiesPage() {
                       <td className="px-4 py-3">
                         <p className="max-w-xs truncate text-sm font-medium text-foreground" title={p.title}>{p.title}</p>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">{formatPrice(p.price, p.currency, p.listingPurpose)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">{formatRange(p)}</td>
                       <td className="px-4 py-3 flex items-center gap-1.5 flex-wrap">
                         <span className="text-sm text-muted">{typeLabel(p.propertyType)}</span>
                         {purposeBadge(p.listingPurpose)}
                         {landBadge(p.propertyType)}
+                        {multiUnitBadge(p)}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted">{p.city}</td>
                       <td className="px-4 py-3 text-sm text-muted">

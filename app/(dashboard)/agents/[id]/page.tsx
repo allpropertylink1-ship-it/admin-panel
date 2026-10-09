@@ -21,6 +21,8 @@ interface ReferredUser {
     id: string; title: string; slug: string; price: number; currency: string
     propertyType: string; moderationStatus: string; city: string
     createdAt: string; coverImage?: string | null; images: string[]
+    hasMultipleUnits?: boolean
+    units?: { id: string }[]
   }[]
 }
 
@@ -350,7 +352,7 @@ async function handleResetPassword() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground">{user.firstName} {user.lastName}</p>
-                          <p className="text-xs text-muted">{user.email}{user.phone && ` Â· ${user.phone}`}</p>
+                          <p className="text-xs text-muted">{user.email}{user.phone && ` · ${user.phone}`}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -380,7 +382,10 @@ async function handleResetPassword() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
-                              <p className="text-xs text-muted">{p.city} Â· {p.propertyType}</p>
+                              <p className="text-xs text-muted">
+                                {p.city} · {p.propertyType}
+                                {p.hasMultipleUnits && <span className="ml-1 text-purple-700">· Multi-unit</span>}
+                              </p>
                             </div>
                             <p className="text-sm font-medium text-foreground tabular-nums shrink-0">
                               {p.currency} {fmt(p.price)}
@@ -426,10 +431,10 @@ async function handleResetPassword() {
                 <tbody className="divide-y divide-border">
                   {claims.map((c) => (
                     <tr key={c.id} className="hover:bg-primary-50/20 transition-colors">
-                      <td className="px-4 py-3 text-muted max-w-[200px] truncate">{c.property?.title || "â€”"}</td>
+                      <td className="px-4 py-3 text-muted max-w-[200px] truncate">{c.property?.title || "—"}</td>
                       <td className="px-4 py-3 text-right font-medium text-foreground tabular-nums">{fmtCurr(Number(c.amount))}</td>
                       <td className="px-4 py-3 text-right text-muted text-xs tabular-nums">
-                        {c.adminModifiedAmount ? fmtCurr(Number(c.adminModifiedAmount)) : "â€”"}
+                        {c.adminModifiedAmount ? fmtCurr(Number(c.adminModifiedAmount)) : "—"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={cn(
@@ -448,7 +453,7 @@ async function handleResetPassword() {
                         {c.paidAt ? new Date(c.paidAt).toLocaleDateString() : new Date(c.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-muted text-xs max-w-[150px] truncate">
-                        {c.adminNotes || c.agentNotes || "â€”"}
+                        {c.adminNotes || c.agentNotes || "—"}
                       </td>
                     </tr>
                   ))}

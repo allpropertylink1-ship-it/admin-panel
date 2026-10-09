@@ -5,10 +5,26 @@ import { useState, useEffect } from "react"
 import { api } from "@/lib/api-client"
 import { X, Loader2, Building2, DollarSign, Home, MapPin, Bed, Bath, Expand, Globe, Calendar } from "@/components/ui/icons"
 
+interface ModalUnit {
+  id: string
+  configuration: string
+  label?: string | null
+  bedrooms?: number | null
+  bathrooms?: number | null
+  area?: number | null
+  price?: number | null
+  listingPurpose?: string | null
+  availableUnits?: number | null
+  totalUnits?: number | null
+}
+
 interface Property {
   id: string; slug: string; title: string; price: number; currency: string
   propertyType: string; listingPurpose: string | null; city: string
   moderationStatus: string; isPublished: boolean; createdAt: string
+  hasMultipleUnits?: boolean
+  unitMixDescription?: string | null
+  units?: ModalUnit[]
   agent: { id: string; firstName: string; lastName: string; email: string } | null
 }
 
@@ -30,14 +46,33 @@ export interface PropertyDetail {
   agent?: { id?: string; firstName?: string; lastName?: string; email?: string; phone?: string | null } | null
   coverImage?: string | null
   images?: string | string[]
+  hasMultipleUnits?: boolean
+  unitMixDescription?: string | null
+  units?: ModalUnit[]
 }
 
 function formatPrice(price: number | null, currency: string, listingPurpose?: string | null) {
-  if (price == null) return "Price on request"
+  if (price == null) return "—"
   const formatted = new Intl.NumberFormat("en-KE", { style: "currency", currency, minimumFractionDigits: 0 }).format(price)
   if (listingPurpose === "FOR_RENT_SHORT_TERM") return `${formatted}/night`
   if (listingPurpose === "FOR_RENT_LONG_TERM") return `${formatted}/month`
   return formatted
+}
+
+/** "KES 35,000 – KES 120,000" or single price when only one unit is priced. */
+function formatUnitRange(units: ModalUnit[] | null | undefined, currency: string) {
+  const prices = (units ?? [])
+    .map((u) => (typeof u.price === "number" ? u.price : Number(u.price)))
+    .filter((n) => Number.isFinite(n) && n > 0)
+  if (prices.length === 0) return null
+  const min = Math.min(...prices)
+  const max = Math.max(...prices)
+  const fmt = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency, minimumFractionDigits: 0 }).format(n)
+  return min === max ? fmt(min) : `${fmt(min)} – ${fmt(max)}`
+}
+
+function unitConfigLabel(value: string) {
+  return value.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function typeLabel(type: string) {
@@ -82,12 +117,13 @@ export function PropertyModal({ property, open, onClose }: PropertyModalProps) {
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3">
               {[
-                { icon: <DollarSign size={14} />, label: "Price", value: formatPrice(property.price, property.currency, property.listingPurpose) },
+                { icon: <DollarSign size={14} />, label: "Price", value: (property.hasMultipleUnits && formatUnitRange(property.units ?? detail.units, property.currency)) || formatPrice(property.price, property.currency, property.listingPurpose) },
                 { icon: <Home size={14} />, label: "Type", value: typeLabel(property.propertyType) },
                 { icon: <MapPin size={14} />, label: "Location", value: [detail.city, detail.region].filter(Boolean).join(", ") || "\u2014" },
                 { icon: <Bed size={14} />, label: "Bedrooms", value: detail.bedrooms != null ? String(detail.bedrooms) : "\u2014" },
                 { icon: <Bath size={14} />, label: "Bathrooms", value: detail.bathrooms != null ? String(detail.bathrooms) : "\u2014" },
                 { icon: <Expand size={14} />, label: "Area", value: detail.area ? `${detail.area} sqft` : "\u2014" },
+                { icon: <Building2 size={14} />, label: "Units", value: property.hasMultipleUnits ? `${(property.units ?? detail.units ?? []).length} configs${property.unitMixDescription ?? detail.unitMixDescription ? ` — ${property.unitMixDescription ?? detail.unitMixDescription}` : ""}` : "Single" },
                 { icon: <Globe size={14} />, label: "Published", value: detail.isPublished ? "Yes" : "No" },
                 { icon: <Calendar size={14} />, label: "Created", value: detail.createdAt ? new Date(detail.createdAt).toLocaleDateString() : "\u2014" },
                 { icon: <Calendar size={14} />, label: "Updated", value: detail.updatedAt ? new Date(detail.updatedAt).toLocaleDateString() : "\u2014" },
@@ -98,6 +134,47 @@ export function PropertyModal({ property, open, onClose }: PropertyModalProps) {
                 </div>
               ))}
             </div>
+
+            {(property.units ?? detail.units ?? []).length > 0 && (
+              <div className="rounded-lg border border-border p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+                  Unit configurations ({(property.units ?? detail.units ?? []).length})
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[480px] border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wider text-muted">
+                        <th scope="col" className="py-1.5 pr-3">Configuration</th>
+                        <th scope="col" className="py-1.5 pr-3">Beds</th>
+                        <th scope="col" className="py-1.5 pr-3">Baths</th>
+                        <th scope="col" className="py-1.5 pr-3">Area</th>
+                        <th scope="col" className="py-1.5 pr-3">Price</th>
+                        <th scope="col" className="py-1.5">Avail.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(property.units ?? detail.units ?? []).map((u) => (
+                        <tr key={u.id} className="border-b border-border last:border-0">
+                          <td className="py-2 pr-3 font-medium text-foreground">
+                            {unitConfigLabel(u.configuration)}
+                            {u.label && <span className="block text-xs font-normal text-muted">{u.label}</span>}
+                          </td>
+                          <td className="py-2 pr-3 tabular-nums text-muted">{u.bedrooms ?? "—"}</td>
+                          <td className="py-2 pr-3 tabular-nums text-muted">{u.bathrooms ?? "—"}</td>
+                          <td className="py-2 pr-3 tabular-nums text-muted">{u.area != null ? Number(u.area).toLocaleString() : "—"}</td>
+                          <td className="py-2 pr-3 font-medium tabular-nums text-foreground">
+                            {u.price != null ? formatPrice(Number(u.price), property.currency, u.listingPurpose ?? property.listingPurpose) : "—"}
+                          </td>
+                          <td className="py-2 tabular-nums text-muted">
+                            {u.availableUnits != null && u.totalUnits != null ? `${u.availableUnits}/${u.totalUnits}` : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             <div className="rounded-lg border border-border p-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Agent / Owner</p>
