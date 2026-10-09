@@ -3,6 +3,10 @@ const API_BASE = ""
 interface ApiResponse<T = unknown> {
   data?: T
   error?: string
+  // Sleep/wake resilience (2026-10): proxy marks cold-start failures
+  // retryable so the UI can show "Trying again..." instead of raw errors.
+  retryable?: boolean
+  retryAfter?: number
 }
 
 class ApiClient {
@@ -123,6 +127,19 @@ class ApiClient {
 
       if (!finalRes.ok) {
         const body = await finalRes.json().catch(() => ({}))
+        if (this.isRetriableStatus(finalRes.status)) {
+          return {
+            error: body.error || "Service warming up — please try again in a few seconds.",
+            retryable: true,
+            retryAfter: body.retryAfter,
+          }
+        }
+        if (finalRes.status === 429) {
+          return {
+            error: body.error || "Too many tries — please wait a few seconds and try again.",
+            retryAfter: body.retryAfter,
+          }
+        }
         return { error: body.error || `HTTP ${finalRes.status}` }
       }
 
@@ -139,9 +156,9 @@ class ApiClient {
       return { data: body as T }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        return { error: "Request timed out" }
+        return { error: "Request timed out — trying again...", retryable: true }
       }
-      return { error: err instanceof Error ? err.message : "Network error" }
+      return { error: err instanceof Error ? err.message : "Network error", retryable: true }
     }
   }
 

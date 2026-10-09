@@ -23,23 +23,38 @@ async function proxy(req: NextRequest, key: string) {
     if (buf.byteLength > 0) body = buf
   }
 
-  let upstream: Response
-  const controller = new AbortController()
-  const t = setTimeout(() => controller.abort(), 8000)
-  try {
-    upstream = await fetch(target, {
-      method,
-      headers,
-      body,
-      cache: "no-store",
-      signal: controller.signal,
-    })
-  } catch (e) {
-    clearTimeout(t)
-    console.error(`[admin-proxy] upstream failed ${method} ${key} -> ${target}:`, e instanceof Error ? e.message : e)
-    return NextResponse.json({ error: "Upstream unavailable" }, { status: 502 })
-  } finally {
-    clearTimeout(t)
+  // Same Passenger sleep/wake retry as the main site: two 4s attempts
+  // (~8.3s total) inside the Vercel Hobby 10s function limit.
+  let upstream: Response | null = null
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const controller = new AbortController()
+    const t = setTimeout(() => controller.abort(), 4000)
+    try {
+      upstream = await fetch(target, {
+        method,
+        headers,
+        body,
+        cache: "no-store",
+        signal: controller.signal,
+      })
+      clearTimeout(t)
+      break
+    } catch (e) {
+      clearTimeout(t)
+      console.error(`[admin-proxy] upstream failed ${method} ${key} -> ${target} (attempt ${attempt}/2):`, e instanceof Error ? e.message : e)
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 300))
+    }
+  }
+  if (!upstream) {
+    const warmingUp = method === "GET"
+    return NextResponse.json(
+      {
+        error: warmingUp ? "Service warming up — retrying..." : "Upstream unavailable",
+        retryable: true,
+        retryAfter: 3,
+      },
+      { status: warmingUp ? 503 : 502, headers: { "Retry-After": "3" } }
+    )
   }
 
   const respBody = await upstream.arrayBuffer()
