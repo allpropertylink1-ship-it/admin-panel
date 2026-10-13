@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
   X, Receipt, ShieldCheck, BookUser, Archive, Flag,
-  Mail, Star, Briefcase,
+  Mail, Star, Briefcase, Bell,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -61,6 +61,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/disputes", label: "Disputes", icon: ScrollText, permission: "disputes" },
       { href: "/reports", label: "Reports", icon: BarChart3, permission: "reports" },
+      { href: "/lifecycle", label: "Lifecycle", icon: ScrollText, permission: "properties" },
       { href: "/audit", label: "Audit Log", icon: BookUser, permission: "audit" },
     ],
   },
@@ -68,6 +69,8 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     group: "Admin",
     items: [
       { href: "/admin-accounts", label: "Admin Accounts", icon: ShieldCheck, permission: "adminAccounts" },
+      { href: "/security", label: "Security", icon: Shield, permission: "audit" },
+      { href: "/delivery", label: "Delivery", icon: Bell, permission: "settings" },
       { href: "/feature-flags", label: "Feature Flags", icon: Flag, permission: "settings" },
       { href: "/settings", label: "Platform Settings", icon: Settings, permission: "settings" },
     ],
@@ -110,6 +113,9 @@ export function AdminSidebar() {
     if (href === "/agents") return pathname.startsWith("/agents")
     if (href === "/disputes") return pathname.startsWith("/disputes")
     if (href === "/reports") return pathname.startsWith("/reports")
+    if (href === "/lifecycle") return pathname.startsWith("/lifecycle")
+    if (href === "/delivery") return pathname.startsWith("/delivery")
+    if (href === "/security") return pathname.startsWith("/security")
     if (href === "/audit") return pathname.startsWith("/audit")
     if (href === "/settings") return pathname.startsWith("/settings")
     if (href === "/feature-flags") return pathname.startsWith("/feature-flags")

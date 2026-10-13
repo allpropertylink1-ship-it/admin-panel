@@ -8,11 +8,25 @@ import {
   Users, UserCheck, Building2, ShieldOff,
   Handshake, Clock, AlertCircle, ArrowUpRight,
   UserPlus, ChevronRight, Wrench, Star, Mail,
-  MapPin, BarChart3,
+  MapPin, BarChart3, Receipt, Flag, MessageCircle,
 } from "@/components/ui/icons"
 
 interface RecentUser {
   id: string; firstName: string; lastName: string; email: string; role: string; createdAt: string
+}
+
+interface RecentListing {
+  id: string; title: string; city: string | null; moderationStatus: string; createdAt: string
+}
+
+interface QueueItem {
+  count: number; oldestCreatedAt: string | null
+}
+
+interface ActionQueue {
+  pendingApprovals?: QueueItem; pendingReviews?: QueueItem; kycPending?: QueueItem
+  pendingClaims?: QueueItem; openDisputes?: QueueItem
+  unreadMessages?: QueueItem; unresolvedContacts?: QueueItem
 }
 
 interface DashboardData {
@@ -20,6 +34,9 @@ interface DashboardData {
   pendingReviews: number; kycPending: number; totalAgents: number
   totalServices?: number; totalReviews?: number; unreadMessages?: number
   recentRegistrations: RecentUser[]
+  recentProperties?: RecentListing[]
+  recentServices?: RecentListing[]
+  queue?: ActionQueue
   topCities: { city: string; count: number }[]
   registrationsByDay: { date: string; count: number }[]
 }
@@ -38,6 +55,28 @@ const cards = [
 
 const roleBadge: Record<string, string> = {
   ADMIN: "bg-red-50 text-red-700", AGENT: "bg-blue-50 text-blue-700", APPLICANT: "bg-gray-50 text-gray-600",
+}
+
+const moderationBadge: Record<string, string> = {
+  APPROVED: "bg-emerald-50 text-emerald-700",
+  PENDING_REVIEW: "bg-amber-50 text-amber-700",
+  REJECTED: "bg-red-50 text-red-700",
+  DRAFT: "bg-gray-50 text-gray-600",
+}
+
+function formatWaitingAge(iso: string | null | undefined): string {
+  if (!iso) return "—"
+  const diffMs = Date.now() - new Date(iso).getTime()
+  if (Number.isNaN(diffMs) || diffMs < 0) return "—"
+  const minutes = Math.floor(diffMs / 60000)
+  if (minutes < 1) return "just now"
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d`
+  const months = Math.floor(days / 30)
+  return `${months}mo`
 }
 
 function SkeletonCard() {
@@ -161,6 +200,52 @@ export default function DashboardPage() {
         })}
       </div>
 
+      <div className="rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle size={16} className="text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">Needs Action</h2>
+          </div>
+          <span className="text-xs text-muted tabular-nums">
+            oldest wait shown per queue
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
+          {[
+            { label: "Pending Approvals", href: "/approvals", icon: UserCheck, iconColor: "text-amber-600", iconBg: "bg-amber-50", count: data.queue?.pendingApprovals?.count ?? data.pendingApprovals ?? 0, oldest: data.queue?.pendingApprovals?.oldestCreatedAt ?? null },
+            { label: "KYC Pending", href: "/kyc", icon: ShieldOff, iconColor: "text-rose-600", iconBg: "bg-rose-50", count: data.queue?.kycPending?.count ?? data.kycPending ?? 0, oldest: data.queue?.kycPending?.oldestCreatedAt ?? null },
+            { label: "Pending Properties", href: "/properties", icon: Clock, iconColor: "text-orange-600", iconBg: "bg-orange-50", count: data.queue?.pendingReviews?.count ?? data.pendingReviews ?? 0, oldest: data.queue?.pendingReviews?.oldestCreatedAt ?? null },
+            { label: "Pending Claims", href: "/claims", icon: Receipt, iconColor: "text-violet-600", iconBg: "bg-violet-50", count: data.queue?.pendingClaims?.count ?? 0, oldest: data.queue?.pendingClaims?.oldestCreatedAt ?? null },
+            { label: "Open Disputes", href: "/disputes", icon: Flag, iconColor: "text-red-600", iconBg: "bg-red-50", count: data.queue?.openDisputes?.count ?? 0, oldest: data.queue?.openDisputes?.oldestCreatedAt ?? null },
+            { label: "Unread Messages", href: "/messages", icon: Mail, iconColor: "text-sky-600", iconBg: "bg-sky-50", count: data.queue?.unreadMessages?.count ?? data.unreadMessages ?? 0, oldest: data.queue?.unreadMessages?.oldestCreatedAt ?? null },
+            { label: "Unresolved Contacts", href: "/messages", icon: MessageCircle, iconColor: "text-cyan-600", iconBg: "bg-cyan-50", count: data.queue?.unresolvedContacts?.count ?? 0, oldest: data.queue?.unresolvedContacts?.oldestCreatedAt ?? null },
+          ].map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="group flex items-center gap-3 rounded-xl border border-border p-3.5 transition-all duration-200 hover:shadow-md hover:shadow-black/5 hover:-translate-y-0.5"
+              >
+                <div className={cn("shrink-0 rounded-xl p-2.5", item.iconBg)}>
+                  <Icon size={18} className={item.iconColor} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{item.label}</p>
+                  <p className="mt-0.5 text-xs text-muted tabular-nums">
+                    waiting {formatWaitingAge(item.oldest)}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-sm font-bold text-foreground tabular-nums">
+                  {item.count.toLocaleString()}
+                </span>
+                <ChevronRight size={14} className="shrink-0 text-muted/30 transition-colors group-hover:text-muted" />
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -254,6 +339,74 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2.5">
+              <Building2 size={16} className="text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Recent Properties</h2>
+            </div>
+            <Link href="/properties" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors">
+              View all <ChevronRight size={12} />
+            </Link>
+          </div>
+          <div className="divide-y divide-border">
+            {(data.recentProperties ?? []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-muted">
+                <Building2 size={24} className="mb-2 opacity-40" />
+                <p className="text-sm">No recent properties</p>
+              </div>
+            ) : (
+              (data.recentProperties ?? []).slice(0, 5).map((property) => (
+                <div key={property.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-gray-50/50">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{property.title}</p>
+                    <p className="truncate text-xs text-muted">{property.city || "Unknown city"}</p>
+                  </div>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium", moderationBadge[property.moderationStatus] || "")}>
+                    {property.moderationStatus}
+                  </span>
+                  <span className="shrink-0 text-[11px] text-muted tabular-nums">{new Date(property.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2.5">
+              <Wrench size={16} className="text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Recent Services</h2>
+            </div>
+            <Link href="/services" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors">
+              View all <ChevronRight size={12} />
+            </Link>
+          </div>
+          <div className="divide-y divide-border">
+            {(data.recentServices ?? []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-muted">
+                <Wrench size={24} className="mb-2 opacity-40" />
+                <p className="text-sm">No recent services</p>
+              </div>
+            ) : (
+              (data.recentServices ?? []).slice(0, 5).map((service) => (
+                <div key={service.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-gray-50/50">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{service.title}</p>
+                    <p className="truncate text-xs text-muted">{service.city || "Unknown city"}</p>
+                  </div>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium", moderationBadge[service.moderationStatus] || "")}>
+                    {service.moderationStatus}
+                  </span>
+                  <span className="shrink-0 text-[11px] text-muted tabular-nums">{new Date(service.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
