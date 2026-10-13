@@ -4,6 +4,9 @@ export interface Agent {
   email: string
   phone: string
   agentCode: string
+  avatar?: string | null
+  regions?: string[]
+  specificArea?: string | null
   status: string
   hasActivated: boolean
   suspendedAt: string | null
