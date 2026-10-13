@@ -284,7 +284,7 @@ export default function DeliveryPage() {
               </div>
             )}
             {sms && sms.totalPages > 1 && (
-              <TablePagination page={sms.page} totalPages={sms.totalPages} onPageChange={setPage} />
+              <TablePagination page={sms.page} totalPages={sms.totalPages} total={sms.total} pageSize={15} onPageChange={setPage} />
             )}
           </>
         ) : (
@@ -308,7 +308,7 @@ export default function DeliveryPage() {
               </div>
             )}
             {email && email.totalPages > 1 && (
-              <TablePagination page={email.page} totalPages={email.totalPages} onPageChange={setPage} />
+              <TablePagination page={email.page} totalPages={email.totalPages} total={email.total} pageSize={15} onPageChange={setPage} />
             )}
           </>
         )}
