@@ -86,6 +86,19 @@ export default function KycDetail({
                 {selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}
               </h2>
               <p className="text-sm text-muted">{selectedDoc.user?.email || "—"}</p>
+              {(selectedDoc.user?.aplAgent || selectedDoc.user?.referredByAgentCode) ? (
+                <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                  <User size={11} />
+                  Referred by {selectedDoc.user.aplAgent?.fullName || "APL Representative"}
+                  <span className="font-mono font-normal">
+                    ({selectedDoc.user.referredByAgentCode || selectedDoc.user.aplAgent?.agentCode})
+                  </span>
+                </p>
+              ) : (
+                <p className="mt-1 inline-flex items-center rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-muted">
+                  No referring rep — direct signup
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">

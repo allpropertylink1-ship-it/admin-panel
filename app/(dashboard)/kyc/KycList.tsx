@@ -185,6 +185,14 @@ export default function KycList({
                       {doc.user ? `${doc.user.firstName} ${doc.user.lastName}` : "Unknown user"}
                     </p>
                     <p className="truncate text-xs text-muted">{doc.user?.email || "—"}</p>
+                    {(doc.user?.aplAgent || doc.user?.referredByAgentCode) ? (
+                      <p className="mt-0.5 truncate text-[11px] font-semibold text-primary">
+                        Rep: {doc.user.aplAgent?.fullName || "APL Representative"}{" "}
+                        <span className="font-mono font-normal">({doc.user.referredByAgentCode || doc.user.aplAgent?.agentCode})</span>
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 truncate text-[11px] text-muted/70">No referring rep — direct signup</p>
+                    )}
                   </div>
                 </div>
                 <DocStatusBadge status={doc.status} />

@@ -55,6 +55,14 @@ export function ApprovalCard({ user, isExpanded, actionLoading, rejectInput, rej
             {user.firstName} {user.lastName}
           </p>
           <p className="truncate text-xs text-muted">{user.email}</p>
+          {(user.aplAgent || user.referredByAgentCode) ? (
+            <p className="mt-0.5 truncate text-[11px] font-semibold text-primary">
+              Rep: {user.aplAgent?.fullName || "APL Representative"}{" "}
+              <span className="font-mono font-normal">({user.referredByAgentCode || user.aplAgent?.agentCode})</span>
+            </p>
+          ) : (
+            <p className="mt-0.5 truncate text-[11px] text-muted/70">No referring rep — direct signup</p>
+          )}
         </div>
         <div className="hidden items-center gap-2 sm:flex">
           {user.category && (
@@ -101,9 +109,22 @@ export function ApprovalCard({ user, isExpanded, actionLoading, rejectInput, rej
                     </div>
                   </div>
                 </div>
+                )}
+              </div>
+              {(user.aplAgent || user.referredByAgentCode) ? (
+                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                  <User size={11} />
+                  Referred by {user.aplAgent?.fullName || "APL Representative"}
+                  <span className="font-mono font-normal">
+                    ({user.referredByAgentCode || user.aplAgent?.agentCode})
+                  </span>
+                </p>
+              ) : (
+                <p className="mt-3 inline-flex items-center rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-muted">
+                  No referring rep — direct signup
+                </p>
               )}
             </div>
-          </div>
 
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Company Details</h4>

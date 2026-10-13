@@ -24,4 +24,6 @@ export interface PendingUser {
   estateSubLocation?: string
   createdAt: string
   kycDocuments: KycDocument[]
+  referredByAgentCode?: string | null
+  aplAgent?: { id: string; fullName: string; agentCode: string } | null
 }

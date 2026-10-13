@@ -1,5 +1,7 @@
 export interface UserInfo {
   id: string; firstName: string; lastName: string; email: string; avatar: string | null; kycStatus?: string
+  referredByAgentCode?: string | null
+  aplAgent?: { id: string; fullName: string; agentCode: string; email?: string | null; phone?: string | null } | null
 }
 
 export interface KycDocument {
