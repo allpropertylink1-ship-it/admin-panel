@@ -7,7 +7,7 @@ import { ExportButton } from "@/components/shared/ExportButton"
 import { ListFreshness } from "@/components/shared/ListFreshness"
 import { cn, isValidUrl } from "@/lib/utils"
 import { absUpload } from "@/lib/img";
-import { FILTERS, docLabels, timeAgo, initials, Skeleton, EmptyState, DocStatusBadge, ImgWithFallback } from "./utils"
+import { FILTERS, docLabels, userTypeLabels, userTypeList, timeAgo, initials, Skeleton, EmptyState, DocStatusBadge, ImgWithFallback, UserTypeBadge } from "./utils"
 import type { KycDocument } from "./types"
 
 interface KycListProps {
@@ -17,12 +17,14 @@ interface KycListProps {
   selectedIds: string[]
   search: string
   filter: string
+  userType: string
   loading: boolean
   page: number
   totalPages: number
   onSelectDoc: (doc: KycDocument) => void
   onSearchChange: (s: string) => void
   onFilterChange: (f: string) => void
+  onUserTypeChange: (t: string) => void
   onToggleSelect: (id: string) => void
   onToggleSelectAll: () => void
   onPageChange: (p: number) => void
@@ -33,8 +35,8 @@ interface KycListProps {
 }
 
 export default function KycList({
-  docs, total, selectedDoc, selectedIds, search, filter, loading, page, totalPages,
-  onSelectDoc, onSearchChange, onFilterChange, onToggleSelect, onToggleSelectAll, onPageChange, listRef,
+  docs, total, selectedDoc, selectedIds, search, filter, userType, loading, page, totalPages,
+  onSelectDoc, onSearchChange, onFilterChange, onUserTypeChange, onToggleSelect, onToggleSelectAll, onPageChange, listRef,
   lastUpdated, onRefresh, onClearCache,
 }: KycListProps) {
   const pendingCount = docs.filter((d) => d.status === "PENDING").length
@@ -104,6 +106,32 @@ export default function KycList({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Account-type filter */}
+        <div className="mt-2 flex items-center gap-2">
+          <label htmlFor="kyc-user-type" className="shrink-0 text-xs font-medium text-muted">
+            Account type
+          </label>
+          <select
+            id="kyc-user-type"
+            value={userType}
+            onChange={(e) => onUserTypeChange(e.target.value)}
+            className="min-w-0 flex-1 rounded-xl border border-border bg-card/80 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+          >
+            <option value="">All types</option>
+            {Object.entries(userTypeLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+          {userType && (
+            <button onClick={() => onUserTypeChange("")}
+              className="shrink-0 rounded-md p-1 text-muted hover:text-foreground transition-colors"
+              aria-label="Clear account type filter"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -201,6 +229,16 @@ export default function KycList({
                 <span>{docLabels[doc.documentType] || doc.documentType}</span>
                 <span className="text-border">·</span>
                 <span>{timeAgo(doc.createdAt)}</span>
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                {(() => {
+                  const types = userTypeList(doc.user)
+                  if (types.length === 0) return null
+                  const primary = doc.user?.primaryUserType || null
+                  return types.slice(0, 2).map((t) => (
+                    <UserTypeBadge key={t} type={t} primary={t === primary} />
+                  ))
+                })()}
               </div>
               {(doc.frontImage || doc.backImage || doc.businessPermit) && (
                 <div className="mt-2 flex gap-1.5">

@@ -15,9 +15,10 @@ interface BulkActionsBarProps {
   actions: BulkAction[]
   onAction: (action: string) => Promise<void> | void
   loading?: boolean
+  confirmSummary?: string[]
 }
 
-export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loading }: BulkActionsBarProps) {
+export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loading, confirmSummary }: BulkActionsBarProps) {
   const [confirmAction, setConfirmAction] = useState<string | null>(null)
 
   if (selectedIds.length === 0) return null
@@ -71,6 +72,16 @@ export function BulkActionsBar({ selectedIds, onClear, actions, onAction, loadin
             <p className="mt-2 text-sm text-muted">
               This will affect {selectedIds.length} item{selectedIds.length !== 1 ? "s" : ""}.
             </p>
+            {confirmSummary && confirmSummary.length > 0 && (
+              <ul className="mt-3 space-y-1 rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground" aria-label="Selection breakdown">
+                {confirmSummary.map((line) => (
+                  <li key={line} className="flex items-center gap-1.5">
+                    <span className="h-1 w-1 rounded-full bg-primary" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setConfirmAction(null)}

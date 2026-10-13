@@ -17,6 +17,23 @@ export const docLabels: Record<string, string> = {
   NATIONAL_ID: "National ID", PASSPORT: "Passport", DRIVERS_LICENSE: "Driver's License",
 }
 
+export const userTypeLabels: Record<string, string> = {
+  PROPERTY_OWNER: "Property Owner",
+  AGENT: "Agent",
+  FUNDI: "Fundi",
+  SERVICE_PROVIDER: "Service Provider",
+  CUSTOMER: "Customer",
+}
+
+export function userTypeList(user?: { userTypes?: string[] | null; primaryUserType?: string | null } | null): string[] {
+  if (!user) return []
+  const types = Array.isArray(user.userTypes) ? user.userTypes.filter(Boolean) : []
+  const primary = user.primaryUserType || null
+  if (primary && !types.includes(primary)) return [primary, ...types]
+  if (primary) return [primary, ...types.filter((t) => t !== primary)]
+  return types
+}
+
 export const statusCfg: Record<string, { dot: string; bg: string; text: string; label: string }> = {
   PENDING: { dot: "bg-warning", bg: "bg-warning/10", text: "text-warning", label: "Pending" },
   VERIFIED: { dot: "bg-success", bg: "bg-success/10", text: "text-success", label: "Verified" },
@@ -87,6 +104,23 @@ export function DocStatusBadge({ status }: { status: string }) {
     <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium", c.bg, c.text)}>
       <span className={cn("h-1.5 w-1.5 rounded-full", c.dot)} />
       {c.label}
+    </span>
+  )
+}
+
+export function UserTypeBadge({ type, primary }: { type: string; primary?: boolean }) {
+  return (
+    <span
+      title={primary ? "Primary account type" : "Account type"}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+        primary
+          ? "border-primary/40 bg-primary/10 text-primary"
+          : "border-border bg-gray-50 text-muted"
+      )}
+    >
+      {userTypeLabels[type] || type}
+      {primary && <span className="font-normal opacity-70">· primary</span>}
     </span>
   )
 }

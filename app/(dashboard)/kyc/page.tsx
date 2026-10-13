@@ -7,6 +7,7 @@ import { BulkActionsBar } from "@/components/BulkActionsBar"
 import KycList from "./KycList"
 import KycDetail from "./KycDetail"
 import { cn } from "@/lib/utils"
+import { userTypeLabels, userTypeList } from "./utils"
 import type { KycDocument, KycResponse, UserDocsResponse } from "./types"
 
 export default function KycPage() {
@@ -15,6 +16,7 @@ export default function KycPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState("PENDING")
+  const [userType, setUserType] = useState("")
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -36,6 +38,7 @@ export default function KycPage() {
     try {
       const p = new URLSearchParams()
       if (filter) p.set("status", filter)
+      if (userType) p.set("userType", userType)
       if (search) p.set("search", search)
       p.set("page", String(page))
       p.set("limit", "50")
@@ -52,7 +55,7 @@ export default function KycPage() {
       } else { setSelectedDoc(null); setUserDocs([]) }
     } catch { setError("Failed to load KYC documents.") }
     finally { setLoading(false) }
-  }, [filter, page, search, selectedDoc])
+  }, [filter, userType, page, search, selectedDoc])
 
   useEffect(() => { void (async () => { await fetchDocs() })() }, [fetchDocs])
 
@@ -145,6 +148,7 @@ export default function KycPage() {
   }
 
   const handleFilterChange = (f: string) => { setFilter(f); setPage(1) }
+  const handleUserTypeChange = (t: string) => { setUserType(t); setPage(1) }
   const handleSearchChange = (s: string) => { setSearch(s); setPage(1) }
   const handleSelectDoc = (doc: KycDocument) => { 
     setSelectedDoc(doc); 
@@ -156,6 +160,22 @@ export default function KycPage() {
   const handleBackToList = () => {
     setMobileView("list");
   }
+
+  const selectedTypeSummary = (() => {
+    const counts = new Map<string, number>()
+    for (const id of selectedIds) {
+      const d = docs.find((x) => x.id === id)
+      const types = d ? userTypeList(d.user) : []
+      const primary = d?.user?.primaryUserType || null
+      const key = types.length > 0
+        ? (primary && types.includes(primary) ? primary : types[0])
+        : "UNKNOWN"
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    return [...counts.entries()].map(([t, n]) =>
+      t === "UNKNOWN" ? `Type not set × ${n}` : `${userTypeLabels[t] || t} × ${n}`
+    )
+  })()
 
   return (
     <div className="flex h-[calc(100dvh-5rem)] flex-col lg:flex-row gap-0">
@@ -179,6 +199,8 @@ export default function KycPage() {
           onSelectDoc={handleSelectDoc}
           onSearchChange={handleSearchChange}
           onFilterChange={handleFilterChange}
+          onUserTypeChange={handleUserTypeChange}
+          userType={userType}
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
           onPageChange={setPage}
@@ -195,6 +217,7 @@ export default function KycPage() {
             { label: "Approve", action: "approve", requiresConfirmation: true },
             { label: "Reject", action: "reject", variant: "destructive", requiresConfirmation: true },
           ]}
+          confirmSummary={selectedTypeSummary}
           onAction={async (action) => {
             setLoading(true)
             try {

@@ -1,12 +1,12 @@
 ﻿"use client"
 
 import { useRef } from "react"
-import { Shield, AlertCircle, Loader2, CheckCircle, XCircle, RefreshCcw, Clock, User, FileText, ArrowUp, ArrowDown, ArrowLeft } from "@/components/ui/icons"
+import { Shield, AlertCircle, Loader2, CheckCircle, XCircle, RefreshCcw, Clock, User, FileText, ArrowUp, ArrowDown, ArrowLeft, ZoomIn, ExternalLink, Phone, Building2 } from "@/components/ui/icons"
 import PdfViewer from "@/components/PdfViewer"
 import { cn, isValidUrl } from "@/lib/utils"
 import { PermissionGuard } from "@/components/PermissionGuard"
 import { absUpload } from "@/lib/img";
-import { docLabels, timeAgo, fmtDate, initials, ImgWithFallback, Skeleton, EmptyState, StatusBadge, DocStatusBadge } from "./utils"
+import { docLabels, userTypeLabels, userTypeList, timeAgo, fmtDate, initials, ImgWithFallback, Skeleton, EmptyState, StatusBadge, DocStatusBadge, UserTypeBadge } from "./utils"
 import type { KycDocument } from "./types"
 
 interface KycDetailProps {
@@ -23,6 +23,35 @@ interface KycDetailProps {
   onOpenLightbox: (images: { src: string; label: string }[], index: number) => void
   onRetry?: () => void
   onBack?: () => void
+}
+
+function isPdfUrl(url: string | null | undefined): boolean {
+  return !!url && /\.pdf/i.test(url)
+}
+
+function normName(s: string | null | undefined): string {
+  return (s || "").trim().toLowerCase()
+}
+
+function normPhone(s: string | null | undefined): string {
+  const digits = (s || "").replace(/\D/g, "")
+  return digits.length > 9 ? digits.slice(-9) : digits
+}
+
+// Fields where the submitted ID details disagree with the account profile.
+// A mismatch is a fraud signal the reviewer must resolve before approving.
+function bioMismatches(doc: KycDocument): string[] {
+  const bio = doc.bioData
+  const user = doc.user
+  if (!bio || !user) return []
+  const out: string[] = []
+  if (bio.firstName && user.firstName && normName(bio.firstName) !== normName(user.firstName)) out.push("first name")
+  if (bio.lastName && user.lastName && normName(bio.lastName) !== normName(user.lastName)) out.push("last name")
+  if (bio.email && user.email && normName(bio.email) !== normName(user.email)) out.push("email")
+  const bioPhone = normPhone(bio.phone)
+  const userPhone = normPhone(user.phone)
+  if (bioPhone && userPhone && bioPhone !== userPhone) out.push("phone")
+  return out
 }
 
 function buildDocLightboxImages(doc: KycDocument, userName: string): { src: string; label: string }[] {
@@ -86,6 +115,75 @@ export default function KycDetail({
                 {selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}
               </h2>
               <p className="text-sm text-muted">{selectedDoc.user?.email || "—"}</p>
+              {/* Account type — what kind of user is being approved */}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5" aria-label="Account type">
+                {(() => {
+                  const types = userTypeList(selectedDoc.user)
+                  if (types.length === 0) {
+                    return (
+                      <span className="inline-flex items-center rounded-full border border-dashed border-border px-2 py-0.5 text-[11px] font-medium text-muted">
+                        Type not set
+                      </span>
+                    )
+                  }
+                  const primary = selectedDoc.user?.primaryUserType || null
+                  return types.map((t) => (
+                    <UserTypeBadge key={t} type={t} primary={t === primary} />
+                  ))
+                })()}
+                {selectedDoc.user?.accountStatus && (
+                  <span
+                    title="Account status"
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                      selectedDoc.user.accountStatus === "ACTIVE" && "bg-success/10 text-success",
+                      (selectedDoc.user.accountStatus === "SUSPENDED" || selectedDoc.user.accountStatus === "BANNED") && "bg-error/10 text-error",
+                      (selectedDoc.user.accountStatus === "PENDING_APPROVAL" || selectedDoc.user.accountStatus === "REJECTED") && "bg-warning/10 text-warning",
+                      selectedDoc.user.accountStatus === "DELETED" && "bg-gray-100 text-gray-500"
+                    )}
+                  >
+                    <span className="h-1 w-1 rounded-full bg-current" />
+                    {selectedDoc.user.accountStatus}
+                  </span>
+                )}
+              </div>
+              {/* Trust signals: contact verification + account age */}
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                <span
+                  className={cn("inline-flex items-center gap-1", selectedDoc.user?.emailVerified ? "text-success" : "text-muted")}
+                  title={selectedDoc.user?.emailVerified ? "Email verified" : "Email not verified"}
+                >
+                  <CheckCircle size={11} /> Email {selectedDoc.user?.emailVerified ? "verified" : "unverified"}
+                </span>
+                <span
+                  className={cn("inline-flex items-center gap-1", selectedDoc.user?.phoneVerified ? "text-success" : "text-muted")}
+                  title={selectedDoc.user?.phoneVerified ? "Phone verified" : "Phone not verified"}
+                >
+                  <CheckCircle size={11} /> Phone {selectedDoc.user?.phoneVerified ? "verified" : "unverified"}
+                </span>
+                {selectedDoc.user?.createdAt && (
+                  <span title={`Signed up ${fmtDate(selectedDoc.user.createdAt)}`}>
+                    Member since {fmtDate(selectedDoc.user.createdAt)} · {timeAgo(selectedDoc.user.createdAt)}
+                  </span>
+                )}
+              </div>
+              {(selectedDoc.user?.phone || selectedDoc.user?.companyName || selectedDoc.user?.category) && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                  {selectedDoc.user?.phone && (
+                    <span className="inline-flex items-center gap-1">
+                      <Phone size={11} /> {selectedDoc.user.phone}
+                    </span>
+                  )}
+                  {(selectedDoc.user?.companyName || selectedDoc.user?.category) && (
+                    <span className="inline-flex items-center gap-1">
+                      <Building2 size={11} />
+                      {selectedDoc.user.companyName || ""}
+                      {selectedDoc.user.companyName && selectedDoc.user.category ? " · " : ""}
+                      {selectedDoc.user.category || ""}
+                    </span>
+                  )}
+                </div>
+              )}
               {(selectedDoc.user?.aplAgent || selectedDoc.user?.referredByAgentCode) ? (
                 <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary">
                   <User size={11} />
@@ -176,18 +274,19 @@ export default function KycDetail({
                       Front Image
                     </label>
                     {isValidUrl(absUpload(doc.frontImage) || "") ? (
-                      doc.frontImage!.match(/\.pdf/i) ? (
-                        <PdfViewer url={doc.frontImage!} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Front`} compact />
+                      isPdfUrl(doc.frontImage) ? (
+                        <PdfViewer url={doc.frontImage!} filename={`${docLabels[doc.documentType] || doc.documentType} — Front`} />
                       ) : (
                         <button onClick={() => onOpenLightbox(buildDocLightboxImages(doc, selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"), 0)}
+                          aria-label={`Open ${docLabels[doc.documentType] || doc.documentType} front image in full view with zoom`}
                           className="group relative overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-md active:scale-[0.99]"
                         >
                           <ImgWithFallback src={absUpload(doc.frontImage)} alt={doc.documentType}
                             className="h-52 w-full object-contain p-2"
                           />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/5">
-                            <span className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
-                              Click to zoom
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                              <ZoomIn size={12} /> Open & zoom
                             </span>
                           </div>
                         </button>
@@ -211,18 +310,19 @@ export default function KycDetail({
                   <div className="flex flex-col">
                     <label className="mb-2 text-[11px] font-semibold text-muted uppercase tracking-widest">Back Image</label>
                     {isValidUrl(absUpload(doc.backImage) || "") ? (
-                      doc.backImage!.match(/\.pdf/i) ? (
-                        <PdfViewer url={doc.backImage!} filename={`${docLabels[doc.documentType] || doc.documentType} \u2014 Back`} compact />
+                      isPdfUrl(doc.backImage) ? (
+                        <PdfViewer url={doc.backImage!} filename={`${docLabels[doc.documentType] || doc.documentType} — Back`} />
                       ) : (
                         <button onClick={() => { const imgs = buildDocLightboxImages(doc, selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"); onOpenLightbox(imgs, imgs.length > 1 ? 1 : 0) }}
+                          aria-label={`Open ${docLabels[doc.documentType] || doc.documentType} back image in full view with zoom`}
                           className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all hover:shadow-md active:scale-[0.99]"
                         >
                           <ImgWithFallback src={absUpload(doc.backImage)} alt="Back"
                             className="h-52 w-full object-contain p-2"
                           />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/5">
-                            <span className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
-                              Click to zoom
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                              <ZoomIn size={12} /> Open & zoom
                             </span>
                           </div>
                         </button>
@@ -243,25 +343,50 @@ export default function KycDetail({
                 )}
               </div>
 
-              {/* Business Permit PDF */}
+              {/* Additional submitted documents */}
               {doc.businessPermit && (
                 <div className="border-t border-border px-5 py-4">
                   <label className="mb-3 flex items-center gap-2 text-[11px] font-semibold text-muted uppercase tracking-widest">
                     <span className="rounded-full bg-warning/10 p-1"><FileText size={12} className="text-warning" /></span>
-                    Business Permit
-                    <span className="font-normal normal-case text-muted/60">(Optional)</span>
+                    Additional documents
+                    <span className="font-normal normal-case text-muted/60">(submitted with this application)</span>
                   </label>
                   {isValidUrl(absUpload(doc.businessPermit) || "") ? (
-                    <div className="flex items-center gap-3 rounded-lg border border-border bg-warning/5 px-4 py-3">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-warning/10">
-                        <FileText size={20} className="text-warning" />
+                    isPdfUrl(doc.businessPermit) ? (
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-foreground">Business Permit Document</p>
+                        <PdfViewer url={doc.businessPermit} filename={`Business Permit — ${selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}`} />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground">Business Permit Document</p>
-                        <p className="text-xs text-muted">Uploaded as PDF</p>
+                    ) : (
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-foreground">Business Permit Document</p>
+                        <button
+                          onClick={() => {
+                            const src = absUpload(doc.businessPermit) || ""
+                            if (src) onOpenLightbox([{ src, label: `Business Permit — ${selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}` }], 0)
+                          }}
+                          aria-label="Open business permit image in full view with zoom"
+                          className="group relative block w-full overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-md active:scale-[0.99]"
+                        >
+                          <ImgWithFallback src={absUpload(doc.businessPermit)} alt="Business permit"
+                            className="h-52 w-full object-contain p-2"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/5">
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                              <ZoomIn size={12} /> Open & zoom
+                            </span>
+                          </div>
+                        </button>
+                        <a
+                          href={absUpload(doc.businessPermit) || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        >
+                          Open original in new tab <ExternalLink size={11} />
+                        </a>
                       </div>
-                      <PdfViewer url={doc.businessPermit} filename={`Business Permit \u2014 ${selectedDoc.user ? `${selectedDoc.user.firstName} ${selectedDoc.user.lastName}` : "Unknown user"}`} compact />
-                    </div>
+                    )
                   ) : (
                     <div className="flex items-center gap-3 rounded-lg border border-dashed border-error/50 bg-error-5 px-4 py-3">
                       <span className="text-xs text-error">Invalid document URL</span>
@@ -296,6 +421,22 @@ export default function KycDetail({
                     <span><span className="font-medium">Rejected:</span> {doc.rejectionReason}</span>
                   </div>
                 )}
+                {doc.adminNotes && (
+                  <div className="mt-2 flex items-start gap-2 rounded-lg border border-border bg-gray-50 px-3 py-2 text-xs text-muted">
+                    <FileText size={12} className="mt-0.5 flex-shrink-0" />
+                    <span><span className="font-medium text-foreground">Reviewer notes:</span> {doc.adminNotes}</span>
+                  </div>
+                )}
+                {(() => {
+                  const mm = bioMismatches(doc)
+                  if (mm.length === 0) return null
+                  return (
+                    <div className="mt-2 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning" role="note">
+                      <AlertCircle size={12} className="mt-0.5 flex-shrink-0" />
+                      <span><span className="font-medium">Submitted {mm.join(", ")} {mm.length === 1 ? "differs" : "differ"} from the account profile</span> — confirm identity before approving.</span>
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* Bio data */}
@@ -332,6 +473,21 @@ export default function KycDetail({
 
               {/* Action buttons */}
               <div className="border-t border-border px-5 py-3">
+                {(() => {
+                  const types = userTypeList(selectedDoc.user)
+                  const label = types.length > 0
+                    ? types.map((t) => userTypeLabels[t] || t).join(" + ")
+                    : "user"
+                  return (
+                    <p className="mb-2.5 text-xs text-muted" role="note">
+                      You are reviewing a <span className="font-semibold text-foreground">{label}</span> account
+                      {selectedDoc.user?.companyName ? (
+                        <> — <span className="font-medium text-foreground">{selectedDoc.user.companyName}</span></>
+                      ) : null}
+                      . Verify the ID matches this account type before approving.
+                    </p>
+                  )
+                })()}
                 {doc.status === "PENDING" && (
                   <PermissionGuard permission="kyc" action="write" redirect={false}>
                   <div className="flex flex-wrap items-center gap-2">

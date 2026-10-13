@@ -41,12 +41,20 @@ export default function PdfViewer({ url, filename = "document", onClose, compact
         </div>
         <div className="flex items-center gap-1">
           {isValidUrl(directUrl) ? (
-            <a href={directUrl} target="_blank" rel="noopener noreferrer" download
-              className="rounded p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors"
-              title="Download PDF"
-            >
-              <Download size={14} />
-            </a>
+            <>
+              <a href={directUrl} target="_blank" rel="noopener noreferrer"
+                className="rounded p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors"
+                title="Open in new tab"
+              >
+                <ExternalLink size={14} />
+              </a>
+              <a href={directUrl} target="_blank" rel="noopener noreferrer" download
+                className="rounded p-1 text-muted hover:bg-gray-100 hover:text-foreground transition-colors"
+                title="Download PDF"
+              >
+                <Download size={14} />
+              </a>
+            </>
           ) : (
             <span className="rounded p-1 text-muted" title="Invalid URL"><Download size={14} /></span>
           )}
@@ -60,14 +68,19 @@ export default function PdfViewer({ url, filename = "document", onClose, compact
         </div>
       </div>
       {isValidUrl(directUrl) ? (
-        <a href={directUrl} target="_blank" rel="noopener noreferrer"
-          className="flex items-center justify-center gap-3 rounded-lg border border-border bg-gray-50 py-16 text-sm text-muted transition-colors hover:bg-gray-100 hover:text-primary"
-        >
-          <FileText size={32} className="text-red-400" />
-          <span className="flex items-center gap-1.5 font-medium">
-            Open PDF in new tab <ExternalLink size={14} />
-          </span>
-        </a>
+        <div className="overflow-hidden rounded-lg border border-border bg-gray-50">
+          <iframe
+            src={directUrl}
+            title={filename}
+            className="h-64 w-full bg-white"
+            loading="lazy"
+          />
+          <a href={directUrl} target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 border-t border-border bg-card py-2 text-xs font-medium text-muted transition-colors hover:bg-gray-100 hover:text-primary"
+          >
+            Open full view <ExternalLink size={12} />
+          </a>
+        </div>
       ) : (
         <span className="flex items-center justify-center gap-3 rounded-lg border border-border bg-gray-50 py-16 text-sm text-muted">
           <FileText size={32} className="text-red-400" />
