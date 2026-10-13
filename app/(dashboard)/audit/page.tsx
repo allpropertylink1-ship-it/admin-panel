@@ -16,6 +16,7 @@ interface AuditEntry {
   action: string
   entityType: string
   entityId: string | null
+  userId: string | null
   ipAddress: string | null
   createdAt: string
   user: { firstName: string; lastName: string; email: string | null } | null
@@ -45,6 +46,7 @@ const ACTION_OPTIONS = [
   { label: "ACTIVATE", value: "ACTIVATE" },
   { label: "APPROVE", value: "APPROVE" },
   { label: "REJECT", value: "REJECT" },
+  { label: "CONTACT REVEAL", value: "SERVICE_CONTACT_REVEAL" },
 ]
 
 const actionColor: Record<string, string> = {
@@ -57,10 +59,11 @@ const actionColor: Record<string, string> = {
   ACTIVATE: "bg-emerald-50 text-emerald-700",
   APPROVE: "bg-green-50 text-green-700",
   REJECT: "bg-red-50 text-red-700",
+  SERVICE_CONTACT_REVEAL: "bg-violet-50 text-violet-700",
 }
 
 const auditColumns = [
-  { width: "w-24" }, { width: "w-20" }, { width: "w-28" }, { width: "w-16" }, { width: "w-28" },
+  { width: "w-24" }, { width: "w-20" }, { width: "w-28" }, { width: "w-28" }, { width: "w-16" }, { width: "w-28" },
 ]
 
 export default function AuditPage() {
@@ -154,11 +157,12 @@ export default function AuditPage() {
 
         {loading ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-sm">
+            <table className="w-full min-w-[800px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Action</th>
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Entity Type</th>
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Entity ID</th>
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">User</th>
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">IP Address</th>
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Date</th>
@@ -177,11 +181,12 @@ export default function AuditPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-sm">
+            <table className="w-full min-w-[800px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-gray-50/80">
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Action</th>
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Entity Type</th>
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Entity ID</th>
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">User</th>
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">IP Address</th>
                   <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Date</th>
@@ -201,10 +206,17 @@ export default function AuditPage() {
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">
                       {entry.entityType}
                     </td>
+                    <td className="max-w-[160px] truncate px-4 py-3 font-mono text-xs text-muted" title={entry.entityId ?? ""}>
+                      {entry.entityId ?? "\u2014"}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3 text-foreground">
                       {entry.user
-                        ? `${entry.user.firstName} ${entry.user.lastName}`
-                        : <span className="text-muted italic">System</span>}
+                        ? <><span>{`${entry.user.firstName} ${entry.user.lastName}`}</span>{entry.userId && (
+                          <span className="block font-mono text-[11px] text-muted" title={entry.userId}>{entry.userId.slice(0, 8)}&hellip;</span>
+                        )}</>
+                        : entry.userId
+                          ? <span className="font-mono text-xs text-muted" title={entry.userId}>{entry.userId.slice(0, 8)}&hellip;</span>
+                          : <span className="text-muted italic">System</span>}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted">
                       {entry.ipAddress ?? "\u2014"}
