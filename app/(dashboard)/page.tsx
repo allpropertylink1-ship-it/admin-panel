@@ -38,7 +38,23 @@ interface DashboardData {
   recentServices?: RecentListing[]
   queue?: ActionQueue
   topCities: { city: string; count: number }[]
-  registrationsByDay: { date: string; count: number }[]
+  registrationsByDay: { date: string; count: number; byType?: Record<string, number> }[]
+}
+
+// Stacked colors — one per UserType, counted once by primaryUserType.
+const REG_TYPE_META: { key: string; label: string; color: string }[] = [
+  { key: "PROPERTY_OWNER", label: "Owners", color: "#0d9488" },
+  { key: "AGENT", label: "Agents", color: "#2563eb" },
+  { key: "FUNDI", label: "Fundis", color: "#d97706" },
+  { key: "SERVICE_PROVIDER", label: "Providers", color: "#7c3aed" },
+  { key: "CUSTOMER", label: "Customers", color: "#64748b" },
+  { key: "OTHER", label: "Other", color: "#9ca3af" },
+]
+
+// Parse "YYYY-MM-DD" as local noon so the weekday never shifts with TZ
+// (new Date("YYYY-MM-DD") is UTC midnight and can render a day early).
+function parseDayLocal(dateStr: string): Date {
+  return new Date(`${dateStr}T12:00:00`)
 }
 
 const cards = [
@@ -312,31 +328,87 @@ export default function DashboardPage() {
           </div>
 
           <div className="rounded-xl border border-border bg-card shadow-sm">
-            <div className="flex items-center gap-2.5 border-b border-border px-5 py-4">
-              <BarChart3 size={16} className="text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Registrations (7 days)</h2>
+            <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-4">
+              <div className="flex items-center gap-2.5">
+                <BarChart3 size={16} className="text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Registrations (7 days)</h2>
+              </div>
+              <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary tabular-nums">
+                {data.registrationsByDay.slice(-7).reduce((s, d) => s + d.count, 0).toLocaleString()} in last 7 days
+              </span>
             </div>
             <div className="p-5">
               {data.registrationsByDay.length === 0 ? (
                 <p className="py-4 text-center text-sm text-muted">No registration data yet</p>
               ) : (
-                <div className="flex h-24 items-end gap-1.5">
-                  {data.registrationsByDay.slice(-7).map((d) => {
-                    const max = Math.max(...data.registrationsByDay.slice(-7).map((x) => x.count), 1)
-                    return (
-                      <div key={d.date} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                        <div
-                          title={`${new Date(d.date).toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}`}
-                          className="w-full rounded bg-gradient-to-t from-primary/80 to-primary/40"
-                          style={{ height: `${Math.max((d.count / max) * 100, d.count > 0 ? 10 : 3)}%`, minHeight: 4 }}
-                        />
-                        <span className="text-[10px] text-muted">
-                          {new Date(d.date).toLocaleDateString("en-US", { weekday: "narrow" })}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
+                <>
+                  <div
+                    className="flex h-40 items-stretch gap-1.5"
+                    role="img"
+                    aria-label={`Registrations per day, last 7 days, total ${data.registrationsByDay.slice(-7).reduce((s, d) => s + d.count, 0)}`}
+                  >
+                    {(() => {
+                      const last7 = data.registrationsByDay.slice(-7)
+                      const max = Math.max(...last7.map((x) => x.count), 1)
+                      const MAX_BAR_PX = 96
+                      return last7.map((d) => {
+                        const day = parseDayLocal(d.date)
+                        const byType = d.byType ?? {}
+                        // Back-compat: old cached payloads have no byType — render as a single block.
+                        const segments = REG_TYPE_META.filter((m) => (byType[m.key] ?? 0) > 0)
+                        const showFallback = segments.length === 0 && d.count > 0
+                        const barPx = d.count === 0 ? 4 : Math.max((d.count / max) * MAX_BAR_PX, 12)
+                        const tooltip = segments.length > 0
+                          ? `${day.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}\n${segments.map((m) => `${m.label}: ${byType[m.key]}`).join("\n")}`
+                          : `${day.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}`
+                        return (
+                          <div key={d.date} className="flex min-w-0 flex-1 flex-col" title={tooltip}>
+                            <span className="text-center text-xs font-semibold text-foreground tabular-nums">
+                              {d.count}
+                            </span>
+                            <div className="flex flex-1 flex-col justify-end py-1">
+                              <div
+                                className="flex w-full flex-col-reverse overflow-hidden rounded"
+                                style={{ height: `${barPx}px` }}
+                              >
+                                {showFallback ? (
+                                  <div className="w-full bg-primary/60" style={{ height: "100%" }} />
+                                ) : (
+                                  segments.map((m) => (
+                                    <div
+                                      key={m.key}
+                                      className="w-full"
+                                      style={{
+                                        height: `${((byType[m.key] ?? 0) / Math.max(d.count, 1)) * 100}%`,
+                                        backgroundColor: m.color,
+                                        minHeight: 2,
+                                      }}
+                                    />
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-center text-[10px] text-muted">
+                              {day.toLocaleDateString("en-US", { weekday: "narrow" })}
+                            </span>
+                            <span className="text-center text-[10px] text-muted tabular-nums">
+                              {day.toLocaleDateString("en-US", { day: "numeric" })}
+                            </span>
+                          </div>
+                        )
+                      })
+                    })()}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 border-t border-border pt-3">
+                    {REG_TYPE_META.map((m) => (
+                      <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-muted">
+                        <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: m.color }} />
+                        {m.label}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted">Days in Africa/Nairobi time. Each person counted once, by their main account type.</p>
+                </>
               )}
             </div>
           </div>

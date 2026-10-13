@@ -28,9 +28,22 @@ interface DashboardData {
   totalServices?: number;
   totalReviews?: number;
   unreadMessages?: number;
-  registrationsByDay: { date: string; count: number }[];
+  registrationsByDay: { date: string; count: number; byType?: Record<string, number> }[];
   topCities: { city: string; count: number }[];
   recentRegistrations: RecentUser[];
+}
+
+const REG_TYPE_META: { key: string; label: string; color: string }[] = [
+  { key: "PROPERTY_OWNER", label: "Owners", color: "#0d9488" },
+  { key: "AGENT", label: "Agents", color: "#2563eb" },
+  { key: "FUNDI", label: "Fundis", color: "#d97706" },
+  { key: "SERVICE_PROVIDER", label: "Providers", color: "#7c3aed" },
+  { key: "CUSTOMER", label: "Customers", color: "#64748b" },
+  { key: "OTHER", label: "Other", color: "#9ca3af" },
+];
+
+function parseDayLocal(dateStr: string): Date {
+  return new Date(`${dateStr}T12:00:00`);
 }
 
 function Avatar({ name }: { name: string }) {
@@ -239,25 +252,69 @@ export default function ReportsPage() {
             </div>
           ) : (
             <div className="p-5">
-              <div className="flex items-end gap-2 h-32">
-                {last7Days.map((d) => (
-                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1.5">
-                    <span className="text-xs font-medium text-foreground">
-                      {d.count}
-                    </span>
-                    <div
-                      className="w-full rounded bg-gradient-to-t from-primary/80 to-primary/40 transition-all hover:from-primary"
-                      style={{ height: `${(d.count / maxCount) * 100}%` }}
-                    />
-                    <span className="text-[10px] text-muted whitespace-nowrap">
-                      {new Date(d.date).toLocaleDateString("en-US", {
-                        weekday: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
+              <div
+                className="flex items-stretch gap-2 h-44"
+                role="img"
+                aria-label={`Registrations per day, last 7 days, total ${last7Days.reduce((s, d) => s + d.count, 0)}`}
+              >
+                {(() => {
+                  const MAX_BAR_PX = 104;
+                  return last7Days.map((d) => {
+                    const day = parseDayLocal(d.date);
+                    const byType = d.byType ?? {};
+                    const segments = REG_TYPE_META.filter((m) => (byType[m.key] ?? 0) > 0);
+                    const showFallback = segments.length === 0 && d.count > 0;
+                    const barPx = d.count === 0 ? 4 : Math.max((d.count / maxCount) * MAX_BAR_PX, 12);
+                    const tooltip = segments.length > 0
+                      ? `${day.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}\n${segments.map((m) => `${m.label}: ${byType[m.key]}`).join("\n")}`
+                      : `${day.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}`;
+                    return (
+                      <div key={d.date} className="flex-1 flex flex-col min-w-0" title={tooltip}>
+                        <span className="text-center text-xs font-semibold text-foreground tabular-nums">
+                          {d.count}
+                        </span>
+                        <div className="flex flex-1 flex-col justify-end py-1">
+                          <div
+                            className="w-full rounded overflow-hidden flex flex-col-reverse"
+                            style={{ height: `${barPx}px` }}
+                          >
+                            {showFallback ? (
+                              <div className="w-full bg-primary/60" style={{ height: "100%" }} />
+                            ) : (
+                              segments.map((m) => (
+                                <div
+                                  key={m.key}
+                                  className="w-full"
+                                  style={{
+                                    height: `${((byType[m.key] ?? 0) / Math.max(d.count, 1)) * 100}%`,
+                                    backgroundColor: m.color,
+                                    minHeight: 2,
+                                  }}
+                                />
+                              ))
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-muted whitespace-nowrap text-center">
+                          {day.toLocaleDateString("en-US", {
+                            weekday: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 border-t border-border pt-3">
+                {REG_TYPE_META.map((m) => (
+                  <span key={m.key} className="inline-flex items-center gap-1.5 text-[11px] text-muted">
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: m.color }} />
+                    {m.label}
+                  </span>
                 ))}
               </div>
+              <p className="mt-2 text-[11px] text-muted">Days in Africa/Nairobi time. Each person counted once, by their main account type.</p>
             </div>
           )}
         </div>
@@ -359,20 +416,47 @@ export default function ReportsPage() {
             </div>
             {last7Days.length > 0 && (
               <div>
-                <div className="flex items-end gap-1.5 h-20">
-                  {last7Days.map((d) => (
-                    <div
-                      key={d.date}
-                      title={`${new Date(d.date).toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}`}
-                      className="flex-1 rounded bg-gradient-to-t from-primary/80 to-primary/40"
-                      style={{ height: `${Math.max((d.count / maxCount) * 100, d.count > 0 ? 8 : 2)}%` }}
-                    />
-                  ))}
+                <div className="flex items-stretch gap-1.5 h-20">
+                  {last7Days.map((d) => {
+                    const byType = d.byType ?? {};
+                    const segments = REG_TYPE_META.filter((m) => (byType[m.key] ?? 0) > 0);
+                    const showFallback = segments.length === 0 && d.count > 0;
+                    const barPx = d.count === 0 ? 3 : Math.max((d.count / maxCount) * 64, 8);
+                    const day = parseDayLocal(d.date);
+                    return (
+                      <div
+                        key={d.date}
+                        title={`${day.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}: ${d.count}`}
+                        className="flex-1 flex flex-col justify-end"
+                      >
+                        <div
+                          className="w-full rounded overflow-hidden flex flex-col-reverse"
+                          style={{ height: `${barPx}px` }}
+                        >
+                          {showFallback ? (
+                            <div className="w-full bg-primary/60" style={{ height: "100%" }} />
+                          ) : (
+                            segments.map((m) => (
+                              <div
+                                key={m.key}
+                                className="w-full"
+                                style={{
+                                  height: `${((byType[m.key] ?? 0) / Math.max(d.count, 1)) * 100}%`,
+                                  backgroundColor: m.color,
+                                  minHeight: 2,
+                                }}
+                              />
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <p className="mt-2 text-xs text-muted">
                   Peak: {(() => {
                     const peak = last7Days.reduce((a, b) => (b.count > a.count ? b : a), last7Days[0]);
-                    return `${peak.count} on ${new Date(peak.date).toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}`;
+                    return `${peak.count} on ${parseDayLocal(peak.date).toLocaleDateString("en-US", { weekday: "short", day: "numeric" })}`;
                   })()}
                   {" · "}
                   Top city: {topCities[0] ? `${topCities[0].city} (${topCities[0].count})` : "—"}
