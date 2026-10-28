@@ -33,6 +33,8 @@ interface DashboardData {
   totalUsers: number; pendingApprovals: number; activeProperties: number
   pendingReviews: number; kycPending: number; totalAgents: number
   totalServices?: number; totalReviews?: number; unreadMessages?: number
+  totalFavorites?: number
+  mostSavedProperties?: { id: string; title: string; city: string | null; savedCount: number }[]
   recentRegistrations: RecentUser[]
   recentProperties?: RecentListing[]
   recentServices?: RecentListing[]
@@ -57,6 +59,14 @@ function parseDayLocal(dateStr: string): Date {
   return new Date(`${dateStr}T12:00:00`)
 }
 
+function HeartIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+    </svg>
+  )
+}
+
 const cards = [
   { label: "Total Users", key: "totalUsers", icon: Users, color: "text-blue-600", bg: "bg-blue-50", link: "/users" },
   { label: "Pending Approvals", key: "pendingApprovals", icon: UserCheck, color: "text-amber-600", bg: "bg-amber-50", link: "/approvals" },
@@ -67,6 +77,7 @@ const cards = [
   { label: "Service Listings", key: "totalServices", icon: Wrench, color: "text-violet-600", bg: "bg-violet-50", link: "/services" },
   { label: "Reviews", key: "totalReviews", icon: Star, color: "text-amber-600", bg: "bg-amber-50", link: "/reviews" },
   { label: "Unread Messages", key: "unreadMessages", icon: Mail, color: "text-sky-600", bg: "bg-sky-50", link: "/messages" },
+  { label: "Saved Listings", key: "totalFavorites", icon: HeartIcon, color: "text-rose-500", bg: "bg-rose-50", link: "/properties" },
 ]
 
 const roleBadge: Record<string, string> = {
@@ -300,6 +311,34 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <div className="flex items-center gap-2.5">
+                <HeartIcon size={16} className="text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Most Saved Properties</h2>
+              </div>
+              <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary tabular-nums">
+                {(data.totalFavorites ?? 0).toLocaleString()} total
+              </span>
+            </div>
+            <div className="divide-y divide-border">
+              {!data.mostSavedProperties || data.mostSavedProperties.length === 0 ? (
+                <p className="px-5 py-8 text-center text-sm text-muted">No saved properties yet</p>
+              ) : (
+                data.mostSavedProperties.slice(0, 5).map((p, i) => (
+                  <div key={p.id} className="flex items-center gap-2.5 px-5 py-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-xs font-bold text-primary">
+                      {i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{p.title}</span>
+                    {p.city && <span className="hidden shrink-0 text-xs text-muted sm:block">{p.city}</span>}
+                    <span className="shrink-0 text-sm font-semibold text-foreground tabular-nums">{p.savedCount}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           <div className="rounded-xl border border-border bg-card shadow-sm">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div className="flex items-center gap-2.5">
