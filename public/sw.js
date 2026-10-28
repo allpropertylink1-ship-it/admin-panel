@@ -8,7 +8,7 @@
  * No workbox / next-pwa. Same-origin only.
  */
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const STATIC_CACHE = `apl-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `apl-runtime-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";

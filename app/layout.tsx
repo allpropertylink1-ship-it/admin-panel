@@ -1,19 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans, Noto_Sans_Display } from "next/font/google";
+import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { PWARegister } from "@/components/pwa/PWARegister";
 
-const heading = Noto_Sans_Display({
+const text = Noto_Sans({
   subsets: ["latin"],
-  variable: "--apl-heading",
-  display: "swap",
-});
-
-const body = Noto_Sans({
-  subsets: ["latin"],
-  variable: "--apl-body",
+  variable: "--apl-text",
   display: "swap",
 });
 
@@ -43,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${heading.variable} ${body.variable}`}
+      className={`h-full antialiased ${text.variable}`}
     >
       <head>
         <link rel="manifest" href="/manifest.json" />
