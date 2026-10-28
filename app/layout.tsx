@@ -1,19 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Sora, DM_Sans } from "next/font/google";
+import { Noto_Sans, Noto_Sans_Display } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { PWARegister } from "@/components/pwa/PWARegister";
 
-const sora = Sora({
+const heading = Noto_Sans_Display({
   subsets: ["latin"],
-  variable: "--font-heading",
+  variable: "--apl-heading",
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+const body = Noto_Sans({
   subsets: ["latin"],
-  variable: "--font-body",
+  variable: "--apl-body",
   display: "swap",
 });
 
@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${sora.variable} ${dmSans.variable}`}
+      className={`h-full antialiased ${heading.variable} ${body.variable}`}
     >
       <head>
         <link rel="manifest" href="/manifest.json" />

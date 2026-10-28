@@ -28,6 +28,33 @@ interface Settings {
   maintenanceMode: boolean;
   maintenanceTitle: string;
   maintenanceMessage: string;
+  notificationPolicy: Record<string, Record<string, boolean>>;
+}
+
+const CATEGORY_ORDER = ["PROPERTY_OWNER", "AGENT", "FUNDI", "SERVICE_PROVIDER", "CUSTOMER"];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  PROPERTY_OWNER: "Property owners",
+  AGENT: "Agents",
+  FUNDI: "Fundis",
+  SERVICE_PROVIDER: "Service providers",
+  CUSTOMER: "Customers",
+};
+
+const CHANNELS = ["email", "sms", "whatsapp"] as const;
+
+const CHANNEL_LABELS: Record<string, string> = {
+  email: "Email",
+  sms: "SMS",
+  whatsapp: "WhatsApp",
+};
+
+function allOnPolicy(): Record<string, Record<string, boolean>> {
+  const policy: Record<string, Record<string, boolean>> = {};
+  for (const cat of CATEGORY_ORDER) {
+    policy[cat] = { email: true, sms: true, whatsapp: true };
+  }
+  return policy;
 }
 
 const RESPONSE_TIMES = [
@@ -52,6 +79,7 @@ const defaultSettings: Settings = {
   maintenanceTitle: "We'll be back shortly",
   maintenanceMessage:
     "Our site is currently undergoing scheduled maintenance. Thank you for your patience and understanding.",
+  notificationPolicy: allOnPolicy(),
 };
 
 interface SectionCardProps {
@@ -206,6 +234,26 @@ export default function SettingsPage() {
 
   function updateField<K extends keyof Settings>(key: K, value: Settings[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updatePolicy(cat: string, channel: string, value: boolean) {
+    setForm((prev) => ({
+      ...prev,
+      notificationPolicy: {
+        ...prev.notificationPolicy,
+        [cat]: { ...(prev.notificationPolicy[cat] ?? allOnPolicy()[cat]), [channel]: value },
+      },
+    }));
+  }
+
+  function toggleAllChannel(channel: string, value: boolean) {
+    setForm((prev) => {
+      const next: Record<string, Record<string, boolean>> = {};
+      for (const cat of CATEGORY_ORDER) {
+        next[cat] = { ...(prev.notificationPolicy[cat] ?? allOnPolicy()[cat]), [channel]: value };
+      }
+      return { ...prev, notificationPolicy: next };
+    });
   }
 
   async function handlePreview() {
@@ -480,6 +528,82 @@ export default function SettingsPage() {
             <p className="mt-1 text-xs text-muted">
               Opens the live site in a new tab with a 12-hour preview bypass.
             </p>
+          </div>
+        </SectionCard>
+
+        <SectionCard icon={<MessageCircle size={18} />} title="Notification channels">
+          <div>
+            <p className="text-sm text-muted">
+              Master switch: which channels may be used to reach each account type. Turning a
+              channel <strong>off</strong> here blocks it for everyone in that category — even
+              if a user opted in. In-app bell notifications are always delivered.
+            </p>
+            <p className="mt-2 text-xs text-muted">
+              Customers also covers not-yet-onboarded accounts. SMS and WhatsApp need a verified
+              phone on the account to be used at all.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] border-separate border-spacing-0 text-sm">
+              <thead>
+                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                  <th className="border-b border-border px-3 py-2">Account type</th>
+                  {CHANNELS.map((channel) => (
+                    <th key={channel} className="border-b border-border px-3 py-2 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {CHANNEL_LABELS[channel]}
+                        <button
+                          type="button"
+                          disabled={!canWrite}
+                          onClick={() =>
+                            toggleAllChannel(
+                              channel,
+                              CATEGORY_ORDER.some(
+                                (cat) => form.notificationPolicy?.[cat]?.[channel] === false
+                              )
+                            )
+                          }
+                          className="rounded-md border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted hover:border-primary/40 hover:text-foreground transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Toggle all
+                        </button>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {CATEGORY_ORDER.map((cat) => (
+                  <tr key={cat} className="border-b border-border">
+                    <td className="border-b border-border px-3 py-2 font-medium text-foreground">
+                      {CATEGORY_LABELS[cat]}
+                    </td>
+                    {CHANNELS.map((channel) => {
+                      const on = form.notificationPolicy?.[cat]?.[channel] !== false;
+                      return (
+                        <td key={channel} className="border-b border-border px-3 py-2 text-center">
+                          <button
+                            type="button"
+                            disabled={!canWrite}
+                            aria-pressed={on}
+                            onClick={() => updatePolicy(cat, channel, !on)}
+                            className={cn(
+                              "rounded-full px-4 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                              on
+                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                : "bg-gray-100 text-muted ring-1 ring-border hover:border-error/40"
+                            )}
+                          >
+                            {on ? "On" : "Off"}
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </SectionCard>
 
