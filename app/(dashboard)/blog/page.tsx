@@ -261,7 +261,7 @@ export default function BlogListPage() {
                           <Eye size={13} /> View
                         </a>
                         <button
-                          onClick={() => openEdit(p)}
+                          onClick={() => router.push(`/dashboard/blog/${p.id}/edit`)}
                           className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors"
                         >
                           <Pencil size={13} /> Edit
