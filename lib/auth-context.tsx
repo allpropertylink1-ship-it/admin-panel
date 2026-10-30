@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import { api } from "./api-client"
 
 interface User {
@@ -62,10 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error || "Login failed" }
   }, [])
 
+  const router = useRouter()
+
   const logout = useCallback(async () => {
     await api.post("/api/auth/logout")
     setUser(null)
-  }, [])
+    router.push("/login")
+  }, [router])
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
