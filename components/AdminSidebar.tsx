@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
   X, Receipt, ShieldCheck, BookUser, Archive, Flag,
-  Mail, Star, Briefcase, Bell, FileText,
+  Mail, Star, Briefcase, Bell, FileText, Hash, MessageCircle,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -46,6 +46,8 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/blog", label: "Blog Posts", icon: FileText, permission: "blog" },
       { href: "/blog/categories", label: "Blog Categories", icon: FileText, permission: "blog" },
+      { href: "/blog/tags", label: "Blog Tags", icon: Hash, permission: "blog" },
+      { href: "/blog/comments", label: "Comments", icon: MessageCircle, permission: "blog" },
     ],
   },
   {

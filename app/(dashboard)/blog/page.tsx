@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
-import { AlertCircle, Loader2, Plus, Pencil, Eye, Archive } from "@/components/ui/icons"
+import { AlertCircle, Loader2, Plus, Pencil, Eye, Archive, Download, Clock } from "@/components/ui/icons"
 
 interface BlogPost {
   id: string
@@ -83,6 +83,37 @@ export default function BlogListPage() {
     }
   }
 
+  async function handleRestore(id: string) {
+    if (!confirm("Restore this post? It will be set back to draft status.")) return
+    setActionLoading(id)
+    try {
+      const { error } = await api.post(`/api/admin/blog/posts/${id}/restore`)
+      if (error) throw new Error(error)
+      await fetchPosts()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to restore")
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  async function handleExport() {
+    try {
+      const { blob, filename, error } = await api.download("/api/admin/blog/export?format=csv")
+      if (error || !blob) throw new Error(error || "Export failed")
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename || "blog-posts.csv"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Export failed")
+    }
+  }
+
   async function handleBulkAction() {
     if (!bulkAction || selectedIds.size === 0) return
     if (bulkAction === "delete" && !confirm(`Delete ${selectedIds.size} post(s)? This cannot be undone.`)) return
@@ -116,6 +147,13 @@ export default function BlogListPage() {
           <p className="mt-1 text-sm text-muted">{posts.length} posts · drafts, published, archived</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-gray-50 transition-colors"
+          >
+            <Download size={16} />
+            Export CSV
+          </button>
           <button
             onClick={() => router.push("/dashboard/blog/new")}
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover transition-colors"
@@ -275,13 +313,29 @@ export default function BlogListPage() {
                             Publish
                           </button>
                         )}
-                        <button
-                          onClick={() => handleArchive(p.id)}
-                          disabled={actionLoading === p.id}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors disabled:opacity-50"
+                        {p.status === "ARCHIVED" ? (
+                          <button
+                            onClick={() => handleRestore(p.id)}
+                            disabled={actionLoading === p.id}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald/30 bg-emerald/50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald/100 transition-colors disabled:opacity-50"
+                          >
+                            Restore
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleArchive(p.id)}
+                            disabled={actionLoading === p.id}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-error hover:bg-error-50 transition-colors disabled:opacity-50"
+                          >
+                            <Archive size={13} /> Archive
+                          </button>
+                        )}
+                        <a
+                          href={`/dashboard/blog/${p.id}/revisions`}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 transition-colors"
                         >
-                          <Archive size={13} /> Archive
-                        </button>
+                          <Clock size={13} /> Revisions
+                        </a>
                       </div>
                     </td>
                   </tr>

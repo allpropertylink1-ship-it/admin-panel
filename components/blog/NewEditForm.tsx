@@ -50,6 +50,7 @@ export default function BlogNewEditForm({ isEdit, postId, onSuccess }: NewEditFo
     coverImageAlt: "",
     categoryId: "",
     status: "DRAFT",
+    scheduledAt: "",
     seoTitle: "",
     seoDescription: "",
     featured: false,
@@ -105,6 +106,7 @@ export default function BlogNewEditForm({ isEdit, postId, onSuccess }: NewEditFo
         coverImageAlt: data.post.coverImageAlt || "",
         categoryId: data.post.categoryId || "",
         status: data.post.status,
+        scheduledAt: data.post.publishedAt ? new Date(data.post.publishedAt).toISOString().slice(0, 16) : "",
         seoTitle: data.post.seoTitle || "",
         seoDescription: data.post.seoDescription || "",
         featured: data.post.featured,
@@ -180,6 +182,12 @@ export default function BlogNewEditForm({ isEdit, postId, onSuccess }: NewEditFo
         featured: form.featured,
       }
 
+      // Scheduled publishing: pass a future publishedAt so the post goes live at that time
+      if (form.status === "SCHEDULED" && form.scheduledAt) {
+        payload.status = "PUBLISHED"
+        payload.publishedAt = form.scheduledAt
+      }
+
       const { error } = isEdit && postId
         ? await api.patch(`/api/admin/blog/posts/${postId}`, payload)
         : await api.post("/api/admin/blog/posts", payload)
@@ -245,14 +253,28 @@ export default function BlogNewEditForm({ isEdit, postId, onSuccess }: NewEditFo
             <select
               id="post-status"
               value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value as "DRAFT" | "PUBLISHED" | "ARCHIVED" })}
+              onChange={(e) => setForm({ ...form, status: e.target.value as "DRAFT" | "PUBLISHED" | "SCHEDULED" | "ARCHIVED" })}
               className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Publish now</option>
+              <option value="SCHEDULED">Schedule for later</option>
               <option value="ARCHIVED">Archived</option>
             </select>
           </div>
+          {form.status === "SCHEDULED" && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-foreground" htmlFor="post-scheduled-at">Publish at</label>
+              <input
+                id="post-scheduled-at"
+                type="datetime-local"
+                value={form.scheduledAt}
+                onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
+                className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <p className="mt-1 text-xs text-muted">Post will be published automatically at this time.</p>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <input
               id="post-featured"
