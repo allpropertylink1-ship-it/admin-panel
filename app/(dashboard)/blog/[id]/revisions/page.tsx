@@ -167,7 +167,7 @@ export default function BlogRevisionsPage({ searchParams }: { searchParams: { [k
   )
 }
 
-function handleDelete() {
+function handleDelete(_id: string) {
   // Placeholder — delete revision endpoint not yet implemented
   alert("Delete revision not yet implemented")
 }
