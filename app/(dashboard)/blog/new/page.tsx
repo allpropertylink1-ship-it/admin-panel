@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import BlogNewEditForm from "@/components/blog/NewEditForm"
 
 export default function BlogNewPage() {
