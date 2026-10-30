@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Users, UserCheck, Building2, Shield,
   Handshake, BarChart3, ScrollText, Settings, LogOut,
   X, Receipt, ShieldCheck, BookUser, Archive, Flag,
-  Mail, Star, Briefcase, Bell,
+  Mail, Star, Briefcase, Bell, FileText,
 } from "@/components/ui/icons"
 
 interface NavItem {
@@ -39,6 +39,13 @@ const navGroups: { group: string; items: NavItem[] }[] = [
       { href: "/messages", label: "Contact Messages", icon: Mail, permission: "messages" },
       { href: "/users/deleted", label: "Deleted Accounts", icon: Archive, permission: "users" },
       { href: "/issues", label: "Issues Queue", icon: Flag, permission: "issues" },
+    ],
+  },
+  {
+    group: "Content",
+    items: [
+      { href: "/blog", label: "Blog Posts", icon: FileText, permission: "blog" },
+      { href: "/blog/categories", label: "Blog Categories", icon: FileText, permission: "blog" },
     ],
   },
   {
@@ -124,6 +131,7 @@ export function AdminSidebar() {
     if (href === "/messages") return pathname.startsWith("/messages")
     if (href === "/admin-accounts") return pathname.startsWith("/admin-accounts")
     if (href.startsWith("/services")) return pathname.startsWith("/services")
+    if (href.startsWith("/blog")) return pathname.startsWith("/blog")
     return pathname === href
   }
 
