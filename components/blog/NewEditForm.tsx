@@ -395,7 +395,7 @@ export default function BlogNewEditForm({ isEdit, postId, onSuccess }: NewEditFo
               if (confirm("Archive this post? It will be removed from the site.")) {
                 setSaving(true)
                 api.delete(`/api/admin/blog/posts/${postId}`).then(({ error }) => {
-                  if (error) setError(error)
+                  if (error) setFormError(error)
                   else onSuccess()
                 }).finally(() => setSaving(false))
               }
