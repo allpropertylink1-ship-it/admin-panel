@@ -1,8 +1,11 @@
-export const dynamic = "force-dynamic"
+"use client"
 
 import BlogNewEditForm from "@/components/blog/NewEditForm"
+import { useRouter } from "next/navigation"
 
 export default function BlogNewPage() {
+  const router = useRouter()
+
   return (
     <div className="space-y-6">
       <div>
@@ -11,7 +14,7 @@ export default function BlogNewPage() {
       </div>
       <BlogNewEditForm
         isEdit={false}
-        onSuccess={() => window.location.href = "/dashboard/blog"}
+        onSuccess={() => router.push("/dashboard/blog")}
       />
     </div>
   )
