@@ -30,7 +30,8 @@ interface ClaimRecord {
   id: string; amount: number; currency: string; adminModifiedAmount: number | null
   status: string; paidAt: string | null; adminNotes: string | null
   agentNotes: string | null; createdAt: string; reviewedAt: string | null
-  property: { id: string; title: string; slug: string; price: number } | null
+  referredUser: { id: string; firstName: string; lastName: string; phone: string | null } | null
+  claimType: string
 }
 
 interface AgentDetail {
@@ -431,7 +432,7 @@ async function handleResetPassword() {
                 <tbody className="divide-y divide-border">
                   {claims.map((c) => (
                     <tr key={c.id} className="hover:bg-primary-50/20 transition-colors">
-                      <td className="px-4 py-3 text-muted max-w-[200px] truncate">{c.property?.title || "—"}</td>
+                      <td className="px-4 py-3 text-muted max-w-[200px] truncate">{c.referredUser ? `${c.referredUser.firstName} ${c.referredUser.lastName}` : "—"}</td>
                       <td className="px-4 py-3 text-right font-medium text-foreground tabular-nums">{fmtCurr(Number(c.amount))}</td>
                       <td className="px-4 py-3 text-right text-muted text-xs tabular-nums">
                         {c.adminModifiedAmount ? fmtCurr(Number(c.adminModifiedAmount)) : "—"}

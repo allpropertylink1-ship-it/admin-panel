@@ -12,7 +12,8 @@ interface PayoutClaim {
   currency: string
   paidAt: string | null
   createdAt: string
-  property: { title: string; city: string } | null
+  referredUser: { id: string; firstName: string; lastName: string; phone: string | null } | null
+  claimType: string
   aplAgent: { fullName: string; agentCode: string }
 }
 
@@ -95,7 +96,7 @@ export default function AdminPayoutsPage() {
                     <div className="text-sm font-medium text-text-primary">{c.aplAgent.fullName}</div>
                     <div className="text-xs text-muted">{c.aplAgent.agentCode}</div>
                   </td>
-                  <td className="px-4 py-3 text-text-primary">{c.property ? `${c.property.title} (${c.property.city})` : "-"}</td>
+                  <td className="px-4 py-3 text-text-primary">{c.referredUser ? `${c.referredUser.firstName} ${c.referredUser.lastName}` : "-"}</td>
                   <td className="px-4 py-3 font-medium text-text-primary">{fmt(Number(c.amount))}</td>
                   <td className="px-4 py-3 text-text-secondary">{c.paidAt ? new Date(c.paidAt).toLocaleDateString() : "-"}</td>
                   <td className="px-4 py-3">

@@ -10,9 +10,8 @@ export interface Claim {
   paidAt: string | null
   createdAt: string
   aplAgent: { id: string; fullName: string; email: string; agentCode: string }
-  property: { id: string; title: string; slug: string; city: string } | null
-  unitId?: string | null
-  unit?: { id: string; configuration: string; label: string | null } | null
+  referredUser: { id: string; firstName: string; lastName: string; phone: string | null } | null
+  claimType: string
 }
 
 export interface ClaimResponse {

@@ -241,7 +241,7 @@ export default function ClaimsPage() {
                       )}
                     </th>
                     <th className="px-4 py-3 text-left">APL Representative</th>
-                    <th className="px-4 py-3 text-left">Property</th>
+                    <th className="px-4 py-3 text-left">Claimed for</th>
                     <th className="px-4 py-3 text-right">Amount</th>
                     <th className="px-4 py-3 text-center">Status</th>
                     <th className="px-4 py-3 text-left">Date</th>
@@ -260,13 +260,8 @@ export default function ClaimsPage() {
                         <p className="text-xs text-muted font-mono">{c.aplAgent.agentCode}</p>
                       </td>
                       <td className="px-4 py-3 max-w-[200px]">
-                        <p className="truncate text-sm">{c.property?.title || "—"}</p>
-                        {c.property?.city && <p className="text-xs text-muted">{c.property.city}</p>}
-                        {c.unit && (
-                          <p className="mt-0.5 inline-flex rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
-                            {c.unit.configuration.replace(/_/g, " ")}{c.unit.label ? ` · ${c.unit.label}` : ""}
-                          </p>
-                        )}
+                        <p className="truncate text-sm">{c.referredUser ? `${c.referredUser.firstName} ${c.referredUser.lastName}` : "—"}</p>
+                        <p className="text-xs text-muted">{c.claimType.replace(/_/g, " ")}</p>
                       </td>
                       <td className="px-4 py-3 text-right font-medium">
                         {fmt(c.amount)}
@@ -333,15 +328,8 @@ export default function ClaimsPage() {
               <div className="flex justify-between"><span className="text-muted">APL Representative</span><span className="font-medium">{reviewModal.aplAgent.fullName}</span></div>
               <div className="flex justify-between"><span className="text-muted">APL Rep Code</span><span className="font-medium font-mono">{reviewModal.aplAgent.agentCode}</span></div>
               <div className="flex justify-between"><span className="text-muted">Amount</span><span className="font-medium">{fmt(reviewModal.amount)}</span></div>
-              {reviewModal.property && (
-                <div className="flex justify-between"><span className="text-muted">Property</span><span className="font-medium">{reviewModal.property.title}</span></div>
-              )}
-              {reviewModal.unit && (
-                <div className="flex justify-between">
-                  <span className="text-muted">Unit</span>
-                  <span className="font-medium">{reviewModal.unit.configuration.replace(/_/g, " ")}{reviewModal.unit.label ? ` · ${reviewModal.unit.label}` : ""}</span>
-                </div>
-              )}
+              <div className="flex justify-between"><span className="text-muted">Claimed for</span><span className="font-medium">{reviewModal.referredUser ? `${reviewModal.referredUser.firstName} ${reviewModal.referredUser.lastName}` : "—"}</span></div>
+              <div className="flex justify-between"><span className="text-muted">Claim type</span><span className="font-medium">{reviewModal.claimType.replace(/_/g, " ")}</span></div>
               {reviewModal.agentNotes && (
                 <div><p className="text-muted mb-1">APL Rep Notes</p><p className="rounded-lg bg-surface-secondary p-3 text-text-primary">{reviewModal.agentNotes}</p></div>
               )}
