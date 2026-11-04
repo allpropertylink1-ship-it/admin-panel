@@ -12,6 +12,7 @@ export interface Claim {
   aplAgent: { id: string; fullName: string; email: string; agentCode: string }
   referredUser: { id: string; firstName: string; lastName: string; phone: string | null } | null
   claimType: string
+  claimListings?: { property: { id: string; title: string; slug: string; city: string; price: number; propertyType: string; moderationStatus: string } }[]
 }
 
 export interface ClaimResponse {

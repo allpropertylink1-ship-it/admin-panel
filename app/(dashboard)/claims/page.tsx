@@ -330,6 +330,16 @@ export default function ClaimsPage() {
               <div className="flex justify-between"><span className="text-muted">Amount</span><span className="font-medium">{fmt(reviewModal.amount)}</span></div>
               <div className="flex justify-between"><span className="text-muted">Claimed for</span><span className="font-medium">{reviewModal.referredUser ? `${reviewModal.referredUser.firstName} ${reviewModal.referredUser.lastName}` : "—"}</span></div>
               <div className="flex justify-between"><span className="text-muted">Claim type</span><span className="font-medium">{reviewModal.claimType.replace(/_/g, " ")}</span></div>
+              {(reviewModal.claimListings ?? []).length > 0 && (
+                <div>
+                  <p className="text-muted mb-1">Listings claimed</p>
+                  <ul className="space-y-1">
+                    {(reviewModal.claimListings as { property: { title: string; city: string; propertyType: string } }[]).map((cl) => (
+                      <li key={cl.property.id} className="text-xs text-text-secondary truncate">{cl.property.title} &middot; {cl.property.city}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {reviewModal.agentNotes && (
                 <div><p className="text-muted mb-1">APL Rep Notes</p><p className="rounded-lg bg-surface-secondary p-3 text-text-primary">{reviewModal.agentNotes}</p></div>
               )}
