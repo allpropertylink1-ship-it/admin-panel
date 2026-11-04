@@ -74,8 +74,8 @@ export default function ClaimsPage() {
   const fetchStats = useCallback(async () => {
     setStatsLoading(true)
     try {
-      const { data } = await api.get<{ total: number; pending: number; approved: number; rejected: number }>("/api/admin/claims/stats")
-      if (data) setStats({ total: data.total, pending: data.pending, paid: data.approved, rejected: data.rejected })
+      const { data } = await api.get<{ total: number; pending: number; paid: number; rejected: number }>("/api/admin/claims/stats")
+      if (data) setStats({ total: data.total, pending: data.pending, paid: data.paid, rejected: data.rejected })
     } catch { /* keep defaults */ }
     finally { setStatsLoading(false) }
   }, [])
