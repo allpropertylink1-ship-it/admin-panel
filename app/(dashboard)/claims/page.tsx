@@ -334,7 +334,7 @@ export default function ClaimsPage() {
                 <div>
                   <p className="text-muted mb-1">Listings claimed</p>
                   <ul className="space-y-1">
-                    {(reviewModal.claimListings as { property: { title: string; city: string; propertyType: string } }[]).map((cl) => (
+                    {(reviewModal.claimListings as { property: { id: string; title: string; city: string; propertyType: string } }[]).map((cl) => (
                       <li key={cl.property.id} className="text-xs text-text-secondary truncate">{cl.property.title} &middot; {cl.property.city}</li>
                     ))}
                   </ul>
